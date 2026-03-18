@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  LinearLayout horizontal : pour aligner les 3 infos côte à côte.
+  android:padding : pour aérer un peu le contenu de la ligne.
+-->
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:padding="12dp"
+    android:gravity="center_vertical"
+    android:background="?attr/selectableItemBackground"> <!-- Effet de clic natif -->
+
+    <!-- Colonne 1 : Prénom de l'enfant (40%) -->
+    <TextView
+        android:id="@+id/textEnfant"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="0.4"
+        android:text="Prénom Enfant"
+        android:textSize="16sp"
+        android:textColor="#000000"
+        android:textStyle="bold"
+        android:maxLines="1"
+        android:ellipsize="end" /> <!-- Coupe avec "..." si trop long -->
+
+    <!-- Colonne 2 : Noms des Parents (40%) -->
+    <TextView
+        android:id="@+id/textParents"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="0.4"
+        android:text="Parent 1 & Parent 2"
+        android:textSize="14sp"
+        android:textColor="#555555"
+        android:maxLines="1"
+        android:ellipsize="end" />
+
+    <!-- Colonne 3 : Date de naissance (20%) -->
+    <TextView
+        android:id="@+id/textDate"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="0.2"
+        android:text="01/01/2020"
+        android:textSize="14sp"
+        android:textColor="#777777"
+        android:gravity="end" <!-- Aligné à droite comme l'en-tête -->
+    android:maxLines="1" />
+
+</LinearLayout>

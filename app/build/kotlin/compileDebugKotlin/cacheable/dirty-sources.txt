@@ -1,0 +1,3 @@
+/home/symflex/AndroidStudioProjects/Genentes/app/src/main/java/ch/ecoandco/genentes/MainActivity.kt
+/home/symflex/AndroidStudioProjects/Genentes/app/src/main/java/ch/ecoandco/genentes/MaBaseDeDonnee.kt
+/home/symflex/AndroidStudioProjects/Genentes/app/src/main/java/ch/ecoandco/genentes/AnniversaireAdapter.kt
