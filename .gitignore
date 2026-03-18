@@ -1,0 +1,19 @@
+# Fichiers générés par le build
+*.iml
+.gradle
+/local.properties
+/.idea
+.DS_Store
+/build
+/captures
+.externalNativeBuild
+.cxx
+local.properties
+
+# Fichiers de signature (NE JAMAIS PUBLIER VOS CLÉS PRIVÉES)
+*.jks
+*.keystore
+!debug.keystore
+
+# Logs
+*.log
