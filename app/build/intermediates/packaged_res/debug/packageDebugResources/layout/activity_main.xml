@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  ConstraintLayout est le conteneur principal.
+  Il permet de positionner les éléments les uns par rapport aux autres.
+-->
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:padding="16dp"
+    tools:context=".MainActivity">
+
+    <!-- 1. Le Titre de l'application -->
+    <TextView
+        android:id="@+id/titreApp"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Anniversaires des Enfants"
+        android:textSize="24sp"
+        android:textStyle="bold"
+        android:textColor="#333333"
+        android:layout_marginBottom="16dp"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+
+    <!-- 2. Les En-têtes de colonnes (Pour simuler un tableau) -->
+    <!-- On utilise un LinearLayout horizontal pour aligner les 3 titres -->
+    <LinearLayout
+        android:id="@+id/enTetes"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:background="#E0E0E0"
+        android:padding="8dp"
+        android:layout_marginBottom="8dp"
+        app:layout_constraintTop_toBottomOf="@id/titreApp">
+
+        <!-- Colonne 1 : Enfant (40% de la largeur) -->
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="0.4"
+            android:text="Enfant"
+            android:textStyle="bold"
+            android:textColor="#555555" />
+
+        <!-- Colonne 2 : Parents (40% de la largeur) -->
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="0.4"
+            android:text="Parents"
+            android:textStyle="bold"
+            android:textColor="#555555" />
+
+        <!-- Colonne 3 : Date (20% de la largeur) -->
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="0.2"
+            android:text="Date"
+            android:textStyle="bold"
+            android:textColor="#555555"
+            android:gravity="end" /> <!-- Texte aligné à droite -->
+    </LinearLayout>
+
+    <!-- 3. Le RecyclerView (La liste dynamique) -->
+    <!-- C'est ici que vos lignes d'enfants s'afficheront -->
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/recyclerViewAnniversaires"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        app:layout_constraintTop_toBottomOf="@id/enTetes"
+        app:layout_constraintBottom_toTopOf="@id/boutonAjouter"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:clipToPadding="false"
+        android:paddingBottom="8dp"/>
+
+    <!-- 4. Le Bouton d'action (En bas de l'écran) -->
+    <Button
+        android:id="@+id/boutonAjouter"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Ajouter un enfant"
+        android:layout_marginTop="16dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>

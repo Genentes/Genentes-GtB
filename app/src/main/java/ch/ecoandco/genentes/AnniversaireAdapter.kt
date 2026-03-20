@@ -8,6 +8,7 @@ import androidx.recyclerview.widget.RecyclerView
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import ch.ecoandco.genentes.R.layout.item_ligne_anniversaire
 
 // 1. Une petite classe "modèle" pour transporter les données d'une ligne
 // C'est plus propre que de passer un Cursor directement à l'adapter

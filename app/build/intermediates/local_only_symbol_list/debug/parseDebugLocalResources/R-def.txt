@@ -1,0 +1,20 @@
+R_DEF: Internal format may change without notice
+local
+color ic_launcher_background
+drawable ic_launcher_foreground
+id boutonAjouter
+id enTetes
+id recyclerViewAnniversaires
+id textDate
+id textEnfant
+id textParents
+id titreApp
+layout activity_main
+layout item_ligne_anniversaire
+mipmap ic_launcher
+mipmap ic_launcher_round
+string app_name
+string label_date
+string label_enfant
+string label_parents
+style Theme.Genentes

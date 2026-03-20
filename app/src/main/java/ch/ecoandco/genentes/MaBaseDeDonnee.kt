@@ -1,8 +1,11 @@
+package ch.ecoandco.genentes
+
 import android.content.ContentValues
 import android.content.Context
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
 import java.util.Calendar
+
 
 class MaBaseDeDonnees(context: Context) : SQLiteOpenHelper(context, "anniversaires.db", null, 1) {
 
@@ -80,7 +83,7 @@ class MaBaseDeDonnees(context: Context) : SQLiteOpenHelper(context, "anniversair
         values.put("nom", "Martin")
         values.put("dateNaissance", getTimeStamp(2019, 2, 10)) // 10 Février 2019
         values.put("idParent1", idPaul)
-        values.put("idParent2", null) // Parent unique
+        values.putNull("idParent2") // Parent unique
         db.insert("enfants", null, values)
     }
 
