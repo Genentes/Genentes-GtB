@@ -1,6 +1,22 @@
 R_DEF: Internal format may change without notice
 local
+color background
+color background_dark
 color ic_launcher_background
+color onBackground
+color onBackground_dark
+color onPrimary
+color onSurface
+color onSurface_dark
+color primary
+color primaryVariant
+color primary_dark
+color surface
+color surface_dark
+dimen text_size_large
+dimen text_size_normal
+dimen text_size_small
+dimen text_size_title
 drawable ic_launcher_foreground
 id boutonAjouter
 id enTetes
@@ -17,4 +33,6 @@ string app_name
 string label_date
 string label_enfant
 string label_parents
+string main_app_title
+string main_button_add
 style Theme.Genentes

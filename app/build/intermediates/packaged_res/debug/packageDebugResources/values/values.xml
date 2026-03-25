@@ -1,11 +1,43 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <color name="background">#F5F5F5</color>
+    <color name="background_dark">#121212</color>
     <color name="ic_launcher_background">#621649</color>
+    <color name="onBackground">#212121</color>
+    <color name="onBackground_dark">#E0E0E0</color>
+    <color name="onPrimary">#FFFFFF</color>
+    <color name="onSurface">#212121</color>
+    <color name="onSurface_dark">#E0E0E0</color>
+    <color name="primary">#1976D2</color>
+    <color name="primaryVariant">#115293</color>
+    <color name="primary_dark">#1565C0</color>
+    <color name="surface">#FFFFFF</color>
+    <color name="surface_dark">#1E1E1E</color>
+    <dimen name="text_size_large">16sp</dimen>
+    <dimen name="text_size_normal">14sp</dimen>
+    <dimen name="text_size_small">12sp</dimen>
+    <dimen name="text_size_title">20sp</dimen>
     <string name="app_name">Genentes</string>
-    <string name="label_date">Date</string>
-    <string name="label_enfant">Enfant</string>
-    <string name="label_parents">Parents</string>
+    <string name="label_date">B day</string>
+    <string name="label_enfant">Qui déjà ?</string>
+    <string name="label_parents">Copains</string>
+    <string name="main_app_title">👾 Enfants de copains 👾</string>
+    <string name="main_button_add">Ajouter un enfant</string>
     <style name="Theme.Genentes" parent="Theme.Material3.DayNight.NoActionBar">
         
+        <item name="colorPrimary">@color/primary</item>
+        <item name="colorPrimaryVariant">@color/primaryVariant</item>
+        <item name="colorOnPrimary">@color/onPrimary</item>
+
+        
+        <item name="android:colorBackground">@color/background</item>
+        <item name="colorSurface">@color/surface</item>
+
+        
+        <item name="colorOnSurface">@color/onSurface</item>
+        <item name="colorOnBackground">@color/onBackground</item>
+
+        
+        <item name="android:statusBarColor">@color/primaryVariant</item>
     </style>
 </resources>

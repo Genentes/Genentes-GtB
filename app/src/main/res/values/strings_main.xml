@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="main_app_title">👾 Enfants de copains 👾</string>
+    <string name="label_enfant">Qui déjà ?</string>
+    <string name="label_parents">Copains</string>
+    <string name="label_date">B day</string>
+    <string name="main_button_add">Ajouter un enfant</string>
+</resources>
