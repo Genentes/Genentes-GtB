@@ -1,6 +1,21 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- res/values/themes.xml -->
 <resources>
     <style name="Theme.Genentes" parent="Theme.Material3.DayNight.NoActionBar">
-        <!-- Personnalisation optionnelle ici -->
+        <!-- Couleurs primaires (Boutons, barre d'état, accents) -->
+        <item name="colorPrimary">@color/primary</item>
+        <item name="colorPrimaryVariant">@color/primaryVariant</item>
+        <item name="colorOnPrimary">@color/onPrimary</item>
+
+        <!-- Couleurs de fond et de surface (Cartes, arrière-plan) -->
+        <item name="android:colorBackground">@color/background</item>
+        <item name="colorSurface">@color/surface</item>
+
+        <!-- C'est ici que se joue la lisibilité du texte global -->
+        <item name="colorOnSurface">@color/onSurface</item>
+        <item name="colorOnBackground">@color/onBackground</item>
+
+        <!-- Barre de statut (optionnel, pour harmoniser) -->
+        <item name="android:statusBarColor">@color/primaryVariant</item>
     </style>
 </resources>

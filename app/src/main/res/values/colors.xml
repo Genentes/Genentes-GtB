@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- res/values/colors.xml -->
+<resources>
+    <!-- Couleurs claires (Mode Jour par défaut) -->
+    <color name="primary">#1976D2</color>          <!-- Bleu standard lisible -->
+    <color name="primaryVariant">#115293</color>
+    <color name="onPrimary">#FFFFFF</color>         <!-- Texte blanc sur bouton bleu -->
+
+    <color name="background">#F5F5F5</color>        <!-- Gris très clair, moins agressif que le blanc pur -->
+    <color name="surface">#FFFFFF</color>           <!-- Fond des cartes/élévations -->
+    <color name="onSurface">#212121</color>         <!-- Texte noir/gris foncé pour lisibilité max -->
+    <color name="onBackground">#212121</color>
+
+    <!-- Couleurs pour le mode sombre (optionnel mais recommandé avec DayNight) -->
+    <color name="primary_dark">#1565C0</color>
+    <color name="background_dark">#121212</color>
+    <color name="surface_dark">#1E1E1E</color>
+    <color name="onSurface_dark">#E0E0E0</color>
+    <color name="onBackground_dark">#E0E0E0</color>
+</resources>

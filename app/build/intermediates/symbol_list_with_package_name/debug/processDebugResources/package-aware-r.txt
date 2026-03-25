@@ -1350,6 +1350,8 @@ color accent_material_dark
 color accent_material_light
 color androidx_core_ripple_material_light
 color androidx_core_secondary_text_default_material_light
+color background
+color background_dark
 color background_floating_material_dark
 color background_floating_material_light
 color background_material_dark
@@ -2070,6 +2072,14 @@ color mtrl_textinput_focused_box_stroke_color
 color mtrl_textinput_hovered_box_stroke_color
 color notification_action_color_filter
 color notification_icon_bg_color
+color onBackground
+color onBackground_dark
+color onPrimary
+color onSurface
+color onSurface_dark
+color primary
+color primaryVariant
+color primary_dark
 color primary_dark_material_dark
 color primary_dark_material_light
 color primary_material_dark
@@ -2084,6 +2094,8 @@ color secondary_text_default_material_dark
 color secondary_text_default_material_light
 color secondary_text_disabled_material_dark
 color secondary_text_disabled_material_light
+color surface
+color surface_dark
 color switch_thumb_disabled_material_dark
 color switch_thumb_disabled_material_light
 color switch_thumb_material_dark
@@ -2880,6 +2892,10 @@ dimen notification_small_icon_size_as_large
 dimen notification_subtext_size
 dimen notification_top_pad
 dimen notification_top_pad_large_text
+dimen text_size_large
+dimen text_size_normal
+dimen text_size_small
+dimen text_size_title
 dimen tooltip_corner_radius
 dimen tooltip_horizontal_padding
 dimen tooltip_margin
@@ -3853,6 +3869,8 @@ string m3_sys_motion_easing_linear
 string m3_sys_motion_easing_standard
 string m3_sys_motion_easing_standard_accelerate
 string m3_sys_motion_easing_standard_decelerate
+string main_app_title
+string main_button_add
 string material_clock_display_divider
 string material_clock_toggle_content_description
 string material_hour_24h_suffix

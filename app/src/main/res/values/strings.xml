@@ -1,7 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Genentes</string>
-    <string name="label_enfant">Enfant</string>
-    <string name="label_parents">Parents</string>
-    <string name="label_date">Date</string>
 </resources>

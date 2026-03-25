@@ -1,4 +1,4 @@
-#Fri Mar 20 22:42:04 CET 2026
+#Wed Mar 25 23:15:06 CET 2026
 base.0=/home/symflex/AndroidStudioProjects/Genentes/app/build/intermediates/dex/debug/mergeExtDexDebug/classes.dex
 base.1=/home/symflex/AndroidStudioProjects/Genentes/app/build/intermediates/dex/debug/mergeProjectDexDebug/0/classes.dex
 base.2=/home/symflex/AndroidStudioProjects/Genentes/app/build/intermediates/dex/debug/mergeProjectDexDebug/7/classes.dex
