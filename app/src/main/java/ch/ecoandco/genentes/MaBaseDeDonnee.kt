@@ -114,7 +114,7 @@ class MaBaseDeDonnees(context: Context) : SQLiteOpenHelper(context, "anniversair
             put("nom", nom)
         }
         // insert retourne l'ID de la ligne créée, ou -1 en cas d'erreur
-        return db.insert("Parents", null, values)
+        return db.insert("parents", null, values)
     }
     fun ajouterEnfant(prenom: String, dateNaissance: Long): Long {
         val db = this.writableDatabase
@@ -122,7 +122,7 @@ class MaBaseDeDonnees(context: Context) : SQLiteOpenHelper(context, "anniversair
             put("prenom", prenom)
             put("dateNaissance", dateNaissance)
         }
-        return db.insert("enfant", null, values)
+        return db.insert("enfants", null, values)
     }
 
     fun mettreAJourParentsEnfant(idEnfant: Long, idParent1: Long, idParent2: Long?): Boolean {
@@ -138,7 +138,7 @@ class MaBaseDeDonnees(context: Context) : SQLiteOpenHelper(context, "anniversair
         }
         // Mise à jour : UPDATE Enfant SET idParent1=?, idParent2=? WHERE id=?
         val rowsAffected = db.update(
-            "enfant",       // Nom de la table
+            "enfants",       // Nom de la table
             values,         // Les nouvelles valeurs
             "id = ?",       // Clause WHERE
             arrayOf(idEnfant.toString()) // Arguments pour le WHERE

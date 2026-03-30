@@ -8,7 +8,9 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import android.database.Cursor
+import android.graphics.Color
 import android.view.LayoutInflater
+import android.view.View
 import android.widget.Button
 import android.widget.EditText
 import android.widget.LinearLayout
@@ -71,16 +73,8 @@ class MainActivity : AppCompatActivity() {
                 )
             }
 
-            val etNom = EditText(context).apply {
-                hint = "Nom"
-                layoutParams = LinearLayout.LayoutParams(
-                    LinearLayout.LayoutParams.MATCH_PARENT,
-                    LinearLayout.LayoutParams.WRAP_CONTENT
-                )
-            }
-
             val etDate = EditText(context).apply {
-                hint = "Date de naissance (JJ/MM/AAAA)"
+                hint = "\uD83D\uDDD3\uFE0F (date)"
                 isFocusable = false // Empêche le clavier de s'ouvrir, on veut le sélecteur de date
                 isClickable = true
                 layoutParams = LinearLayout.LayoutParams(
@@ -117,7 +111,6 @@ class MainActivity : AppCompatActivity() {
 
             // 5. Ajouter les champs au layout
             layout.addView(etPrenom)
-            layout.addView(etNom)
             layout.addView(etDate)
 
             // 6. Créer et afficher l'AlertDialog
@@ -127,7 +120,6 @@ class MainActivity : AppCompatActivity() {
                 .setPositiveButton("Enregistrer") { dialog, which ->
                     // Récupération des valeurs
                     val prenom = etPrenom.text.toString().trim()
-                    val dateNaissance = selectedTimestamp
 
                     // Validation simple
                     if (prenom.isNotEmpty() &&  selectedTimestamp > 0L) {
@@ -136,7 +128,6 @@ class MainActivity : AppCompatActivity() {
 
                         if (rowId != -1L) {
                             ajouterParents(rowId)
-                            android.widget.Toast.makeText(context, "Enfant ajouté avec succès !", android.widget.Toast.LENGTH_SHORT).show()
                             selectedTimestamp = 0L
                             etDate.text.clear()
                         } else {
@@ -176,35 +167,55 @@ class MainActivity : AppCompatActivity() {
             .setTitle("Informations des parents")
             .setView(layout)
             .setPositiveButton("Enregistrer") { dialog, which ->
+            try {
                 val p1Prenom = etParent1Prenom.text.toString().trim()
                 val p1Nom = etParent1Nom.text.toString().trim()
 
-                if (p1Prenom.isNotEmpty() && p1Nom.isNotEmpty()) {
-                    // 1. Enregistrer Parent 1 et récupérer son ID
+                if (p1Prenom.isNotEmpty() || p1Nom.isNotEmpty()) {
+                    // 1. Insertion Parent 1
                     val idParent1 = bdd.ajouterParent(p1Prenom, p1Nom)
 
-                    // 2. Enregistrer Parent 2 (si rempli) et récupérer son ID
+                    if (idParent1 == -1L) {
+                        throw Exception("Échec insertion Parent 1 (Vérifiez la table 'Parents')")
+                    }
+
+                    // 2. Insertion Parent 2 (Optionnel)
                     val p2Prenom = etParent2Prenom.text.toString().trim()
                     val p2Nom = etParent2Nom.text.toString().trim()
                     var idParent2: Long? = null
 
                     if (p2Prenom.isNotEmpty() || p2Nom.isNotEmpty()) {
                         idParent2 = bdd.ajouterParent(p2Prenom, p2Nom)
+                        if (idParent2 == -1L) {
+                            throw Exception("Échec insertion Parent 2")
+                        }
                     }
 
-                    // 3. METTRE À JOUR l'enfant avec les IDs des parents
+                    // 3. Mise à jour de l'enfant
+                    // Assurez-vous que cette fonction retourne bien un Booléen
                     val success = bdd.mettreAJourParentsEnfant(idEnfant, idParent1, idParent2)
 
                     if (success) {
-                        Toast.makeText(context, "Enfant et parents enregistrés !", Toast.LENGTH_SHORT).show()
-                        // Optionnel : rafraîchir la liste
+                        Toast.makeText(context, "Parents enregistrés avec succès !", Toast.LENGTH_SHORT).show()
+                        chargerDonneesDepuisBDD()
                     } else {
-                        Toast.makeText(context, "Erreur lors de la liaison", Toast.LENGTH_SHORT).show()
+                        throw Exception("Échec mise à jour de l'enfant (Vérifiez les colonnes idParent1/2)")
                     }
+
                 } else {
-                    Toast.makeText(context, "Le premier parent est obligatoire", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(context, "Le premier parent est obligatoire.", Toast.LENGTH_SHORT).show()
                 }
+
+            } catch (e: Exception) {
+                // C'EST ICI QUE VOUS VERREZ L'ERREUR SANS PLANTER
+                e.printStackTrace() // Affiche l'erreur détaillée dans le Logcat
+                android.widget.Toast.makeText(
+                    context,
+                    "Erreur : ${e.message}",
+                    android.widget.Toast.LENGTH_LONG
+                ).show()
             }
+        }
             .setNegativeButton("Passer", null)
             .show()
     }
