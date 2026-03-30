@@ -1,11 +1,18 @@
 package ch.ecoandco.genentes // <--- IMPORTANT : Vérifiez que ceci correspond à votre vrai package
 
+import android.app.AlertDialog
+import android.app.DatePickerDialog
 import android.os.Bundle
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import android.database.Cursor
+import android.view.LayoutInflater
+import android.widget.Button
+import android.widget.EditText
+import android.widget.LinearLayout
+import java.util.Calendar
 
 class MainActivity : AppCompatActivity() {
 
@@ -16,6 +23,7 @@ class MainActivity : AppCompatActivity() {
 
     // La liste qui va contenir nos objets formatés pour l'affichage
     private val listeEnfants = mutableListOf<LigneAnniversaire>()
+    private var selectedTimestamp: Long = 0L
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -41,14 +49,164 @@ class MainActivity : AppCompatActivity() {
         adaptateur = AnniversaireAdapter(listeEnfants)
         recyclerView.adapter = adaptateur
 
-        // --- BONUS : Tester le bouton "Ajouter" (juste un message pour l'instant) ---
-        // Vous pourrez plus tard ajouter la logique d'ouverture de formulaire ici
-        /*
         val boutonAjouter = findViewById<Button>(R.id.boutonAjouter)
+
         boutonAjouter.setOnClickListener {
-            Toast.makeText(this, "Fonctionnalité à venir : Ouvrir le formulaire", Toast.LENGTH_SHORT).show()
+            // 1. Créer le contexte et l'inflateur pour la vue personnalisée
+            val context = this
+            val inflater = LayoutInflater.from(context)
+
+            // 2. Créer un Layout linéaire vertical dynamiquement (conteneur des champs)
+            val layout = LinearLayout(context).apply {
+                orientation = LinearLayout.VERTICAL
+                setPadding(50, 40, 50, 10) // Marges internes
+            }
+
+            // 3. Créer les champs de saisie (EditText)
+            val etPrenom = EditText(context).apply {
+                hint = "Prénom"
+                layoutParams = LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.MATCH_PARENT,
+                    LinearLayout.LayoutParams.WRAP_CONTENT
+                )
+            }
+
+            val etNom = EditText(context).apply {
+                hint = "Nom"
+                layoutParams = LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.MATCH_PARENT,
+                    LinearLayout.LayoutParams.WRAP_CONTENT
+                )
+            }
+
+            val etDate = EditText(context).apply {
+                hint = "Date de naissance (JJ/MM/AAAA)"
+                isFocusable = false // Empêche le clavier de s'ouvrir, on veut le sélecteur de date
+                isClickable = true
+                layoutParams = LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.MATCH_PARENT,
+                    LinearLayout.LayoutParams.WRAP_CONTENT
+                )
+            }
+
+                // 4. Gestion du clic sur le champ Date pour ouvrir le DatePicker
+                etDate.setOnClickListener {
+                    val calendar = Calendar.getInstance()
+                    val year = calendar.get(Calendar.YEAR)
+                    val month = calendar.get(Calendar.MONTH)
+                    val day = calendar.get(Calendar.DAY_OF_MONTH)
+
+                    DatePickerDialog(
+                        context,
+                        { _, selectedYear, selectedMonth, selectedDay ->
+                            // 1. Calculer le timestamp
+                            val tempCalendar = Calendar.getInstance().apply {
+                                set(selectedYear, selectedMonth, selectedDay, 0, 0, 0)
+                            }
+
+                            // 2. LE STOCKER dans la variable membre de la classe
+                            selectedTimestamp = tempCalendar.timeInMillis
+
+                            // 3. Afficher la date lisible pour l'utilisateur (optionnel mais recommandé)
+                            val formattedDate = "$selectedDay/${selectedMonth + 1}/$selectedYear"
+                            etDate.setText(formattedDate)
+                        },
+                        year, month, day
+                    ).show()
+                }
+
+            // 5. Ajouter les champs au layout
+            layout.addView(etPrenom)
+            layout.addView(etNom)
+            layout.addView(etDate)
+
+            // 6. Créer et afficher l'AlertDialog
+            AlertDialog.Builder(context)
+                .setTitle("Ajouter un enfant")
+                .setView(layout)
+                .setPositiveButton("Enregistrer") { dialog, which ->
+                    // Récupération des valeurs
+                    val prenom = etPrenom.text.toString().trim()
+                    val dateNaissance = selectedTimestamp
+
+                    // Validation simple
+                    if (prenom.isNotEmpty() &&  selectedTimestamp > 0L) {
+                        // Appel de votre fonction d'ajout (à adapter pour inclure la date)
+                        val rowId = bdd.ajouterEnfant(prenom, selectedTimestamp)
+
+                        if (rowId != -1L) {
+                            ajouterParents(rowId)
+                            android.widget.Toast.makeText(context, "Enfant ajouté avec succès !", android.widget.Toast.LENGTH_SHORT).show()
+                            selectedTimestamp = 0L
+                            etDate.text.clear()
+                        } else {
+                            android.widget.Toast.makeText(context, "Erreur lors de l'ajout", android.widget.Toast.LENGTH_SHORT).show()
+                        }
+                    } else {
+                        android.widget.Toast.makeText(context, "Veuillez remplir tous les champs", android.widget.Toast.LENGTH_SHORT).show()
+                    }
+                }
+                .setNegativeButton("Annuler", null)
+                .show()
         }
-        */
+
+    }
+
+    private fun ajouterParents(idEnfant: Long) {
+        val context = this
+        val layout = LinearLayout(context).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(50, 40, 50, 10)
+        }
+
+        // Champs Parent 1 (Obligatoire)
+        val etParent1Prenom = EditText(context).apply { hint = "Prénom Parent 1" }
+        val etParent1Nom = EditText(context).apply { hint = "Nom Parent 1" }
+
+        // Champs Parent 2 (Optionnel)
+        val etParent2Prenom = EditText(context).apply { hint = "Prénom Parent 2 (optionnel)" }
+        val etParent2Nom = EditText(context).apply { hint = "Nom Parent 2 (optionnel)" }
+
+        layout.addView(etParent1Prenom)
+        layout.addView(etParent1Nom)
+        layout.addView(etParent2Prenom)
+        layout.addView(etParent2Nom)
+
+        AlertDialog.Builder(context)
+            .setTitle("Informations des parents")
+            .setView(layout)
+            .setPositiveButton("Enregistrer") { dialog, which ->
+                val p1Prenom = etParent1Prenom.text.toString().trim()
+                val p1Nom = etParent1Nom.text.toString().trim()
+
+                if (p1Prenom.isNotEmpty() && p1Nom.isNotEmpty()) {
+                    // 1. Enregistrer Parent 1 et récupérer son ID
+                    val idParent1 = bdd.ajouterParent(p1Prenom, p1Nom)
+
+                    // 2. Enregistrer Parent 2 (si rempli) et récupérer son ID
+                    val p2Prenom = etParent2Prenom.text.toString().trim()
+                    val p2Nom = etParent2Nom.text.toString().trim()
+                    var idParent2: Long? = null
+
+                    if (p2Prenom.isNotEmpty() || p2Nom.isNotEmpty()) {
+                        idParent2 = bdd.ajouterParent(p2Prenom, p2Nom)
+                    }
+
+                    // 3. METTRE À JOUR l'enfant avec les IDs des parents
+                    val success = bdd.mettreAJourParentsEnfant(idEnfant, idParent1, idParent2)
+
+                    if (success) {
+                        Toast.makeText(context, "Enfant et parents enregistrés !", Toast.LENGTH_SHORT).show()
+                        // Optionnel : rafraîchir la liste
+                    } else {
+                        Toast.makeText(context, "Erreur lors de la liaison", Toast.LENGTH_SHORT).show()
+                    }
+                } else {
+                    Toast.makeText(context, "Le premier parent est obligatoire", Toast.LENGTH_SHORT).show()
+                }
+            }
+            .setNegativeButton("Passer", null)
+            .show()
     }
 
     private fun chargerDonneesDepuisBDD() {
