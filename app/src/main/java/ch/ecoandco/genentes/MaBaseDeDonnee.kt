@@ -12,7 +12,7 @@ class MaBaseDeDonnees(context: Context) : SQLiteOpenHelper(context, "anniversair
     override fun onCreate(db: SQLiteDatabase) {
         // 1. Création des tables (votre code précédent)
         val createParents = """CREATE TABLE parents (id INTEGER PRIMARY KEY AUTOINCREMENT, prenom TEXT, nom TEXT)"""
-        val createEnfants = """CREATE TABLE enfants (id INTEGER PRIMARY KEY AUTOINCREMENT, prenom TEXT, nom TEXT, dateNaissance INTEGER, idParent1 INTEGER, idParent2 INTEGER)"""
+        val createEnfants = """CREATE TABLE enfants (id INTEGER PRIMARY KEY AUTOINCREMENT, prenom TEXT, dateNaissance INTEGER, idParent1 INTEGER, idParent2 INTEGER)"""
 
         db.execSQL(createParents)
         db.execSQL(createEnfants)
@@ -62,7 +62,6 @@ class MaBaseDeDonnees(context: Context) : SQLiteOpenHelper(context, "anniversair
 
         // Enfant 1 : Louis (Parents : Jean & Marie)
         values.put("prenom", "Louis")
-        values.put("nom", "Dupont")
         values.put("dateNaissance", getTimeStamp(2018, 5, 12)) // 12 Mai 2018
         values.put("idParent1", idJean)
         values.put("idParent2", idMarie)
@@ -71,7 +70,6 @@ class MaBaseDeDonnees(context: Context) : SQLiteOpenHelper(context, "anniversair
         // Enfant 2 : Sophie (Parents : Jean & Marie)
         values.clear()
         values.put("prenom", "Sophie")
-        values.put("nom", "Dupont")
         values.put("dateNaissance", getTimeStamp(2020, 8, 25)) // 25 Août 2020
         values.put("idParent1", idJean)
         values.put("idParent2", idMarie)
@@ -80,7 +78,6 @@ class MaBaseDeDonnees(context: Context) : SQLiteOpenHelper(context, "anniversair
         // Enfant 3 : Lucas (Parent : Paul seul)
         values.clear()
         values.put("prenom", "Lucas")
-        values.put("nom", "Martin")
         values.put("dateNaissance", getTimeStamp(2019, 2, 10)) // 10 Février 2019
         values.put("idParent1", idPaul)
         values.putNull("idParent2") // Parent unique
@@ -116,6 +113,36 @@ class MaBaseDeDonnees(context: Context) : SQLiteOpenHelper(context, "anniversair
             put("prenom", prenom)
             put("nom", nom)
         }
+        // insert retourne l'ID de la ligne créée, ou -1 en cas d'erreur
         return db.insert("parents", null, values)
+    }
+    fun ajouterEnfant(prenom: String, dateNaissance: Long): Long {
+        val db = this.writableDatabase
+        val values = ContentValues().apply {
+            put("prenom", prenom)
+            put("dateNaissance", dateNaissance)
+        }
+        return db.insert("enfants", null, values)
+    }
+
+    fun mettreAJourParentsEnfant(idEnfant: Long, idParent1: Long, idParent2: Long?): Boolean {
+        val db = this.writableDatabase
+        val values = ContentValues().apply {
+            put("idParent1", idParent1)
+            // On met à jour idParent2 seulement s'il existe, sinon on met NULL
+            if (idParent2 != null) {
+                put("idParent2", idParent2)
+            } else {
+                putNull("idParent2")
+            }
+        }
+        // Mise à jour : UPDATE Enfant SET idParent1=?, idParent2=? WHERE id=?
+        val rowsAffected = db.update(
+            "enfants",       // Nom de la table
+            values,         // Les nouvelles valeurs
+            "id = ?",       // Clause WHERE
+            arrayOf(idEnfant.toString()) // Arguments pour le WHERE
+        )
+        return rowsAffected > 0
     }
 }
