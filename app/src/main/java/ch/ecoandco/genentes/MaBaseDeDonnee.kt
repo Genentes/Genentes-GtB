@@ -11,7 +11,7 @@ class MaBaseDeDonnees(context: Context) : SQLiteOpenHelper(context, "anniversair
 
     override fun onCreate(db: SQLiteDatabase) {
         // 1. Création des tables (votre code précédent)
-        val createParents = """CREATE TABLE parents (id INTEGER PRIMARY KEY AUTOINCREMENT, prenom TEXT, nom TEXT)"""
+        val createParents = """CREATE TABLE parents (id INTEGER PRIMARY KEY AUTOINCREMENT, nomComplet TEXT)"""
         val createEnfants = """CREATE TABLE enfants (id INTEGER PRIMARY KEY AUTOINCREMENT, prenom TEXT, dateNaissance INTEGER, idParent1 INTEGER, idParent2 INTEGER)"""
 
         db.execSQL(createParents)
@@ -41,20 +41,17 @@ class MaBaseDeDonnees(context: Context) : SQLiteOpenHelper(context, "anniversair
         val values = ContentValues()
 
         // Parent 1 : Jean Dupont
-        values.put("prenom", "Jean")
-        values.put("nom", "Dupont")
+        values.put("nomComplet", "Jean B")
         val idJean = db.insert("parents", null, values).toInt()
 
         // Parent 2 : Marie Dupont
         values.clear()
-        values.put("prenom", "Marie")
-        values.put("nom", "Dupont")
+        values.put("nomComplet", "Marie Dupont")
         val idMarie = db.insert("parents", null, values).toInt()
 
         // Parent 3 : Paul Martin
         values.clear()
-        values.put("prenom", "Paul")
-        values.put("nom", "Martin")
+        values.put("nomComplet", "Paul spaces")
         val idPaul = db.insert("parents", null, values).toInt()
 
         // --- INSERTION DES ENFANTS ---
@@ -96,8 +93,8 @@ class MaBaseDeDonnees(context: Context) : SQLiteOpenHelper(context, "anniversair
         val db = this.readableDatabase
         val query = """
             SELECT e.prenom as enfantPrenom, e.dateNaissance, 
-                   p1.prenom || ' ' || p1.nom as parent1,
-                   p2.prenom || ' ' || p2.nom as parent2
+                   p1.nomComplet as parent1,
+                   p2.nomComplet as parent2
             FROM enfants e
             JOIN parents p1 ON e.idParent1 = p1.id
             LEFT JOIN parents p2 ON e.idParent2 = p2.id
@@ -107,11 +104,10 @@ class MaBaseDeDonnees(context: Context) : SQLiteOpenHelper(context, "anniversair
     }
 
     // N'oubliez pas votre fonction ajouterParent si vous voulez tester le bouton plus tard
-    fun ajouterParent(prenom: String, nom: String): Long {
+    fun ajouterParent(nomComplet: String): Long {
         val db = this.writableDatabase
         val values = ContentValues().apply {
-            put("prenom", prenom)
-            put("nom", nom)
+            put("nomComplet", nomComplet)
         }
         // insert retourne l'ID de la ligne créée, ou -1 en cas d'erreur
         return db.insert("parents", null, values)
