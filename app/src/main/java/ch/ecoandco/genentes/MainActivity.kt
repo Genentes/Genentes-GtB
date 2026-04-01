@@ -9,12 +9,14 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import android.database.Cursor
 import android.graphics.Color
+import android.text.InputType
 import android.view.LayoutInflater
 import android.view.View
 import android.widget.Button
 import android.widget.EditText
 import android.widget.LinearLayout
 import java.util.Calendar
+import kotlin.or
 
 class MainActivity : AppCompatActivity() {
 
@@ -71,6 +73,7 @@ class MainActivity : AppCompatActivity() {
                     LinearLayout.LayoutParams.MATCH_PARENT,
                     LinearLayout.LayoutParams.WRAP_CONTENT
                 )
+                inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_FLAG_CAP_WORDS
             }
 
             val etDate = EditText(context).apply {
@@ -151,10 +154,16 @@ class MainActivity : AppCompatActivity() {
         }
 
         // Champs Parent 1 (Obligatoire)
-        val etParent1 = EditText(context).apply { hint = "Parent 1" }
-
+        val etParent1 = EditText(context).apply {
+            hint = "Parent 1"
+            // Combine le type de texte classique avec l'option de majuscule sur chaque mot
+            inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_FLAG_CAP_WORDS
+        }
         // Champs Parent 2 (Optionnel)
-        val etParent2 = EditText(context).apply { hint = "Parent 2 (optionnel)" }
+        val etParent2 = EditText(context).apply {
+            hint = "Parent 2 (optionnel)"
+            inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_FLAG_CAP_WORDS
+        }
 
         layout.addView(etParent1)
         layout.addView(etParent2)
