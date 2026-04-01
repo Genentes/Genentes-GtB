@@ -151,41 +151,35 @@ class MainActivity : AppCompatActivity() {
         }
 
         // Champs Parent 1 (Obligatoire)
-        val etParent1Prenom = EditText(context).apply { hint = "Prénom Parent 1" }
-        val etParent1Nom = EditText(context).apply { hint = "Nom Parent 1" }
+        val etParent1 = EditText(context).apply { hint = "Parent 1" }
 
         // Champs Parent 2 (Optionnel)
-        val etParent2Prenom = EditText(context).apply { hint = "Prénom Parent 2 (optionnel)" }
-        val etParent2Nom = EditText(context).apply { hint = "Nom Parent 2 (optionnel)" }
+        val etParent2 = EditText(context).apply { hint = "Parent 2 (optionnel)" }
 
-        layout.addView(etParent1Prenom)
-        layout.addView(etParent1Nom)
-        layout.addView(etParent2Prenom)
-        layout.addView(etParent2Nom)
+        layout.addView(etParent1)
+        layout.addView(etParent2)
 
         AlertDialog.Builder(context)
             .setTitle("Informations des parents")
             .setView(layout)
             .setPositiveButton("Enregistrer") { dialog, which ->
             try {
-                val p1Prenom = etParent1Prenom.text.toString().trim()
-                val p1Nom = etParent1Nom.text.toString().trim()
+                val Parent1 = etParent1.text.toString().trim()
 
-                if (p1Prenom.isNotEmpty() || p1Nom.isNotEmpty()) {
+                if (Parent1.isNotEmpty()) {
                     // 1. Insertion Parent 1
-                    val idParent1 = bdd.ajouterParent(p1Prenom, p1Nom)
+                    val idParent1 = bdd.ajouterParent(Parent1)
 
                     if (idParent1 == -1L) {
                         throw Exception("Échec insertion Parent 1 (Vérifiez la table 'Parents')")
                     }
 
                     // 2. Insertion Parent 2 (Optionnel)
-                    val p2Prenom = etParent2Prenom.text.toString().trim()
-                    val p2Nom = etParent2Nom.text.toString().trim()
+                    val Parent2 = etParent2.text.toString().trim()
                     var idParent2: Long? = null
 
-                    if (p2Prenom.isNotEmpty() || p2Nom.isNotEmpty()) {
-                        idParent2 = bdd.ajouterParent(p2Prenom, p2Nom)
+                    if (Parent2.isNotEmpty() || Parent2.isNotEmpty()) {
+                        idParent2 = bdd.ajouterParent(Parent2)
                         if (idParent2 == -1L) {
                             throw Exception("Échec insertion Parent 2")
                         }
