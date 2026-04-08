@@ -156,6 +156,11 @@ class MainActivity : AppCompatActivity() {
 
     }
 
+    override fun onResume() {
+        super.onResume()
+        chargerDonneesDepuisBDD()
+    }
+
     private fun ajouterParents(idEnfant: Long) {
         try {
             val context = this
@@ -296,6 +301,11 @@ class MainActivity : AppCompatActivity() {
             // Optionnel : Afficher un message si la liste est vide (débug)
             if (listeEnfants.isEmpty()) {
                 Toast.makeText(this, "Aucun enfant trouvé dans la BDD", Toast.LENGTH_LONG).show()
+            }
+
+            // Rafraîchir l'affichage si l'adapter est déjà attaché.
+            if (::adaptateur.isInitialized) {
+                adaptateur.notifyDataSetChanged()
             }
         }
         catch(e : Exception)
