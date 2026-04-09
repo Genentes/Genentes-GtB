@@ -203,7 +203,7 @@ class MainActivity : AppCompatActivity() {
                             val Parent2 = etParent2.text.toString().trim()
                             var idParent2: Long? = null
 
-                            if (Parent2.isNotEmpty() || Parent2.isNotEmpty()) {
+                            if (Parent2.isNotEmpty()) {
                                 idParent2 = bdd.ajouterParent(Parent2)
                                 if (idParent2 == -1L) {
                                     throw Exception("Échec insertion Parent 2")
