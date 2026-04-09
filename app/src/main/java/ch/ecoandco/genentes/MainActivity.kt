@@ -311,7 +311,11 @@ class MainActivity : AppCompatActivity() {
         catch(e : Exception)
         {
             Log.e(TAG, "Erreur dans chargerDonneesDepuisBDD", e)
-            Toast.makeText(this, e.message, Toast.LENGTH_LONG).show()
+            Toast.makeText(
+                this,
+                e.message ?: "Une erreur est survenue lors du chargement des données",
+                Toast.LENGTH_LONG
+            ).show()
         }
     }
 }
