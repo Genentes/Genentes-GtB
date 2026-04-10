@@ -68,7 +68,7 @@ class AnniversaireAdapter(
             holder.textParents.text = elementActuel.nomsParents
 
             // 2. On formate la date (Conversion Long -> "dd/MM/yyyy")
-            val format = SimpleDateFormat("dd.MM.yyyy", Locale.FRANCE)
+            val format = SimpleDateFormat("dd.MM.yy", Locale.FRANCE)
             val dateObjet = Date(elementActuel.timestampNaissance)
             holder.textDate.text = format.format(dateObjet)
 
