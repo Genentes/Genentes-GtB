@@ -8,16 +8,14 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import android.database.Cursor
-import android.graphics.Color
 import android.text.InputType
 import android.util.Log
 import android.view.LayoutInflater
-import android.view.View
 import android.widget.Button
 import android.widget.EditText
 import android.widget.LinearLayout
+import android.widget.TextView
 import java.util.Calendar
-import kotlin.or
 
 class MainActivity : AppCompatActivity() {
 
@@ -33,6 +31,10 @@ class MainActivity : AppCompatActivity() {
     // La liste qui va contenir nos objets formatés pour l'affichage
     private val listeEnfants = mutableListOf<LigneAnniversaire>()
     private var selectedTimestamp: Long = 0L
+
+    private lateinit var headerEnfant: TextView
+    private lateinit var headerParents: TextView
+    private lateinit var headerDate: TextView
 
     override fun onCreate(savedInstanceState: Bundle?) {
         try {
@@ -64,7 +66,6 @@ class MainActivity : AppCompatActivity() {
             boutonAjouter.setOnClickListener {
                 // 1. Créer le contexte et l'inflateur pour la vue personnalisée
                 val context = this
-                val inflater = LayoutInflater.from(context)
 
                 // 2. Créer un Layout linéaire vertical dynamiquement (conteneur des champs)
                 val layout = LinearLayout(context).apply {
@@ -149,6 +150,26 @@ class MainActivity : AppCompatActivity() {
                     .setNegativeButton("Annuler", null)
                     .show()
             }
+            headerEnfant = findViewById(R.id.TriEnfant)
+            headerParents = findViewById(R.id.TriParent)
+            headerDate = findViewById(R.id.TriDate)
+
+            val btnEnfant = findViewById<TextView>(R.id.TriEnfant)
+            btnEnfant.setOnClickListener {
+                chargerDonneesDepuisBDD("enfant")
+                mettreAJourIndicateursTri("enfants")
+            }
+            val btnParent = findViewById<TextView>(R.id.TriParent)
+            btnParent.setOnClickListener{
+                chargerDonneesDepuisBDD("parents")
+                mettreAJourIndicateursTri("parents")
+            }
+            val btnDate = findViewById<TextView>(R.id.TriDate)
+            btnDate.setOnClickListener {
+                chargerDonneesDepuisBDD("date")
+                mettreAJourIndicateursTri("date")
+            }
+
         } catch (e: Exception) {
             Log.e(TAG, "Erreur dans onCreate", e)
             Toast.makeText(this, "Erreur: ${e.message}", Toast.LENGTH_LONG).show()
@@ -243,13 +264,19 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun chargerDonneesDepuisBDD() {
+    private fun chargerDonneesDepuisBDD(quelTri: String = "enfant") {
         try {
             // Vider la liste actuelle (au cas où on recharge)
             listeEnfants.clear()
 
+            val argumentTri = when (quelTri) {
+                "parents" -> "parents"
+                "date"    -> "date" // Pas de COLLATE NOCASE nécessaire pour des dates (Long/Int)
+                else      -> "enfant" // Valeur par défaut (enfants)
+            }
+
             // Exécuter la requête SQL (avec les JOIN)
-            val curseur: Cursor = bdd.recupererTousLesEnfantsAvecParents()
+            val curseur: Cursor = bdd.recupererTousLesEnfantsAvecParents(argumentTri)
             try {
                 // Parcourir le curseur ligne par ligne (comme un while(fetch) en PHP)
                 while (curseur.moveToNext()) {
@@ -316,6 +343,26 @@ class MainActivity : AppCompatActivity() {
                 e.message ?: "Une erreur est survenue lors du chargement des données",
                 Toast.LENGTH_LONG
             ).show()
+        }
+    }
+
+    private fun mettreAJourIndicateursTri(colonneActive: String) {
+        val fleche = getString(R.string.symbol_arrow_down) // Ou "▼" en dur si vous préférez
+
+        headerEnfant.text = getString(R.string.label_enfant)
+        headerParents.text = getString(R.string.label_parents)
+        headerDate.text = getString(R.string.label_date)
+        // 1. Réinitialiser tous les headers sans flèche
+        val texteAvecFleche = when (colonneActive) {
+            "enfants" -> getString(R.string.label_enfant) + " $fleche"
+            "parents" -> getString(R.string.label_parents) + " $fleche"
+            "date"    -> getString(R.string.label_date) + " $fleche"
+            else      -> ""
+        }
+        when (colonneActive) {
+            "enfants" -> headerEnfant.text = texteAvecFleche
+            "parents" -> headerParents.text = texteAvecFleche
+            "date"    -> headerDate.text = texteAvecFleche
         }
     }
 }
