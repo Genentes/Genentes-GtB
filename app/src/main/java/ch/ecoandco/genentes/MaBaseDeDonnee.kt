@@ -122,7 +122,7 @@ class MaBaseDeDonnees(context: Context) : SQLiteOpenHelper(context, "anniversair
                 FROM enfants e
                 JOIN parents p1 ON e.idParent1 = p1.id
                 LEFT JOIN parents p2 ON e.idParent2 = p2.id
-                ORDER BY e.prenom ASC
+                ORDER BY e.prenom COLLATE NOCASE ASC
             """.trimIndent()
             db.rawQuery(query, null)
         } catch (e: Exception) {
