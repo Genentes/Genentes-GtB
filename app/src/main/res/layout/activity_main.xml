@@ -37,6 +37,7 @@
 
         <!-- Colonne 1 : Enfant (40% de la largeur) -->
         <TextView
+            android:id="@+id/TriEnfant"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="0.4"
@@ -47,6 +48,7 @@
 
         <!-- Colonne 2 : Parents (40% de la largeur) -->
         <TextView
+            android:id="@+id/TriParent"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="0.4"
@@ -57,6 +59,7 @@
 
         <!-- Colonne 3 : Date (20% de la largeur) -->
         <TextView
+            android:id="@+id/TriDate"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="0.2"
