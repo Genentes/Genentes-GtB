@@ -243,13 +243,19 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun chargerDonneesDepuisBDD() {
+    private fun chargerDonneesDepuisBDD(quelTri: String = "enfant") {
         try {
             // Vider la liste actuelle (au cas où on recharge)
             listeEnfants.clear()
 
+            val argumentTri = when (quelTri) {
+                "parents" -> "parents"
+                "date"    -> "date" // Pas de COLLATE NOCASE nécessaire pour des dates (Long/Int)
+                else      -> "enfant" // Valeur par défaut (enfants)
+            }
+
             // Exécuter la requête SQL (avec les JOIN)
-            val curseur: Cursor = bdd.recupererTousLesEnfantsAvecParents()
+            val curseur: Cursor = bdd.recupererTousLesEnfantsAvecParents(argumentTri)
             try {
                 // Parcourir le curseur ligne par ligne (comme un while(fetch) en PHP)
                 while (curseur.moveToNext()) {

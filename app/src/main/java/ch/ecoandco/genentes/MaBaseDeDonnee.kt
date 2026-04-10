@@ -112,8 +112,13 @@ class MaBaseDeDonnees(context: Context) : SQLiteOpenHelper(context, "anniversair
     }
 
     // Votre fonction de récupération (à garder telle quelle)
-    fun recupererTousLesEnfantsAvecParents(): android.database.Cursor {
+    fun recupererTousLesEnfantsAvecParents(quelTri: String = "enfant"): android.database.Cursor {
         return try {
+            val colonneTri = when (quelTri) {
+                "parents" -> "p1.nomComplet COLLATE NOCASE ASC"
+                "date"    -> "e.dateNaissance ASC" // Pas de COLLATE NOCASE nécessaire pour des dates (Long/Int)
+                else      -> "e.prenom COLLATE NOCASE ASC" // Valeur par défaut (enfants)
+            }
             val db = this.readableDatabase
             val query = """
                 SELECT e.prenom as enfantPrenom, e.dateNaissance,
@@ -122,7 +127,7 @@ class MaBaseDeDonnees(context: Context) : SQLiteOpenHelper(context, "anniversair
                 FROM enfants e
                 JOIN parents p1 ON e.idParent1 = p1.id
                 LEFT JOIN parents p2 ON e.idParent2 = p2.id
-                ORDER BY e.prenom COLLATE NOCASE ASC
+                ORDER BY $colonneTri 
             """.trimIndent()
             db.rawQuery(query, null)
         } catch (e: Exception) {
