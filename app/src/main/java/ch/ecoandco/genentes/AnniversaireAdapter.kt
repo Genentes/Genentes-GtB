@@ -3,7 +3,9 @@ package ch.ecoandco.genentes // Adaptez avec votre vrai nom de package
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.LinearLayout
 import android.widget.TextView
+import android.util.Log
 import androidx.recyclerview.widget.RecyclerView
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -23,6 +25,10 @@ class AnniversaireAdapter(
     private val listeDonnees: List<LigneAnniversaire> // La liste complète à afficher
 ) : RecyclerView.Adapter<AnniversaireAdapter.MonViewHolder>() {
 
+    companion object {
+        private const val TAG = "AnniversaireAdapter"
+    }
+
     // --- ÉTAPE A : Le ViewHolder ---
     // C'est lui qui "tient" les vues d'une seule ligne (les 3 TextView)
     class MonViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
@@ -33,33 +39,53 @@ class AnniversaireAdapter(
 
     // --- ÉTAPE B : Création de la vue (Quand on a besoin d'une nouvelle ligne) ---
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): MonViewHolder {
-        // On transforme le XML "item_ligne_anniversaire.xml" en un objet View Java
-        val vueLigne = LayoutInflater.from(parent.context)
-            .inflate(R.layout.item_ligne_anniversaire, parent, false)
+        return try {
+            // On transforme le XML "item_ligne_anniversaire.xml" en un objet View Java
+            val vueLigne = LayoutInflater.from(parent.context)
+                .inflate(R.layout.item_ligne_anniversaire, parent, false)
 
-        return MonViewHolder(vueLigne)
+            MonViewHolder(vueLigne)
+        } catch (e: Exception) {
+            Log.e(TAG, "Erreur dans onCreateViewHolder", e)
+            val fallbackView = LinearLayout(parent.context).apply {
+                orientation = LinearLayout.VERTICAL
+                addView(TextView(parent.context).apply { id = R.id.textEnfant })
+                addView(TextView(parent.context).apply { id = R.id.textParents })
+                addView(TextView(parent.context).apply { id = R.id.textDate })
+            }
+            MonViewHolder(fallbackView)
+        }
     }
 
     // --- ÉTAPE C : Remplissage des données (Le cœur du réacteur) ---
     override fun onBindViewHolder(holder: MonViewHolder, position: Int) {
-        // On récupère l'objet correspondant à la ligne actuelle (0, 1, 2...)
-        val elementActuel = listeDonnees[position]
+        try {
+            // On récupère l'objet correspondant à la ligne actuelle (0, 1, 2...)
+            val elementActuel = listeDonnees[position]
 
-        // 1. On injecte le texte simple
-        holder.textEnfant.text = elementActuel.prenomEnfant
-        holder.textParents.text = elementActuel.nomsParents
+            // 1. On injecte le texte simple
+            holder.textEnfant.text = elementActuel.prenomEnfant
+            holder.textParents.text = elementActuel.nomsParents
 
-        // 2. On formate la date (Conversion Long -> "dd/MM/yyyy")
-        val format = SimpleDateFormat("dd.MM.yyyy", Locale.FRANCE)
-        val dateObjet = Date(elementActuel.timestampNaissance)
-        holder.textDate.text = format.format(dateObjet)
+            // 2. On formate la date (Conversion Long -> "dd/MM/yyyy")
+            val format = SimpleDateFormat("dd.MM.yyyy", Locale.FRANCE)
+            val dateObjet = Date(elementActuel.timestampNaissance)
+            holder.textDate.text = format.format(dateObjet)
 
-        // Astuce : Si vous voulez trier par ordre de date pour les anniversaires à venir,
-        // c'est ici qu'on pourrait ajouter de la logique visuelle (ex: couleur différente si c'est bientôt)
+            // Astuce : Si vous voulez trier par ordre de date pour les anniversaires à venir,
+            // c'est ici qu'on pourrait ajouter de la logique visuelle (ex: couleur différente si c'est bientôt)
+        } catch (e: Exception) {
+            Log.e(TAG, "Erreur dans onBindViewHolder", e)
+        }
     }
 
     // --- ÉTAPE D : Combien de lignes ? ---
     override fun getItemCount(): Int {
-        return listeDonnees.size
+        return try {
+            listeDonnees.size
+        } catch (e: Exception) {
+            Log.e(TAG, "Erreur dans getItemCount", e)
+            0
+        }
     }
 }
