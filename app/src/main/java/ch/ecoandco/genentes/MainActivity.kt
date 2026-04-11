@@ -154,6 +154,9 @@ class MainActivity : AppCompatActivity() {
             headerParents = findViewById(R.id.TriParent)
             headerDate = findViewById(R.id.TriDate)
 
+            val fleche = getString(R.string.symbol_arrow_down) // Ou "▼" en dur si vous préférez
+            headerEnfant.text = getString(R.string.label_enfant) + "$fleche"
+
             val btnEnfant = findViewById<TextView>(R.id.TriEnfant)
             btnEnfant.setOnClickListener {
                 chargerDonneesDepuisBDD("enfant")
