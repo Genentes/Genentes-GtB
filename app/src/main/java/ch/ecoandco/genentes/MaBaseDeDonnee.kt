@@ -189,4 +189,17 @@ class MaBaseDeDonnees(context: Context) : SQLiteOpenHelper(context, "anniversair
             false
         }
     }
+
+    fun deleteLine(idEnfant: Long): Boolean {
+        return try {
+            val db = this.writableDatabase
+            val rowsAffected = db.delete(
+                "enfants","id = ?", arrayOf(idEnfant.toString())
+            )
+            rowsAffected > 0
+        } catch (e: Exception) {
+            Log.e(TAG, "Erreur dans la suppression", e)
+            false
+        }
+    }
 }
