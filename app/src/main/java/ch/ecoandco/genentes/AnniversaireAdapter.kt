@@ -17,7 +17,7 @@ import ch.ecoandco.genentes.R.layout.item_ligne_anniversaire
 // 1. Une petite classe "modèle" pour transporter les données d'une ligne
 // C'est plus propre que de passer un Cursor directement à l'adapter
 data class LigneAnniversaire(
-    val idEnfant: Long,
+    val idEnfant: Int,
     val prenomEnfant: String,
     val nomsParents: String,
     val timestampNaissance: Long // On garde le Long brut pour le trier si besoin
@@ -25,7 +25,8 @@ data class LigneAnniversaire(
 
 // 2. La classe Adapter principale
 class AnniversaireAdapter(
-    private val listeDonnees: List<LigneAnniversaire> // La liste complète à afficher
+    private val listeDonnees: List<LigneAnniversaire>, // La liste complète à afficher
+    private val onSupprimer: (Int) -> Unit         // NOUVEAU : Une fonction qui prend un ID (Int)
 ) : RecyclerView.Adapter<AnniversaireAdapter.MonViewHolder>() {
 
     companion object {
@@ -97,8 +98,7 @@ class AnniversaireAdapter(
                     .setTitle("Supprimer ?")
                     .setMessage("Voulez-vous vraiment supprimer l'anniversaire de ${elementActuel.prenomEnfant} ?")
                     .setPositiveButton("Oui") { _, _ ->
-                            deleteLine(elementActuel.idEnfant) // Votre fonction BDD
-                            removeItemAt(position)     // Votre fonction pour mettre à jour la liste
+                            onSupprimer(elementActuel.idEnfant)
                     }
                     .setNegativeButton("Annuler", null)
                     .show()

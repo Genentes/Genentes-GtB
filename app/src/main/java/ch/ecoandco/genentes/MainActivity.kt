@@ -58,7 +58,14 @@ class MainActivity : AppCompatActivity() {
 
             // 5. Créer et attacher l'Adapter
             // On passe la liste remplie à l'adapter
-            adaptateur = AnniversaireAdapter(listeEnfants)
+            adaptateur = AnniversaireAdapter(
+                listeEnfants,
+                        onSupprimer = { idEnfant ->
+                    // C'est ici que vous avez accès à votre variable 'bdd' !
+                    bdd.deleteLine(idEnfant)
+                    chargerDonneesDepuisBDD()
+                }
+            )
             recyclerView.adapter = adaptateur
 
             val boutonAjouter = findViewById<Button>(R.id.boutonAjouter)
@@ -284,7 +291,7 @@ class MainActivity : AppCompatActivity() {
                 // Parcourir le curseur ligne par ligne (comme un while(fetch) en PHP)
                 while (curseur.moveToNext()) {
                     // Récupération des colonnes par leur nom (défini dans le SQL avec AS)
-                   val idEnfant = curseur.getLong(
+                   val idEnfant = curseur.getInt(
                        curseur.getColumnIndexOrThrow("enfantId")
                    )
 

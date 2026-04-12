@@ -190,7 +190,7 @@ class MaBaseDeDonnees(context: Context) : SQLiteOpenHelper(context, "anniversair
         }
     }
 
-    fun deleteLine(idEnfant: Long): Boolean {
+    fun deleteLine(idEnfant: Int): Boolean {
         return try {
             val db = this.writableDatabase
             val rowsAffected = db.delete(
