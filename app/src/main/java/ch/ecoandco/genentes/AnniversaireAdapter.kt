@@ -1,11 +1,13 @@
 package ch.ecoandco.genentes // Adaptez avec votre vrai nom de package
 
+import android.app.AlertDialog
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.LinearLayout
 import android.widget.TextView
 import android.util.Log
+import android.view.HapticFeedbackConstants
 import androidx.recyclerview.widget.RecyclerView
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -15,6 +17,7 @@ import ch.ecoandco.genentes.R.layout.item_ligne_anniversaire
 // 1. Une petite classe "modèle" pour transporter les données d'une ligne
 // C'est plus propre que de passer un Cursor directement à l'adapter
 data class LigneAnniversaire(
+    val idEnfant: Int,
     val prenomEnfant: String,
     val nomsParents: String,
     val timestampNaissance: Long // On garde le Long brut pour le trier si besoin
@@ -22,7 +25,8 @@ data class LigneAnniversaire(
 
 // 2. La classe Adapter principale
 class AnniversaireAdapter(
-    private val listeDonnees: List<LigneAnniversaire> // La liste complète à afficher
+    private val listeDonnees: List<LigneAnniversaire>, // La liste complète à afficher
+    private val onSupprimer: (Int) -> Unit         // NOUVEAU : Une fonction qui prend un ID (Int)
 ) : RecyclerView.Adapter<AnniversaireAdapter.MonViewHolder>() {
 
     companion object {
@@ -72,6 +76,37 @@ class AnniversaireAdapter(
             val dateObjet = Date(elementActuel.timestampNaissance)
             holder.textDate.text = format.format(dateObjet)
 
+            // --- AJOUT DU CLIC LONG ICI ---
+            holder.itemView.setOnLongClickListener {
+                // 1. Récupérer la position actuelle et sûre
+                val position = holder.bindingAdapterPosition
+
+                // 2. Vérification de sécurité CRUCIALE
+                // Si la position est NO_POSITION, on ne fait rien (l'élément a peut-être déjà bougé/disparu)
+                if (position == RecyclerView.NO_POSITION) {
+                    return@setOnLongClickListener true
+                }
+
+                // 1. Feedback visuel immédiat (optionnel mais recommandé)
+                // Cela fait vibrer le téléphone très brièvement si autorisé
+                holder.itemView.isHapticFeedbackEnabled = true
+                holder.itemView.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
+
+                // 2. Votre logique de suppression
+                // On peut afficher une confirmation avant de supprimer pour éviter les erreurs
+                AlertDialog.Builder(holder.itemView.context)
+                    .setTitle("Supprimer ?")
+                    .setMessage("Voulez-vous vraiment supprimer la ligne de ${elementActuel.prenomEnfant} ?")
+                    .setPositiveButton("Oui") { _, _ ->
+                            onSupprimer(elementActuel.idEnfant)
+                    }
+                    .setNegativeButton("Annuler", null)
+                    .show()
+
+                // Retourner true pour indiquer qu'on a bien géré l'événement
+                // (cela empêche le clic court de se déclencher aussi)
+                true
+            }
             // Astuce : Si vous voulez trier par ordre de date pour les anniversaires à venir,
             // c'est ici qu'on pourrait ajouter de la logique visuelle (ex: couleur différente si c'est bientôt)
         } catch (e: Exception) {

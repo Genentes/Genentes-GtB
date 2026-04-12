@@ -112,7 +112,7 @@ class MaBaseDeDonnees(context: Context) : SQLiteOpenHelper(context, "anniversair
     }
 
     // Votre fonction de récupération (à garder telle quelle)
-    fun recupererTousLesEnfantsAvecParents(quelTri: String = "enfant"): android.database.Cursor {
+    fun recupererTousLesEnfantsAvecParents(quelTri: String = "enfants"): android.database.Cursor {
         return try {
             val colonneTri = when (quelTri) {
                 "parents" -> "p1.nomComplet COLLATE NOCASE ASC"
@@ -121,7 +121,7 @@ class MaBaseDeDonnees(context: Context) : SQLiteOpenHelper(context, "anniversair
             }
             val db = this.readableDatabase
             val query = """
-                SELECT e.prenom as enfantPrenom, e.dateNaissance,
+                SELECT e.id as enfantId, e.prenom as enfantPrenom, e.dateNaissance,
                        p1.nomComplet as parent1,
                        p2.nomComplet as parent2
                 FROM enfants e
@@ -186,6 +186,19 @@ class MaBaseDeDonnees(context: Context) : SQLiteOpenHelper(context, "anniversair
             rowsAffected > 0
         } catch (e: Exception) {
             Log.e(TAG, "Erreur dans mettreAJourParentsEnfant", e)
+            false
+        }
+    }
+
+    fun deleteLine(idEnfant: Int): Boolean {
+        return try {
+            val db = this.writableDatabase
+            val rowsAffected = db.delete(
+                "enfants","id = ?", arrayOf(idEnfant.toString())
+            )
+            rowsAffected > 0
+        } catch (e: Exception) {
+            Log.e(TAG, "Erreur dans la suppression", e)
             false
         }
     }

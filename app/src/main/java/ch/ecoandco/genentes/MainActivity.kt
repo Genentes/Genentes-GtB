@@ -32,6 +32,8 @@ class MainActivity : AppCompatActivity() {
     private val listeEnfants = mutableListOf<LigneAnniversaire>()
     private var selectedTimestamp: Long = 0L
 
+    private var colonneTri: String = "enfants"
+
     private lateinit var headerEnfant: TextView
     private lateinit var headerParents: TextView
     private lateinit var headerDate: TextView
@@ -42,6 +44,10 @@ class MainActivity : AppCompatActivity() {
 
             // 1. Charger le design XML
             setContentView(R.layout.activity_main)
+
+            headerEnfant = findViewById(R.id.TriEnfant)
+            headerParents = findViewById(R.id.TriParent)
+            headerDate = findViewById(R.id.TriDate)
 
             // 2. Initialiser la Base de Données
             // Cela va déclencher onCreate() dans MaBaseDeDonnees et insérer les données de test
@@ -58,7 +64,14 @@ class MainActivity : AppCompatActivity() {
 
             // 5. Créer et attacher l'Adapter
             // On passe la liste remplie à l'adapter
-            adaptateur = AnniversaireAdapter(listeEnfants)
+            adaptateur = AnniversaireAdapter(
+                listeEnfants,
+                        onSupprimer = { idEnfant ->
+                    // C'est ici que vous avez accès à votre variable 'bdd' !
+                    bdd.deleteLine(idEnfant)
+                    chargerDonneesDepuisBDD()
+                }
+            )
             recyclerView.adapter = adaptateur
 
             val boutonAjouter = findViewById<Button>(R.id.boutonAjouter)
@@ -150,24 +163,21 @@ class MainActivity : AppCompatActivity() {
                     .setNegativeButton("Annuler", null)
                     .show()
             }
-            headerEnfant = findViewById(R.id.TriEnfant)
-            headerParents = findViewById(R.id.TriParent)
-            headerDate = findViewById(R.id.TriDate)
+
+            val fleche = getString(R.string.symbol_arrow_down) // Ou "▼" en dur si vous préférez
+            headerEnfant.text = getString(R.string.label_enfant) + "$fleche"
 
             val btnEnfant = findViewById<TextView>(R.id.TriEnfant)
             btnEnfant.setOnClickListener {
                 chargerDonneesDepuisBDD("enfant")
-                mettreAJourIndicateursTri("enfants")
             }
             val btnParent = findViewById<TextView>(R.id.TriParent)
             btnParent.setOnClickListener{
                 chargerDonneesDepuisBDD("parents")
-                mettreAJourIndicateursTri("parents")
             }
             val btnDate = findViewById<TextView>(R.id.TriDate)
             btnDate.setOnClickListener {
                 chargerDonneesDepuisBDD("date")
-                mettreAJourIndicateursTri("date")
             }
 
         } catch (e: Exception) {
@@ -264,15 +274,17 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun chargerDonneesDepuisBDD(quelTri: String = "enfant") {
+    private fun chargerDonneesDepuisBDD(quelTri: String? = null) {
         try {
             // Vider la liste actuelle (au cas où on recharge)
             listeEnfants.clear()
+            val colonneAUtiliser = quelTri ?: colonneTri
 
-            val argumentTri = when (quelTri) {
+            val argumentTri = when (colonneAUtiliser) {
                 "parents" -> "parents"
                 "date"    -> "date" // Pas de COLLATE NOCASE nécessaire pour des dates (Long/Int)
-                else      -> "enfant" // Valeur par défaut (enfants)
+                "enfants"      -> "enfants" // Valeur par défaut (enfants)
+                else   -> "enfants"
             }
 
             // Exécuter la requête SQL (avec les JOIN)
@@ -281,6 +293,10 @@ class MainActivity : AppCompatActivity() {
                 // Parcourir le curseur ligne par ligne (comme un while(fetch) en PHP)
                 while (curseur.moveToNext()) {
                     // Récupération des colonnes par leur nom (défini dans le SQL avec AS)
+                   val idEnfant = curseur.getInt(
+                       curseur.getColumnIndexOrThrow("enfantId")
+                   )
+
                     val prenomEnfant = curseur.getString(
                         curseur.getColumnIndexOrThrow("enfantPrenom")
                     )
@@ -312,12 +328,14 @@ class MainActivity : AppCompatActivity() {
                     // Création de l'objet data et ajout à la liste
                     listeEnfants.add(
                         LigneAnniversaire(
+                            idEnfant = idEnfant,
                             prenomEnfant = prenomEnfant,
                             nomsParents = texteParents,
                             timestampNaissance = dateNaissance
                         )
                     )
                 }
+                mettreAJourIndicateursTri(argumentTri)
             }
             finally {
                 // IMPORTANT : Toujours fermer le curseur pour libérer la mémoire
@@ -349,6 +367,8 @@ class MainActivity : AppCompatActivity() {
     private fun mettreAJourIndicateursTri(colonneActive: String) {
         val fleche = getString(R.string.symbol_arrow_down) // Ou "▼" en dur si vous préférez
 
+        colonneTri = colonneActive
+
         headerEnfant.text = getString(R.string.label_enfant)
         headerParents.text = getString(R.string.label_parents)
         headerDate.text = getString(R.string.label_date)
@@ -363,6 +383,15 @@ class MainActivity : AppCompatActivity() {
             "enfants" -> headerEnfant.text = texteAvecFleche
             "parents" -> headerParents.text = texteAvecFleche
             "date"    -> headerDate.text = texteAvecFleche
+        }
+        recyclerView.layoutManager?.scrollToPosition(0)
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        // C'est le seul endroit où on ferme la connexion globale
+        if (::bdd.isInitialized) {
+            bdd.close()
         }
     }
 }
