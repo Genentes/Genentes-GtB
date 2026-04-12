@@ -121,7 +121,7 @@ class MaBaseDeDonnees(context: Context) : SQLiteOpenHelper(context, "anniversair
             }
             val db = this.readableDatabase
             val query = """
-                SELECT e.prenom as enfantPrenom, e.dateNaissance,
+                SELECT e.id as enfantId, e.prenom as enfantPrenom, e.dateNaissance,
                        p1.nomComplet as parent1,
                        p2.nomComplet as parent2
                 FROM enfants e

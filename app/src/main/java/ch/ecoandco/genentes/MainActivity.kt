@@ -284,6 +284,10 @@ class MainActivity : AppCompatActivity() {
                 // Parcourir le curseur ligne par ligne (comme un while(fetch) en PHP)
                 while (curseur.moveToNext()) {
                     // Récupération des colonnes par leur nom (défini dans le SQL avec AS)
+                   val idEnfant = curseur.getLong(
+                       curseur.getColumnIndexOrThrow("enfantId")
+                   )
+
                     val prenomEnfant = curseur.getString(
                         curseur.getColumnIndexOrThrow("enfantPrenom")
                     )
@@ -315,6 +319,7 @@ class MainActivity : AppCompatActivity() {
                     // Création de l'objet data et ajout à la liste
                     listeEnfants.add(
                         LigneAnniversaire(
+                            idEnfant = idEnfant,
                             prenomEnfant = prenomEnfant,
                             nomsParents = texteParents,
                             timestampNaissance = dateNaissance
