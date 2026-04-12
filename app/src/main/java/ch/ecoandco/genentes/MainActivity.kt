@@ -45,6 +45,10 @@ class MainActivity : AppCompatActivity() {
             // 1. Charger le design XML
             setContentView(R.layout.activity_main)
 
+            headerEnfant = findViewById(R.id.TriEnfant)
+            headerParents = findViewById(R.id.TriParent)
+            headerDate = findViewById(R.id.TriDate)
+
             // 2. Initialiser la Base de Données
             // Cela va déclencher onCreate() dans MaBaseDeDonnees et insérer les données de test
             bdd = MaBaseDeDonnees(this)
@@ -159,9 +163,6 @@ class MainActivity : AppCompatActivity() {
                     .setNegativeButton("Annuler", null)
                     .show()
             }
-            headerEnfant = findViewById(R.id.TriEnfant)
-            headerParents = findViewById(R.id.TriParent)
-            headerDate = findViewById(R.id.TriDate)
 
             val fleche = getString(R.string.symbol_arrow_down) // Ou "▼" en dur si vous préférez
             headerEnfant.text = getString(R.string.label_enfant) + "$fleche"
@@ -382,6 +383,15 @@ class MainActivity : AppCompatActivity() {
             "enfants" -> headerEnfant.text = texteAvecFleche
             "parents" -> headerParents.text = texteAvecFleche
             "date"    -> headerDate.text = texteAvecFleche
+        }
+        recyclerView.layoutManager?.scrollToPosition(0)
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        // C'est le seul endroit où on ferme la connexion globale
+        if (::bdd.isInitialized) {
+            bdd.close()
         }
     }
 }
