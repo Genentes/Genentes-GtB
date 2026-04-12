@@ -32,6 +32,8 @@ class MainActivity : AppCompatActivity() {
     private val listeEnfants = mutableListOf<LigneAnniversaire>()
     private var selectedTimestamp: Long = 0L
 
+    private var colonneTri: String = "enfants"
+
     private lateinit var headerEnfant: TextView
     private lateinit var headerParents: TextView
     private lateinit var headerDate: TextView
@@ -167,17 +169,14 @@ class MainActivity : AppCompatActivity() {
             val btnEnfant = findViewById<TextView>(R.id.TriEnfant)
             btnEnfant.setOnClickListener {
                 chargerDonneesDepuisBDD("enfant")
-                mettreAJourIndicateursTri("enfants")
             }
             val btnParent = findViewById<TextView>(R.id.TriParent)
             btnParent.setOnClickListener{
                 chargerDonneesDepuisBDD("parents")
-                mettreAJourIndicateursTri("parents")
             }
             val btnDate = findViewById<TextView>(R.id.TriDate)
             btnDate.setOnClickListener {
                 chargerDonneesDepuisBDD("date")
-                mettreAJourIndicateursTri("date")
             }
 
         } catch (e: Exception) {
@@ -274,15 +273,17 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun chargerDonneesDepuisBDD(quelTri: String = "enfant") {
+    private fun chargerDonneesDepuisBDD(quelTri: String? = null) {
         try {
             // Vider la liste actuelle (au cas où on recharge)
             listeEnfants.clear()
+            val colonneAUtiliser = quelTri ?: colonneTri
 
-            val argumentTri = when (quelTri) {
+            val argumentTri = when (colonneAUtiliser) {
                 "parents" -> "parents"
                 "date"    -> "date" // Pas de COLLATE NOCASE nécessaire pour des dates (Long/Int)
-                else      -> "enfant" // Valeur par défaut (enfants)
+                "enfants"      -> "enfants" // Valeur par défaut (enfants)
+                else   -> "enfants"
             }
 
             // Exécuter la requête SQL (avec les JOIN)
@@ -333,6 +334,7 @@ class MainActivity : AppCompatActivity() {
                         )
                     )
                 }
+                mettreAJourIndicateursTri(argumentTri)
             }
             finally {
                 // IMPORTANT : Toujours fermer le curseur pour libérer la mémoire
@@ -363,6 +365,8 @@ class MainActivity : AppCompatActivity() {
 
     private fun mettreAJourIndicateursTri(colonneActive: String) {
         val fleche = getString(R.string.symbol_arrow_down) // Ou "▼" en dur si vous préférez
+
+        colonneTri = colonneActive
 
         headerEnfant.text = getString(R.string.label_enfant)
         headerParents.text = getString(R.string.label_parents)

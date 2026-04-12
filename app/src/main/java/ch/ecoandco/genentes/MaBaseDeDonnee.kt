@@ -112,7 +112,7 @@ class MaBaseDeDonnees(context: Context) : SQLiteOpenHelper(context, "anniversair
     }
 
     // Votre fonction de récupération (à garder telle quelle)
-    fun recupererTousLesEnfantsAvecParents(quelTri: String = "enfant"): android.database.Cursor {
+    fun recupererTousLesEnfantsAvecParents(quelTri: String = "enfants"): android.database.Cursor {
         return try {
             val colonneTri = when (quelTri) {
                 "parents" -> "p1.nomComplet COLLATE NOCASE ASC"

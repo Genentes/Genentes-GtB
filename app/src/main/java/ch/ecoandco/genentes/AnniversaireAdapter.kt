@@ -96,7 +96,7 @@ class AnniversaireAdapter(
                 // On peut afficher une confirmation avant de supprimer pour éviter les erreurs
                 AlertDialog.Builder(holder.itemView.context)
                     .setTitle("Supprimer ?")
-                    .setMessage("Voulez-vous vraiment supprimer l'anniversaire de ${elementActuel.prenomEnfant} ?")
+                    .setMessage("Voulez-vous vraiment supprimer la ligne de ${elementActuel.prenomEnfant} ?")
                     .setPositiveButton("Oui") { _, _ ->
                             onSupprimer(elementActuel.idEnfant)
                     }
