@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- res/values-night/colors.xml -->
+<resources>
+    <!-- Couleurs pour le mode sombre (optionnel mais recommandé avec DayNight) -->
+    <color name="primary">#1565C0</color>
+    <color name="primaryVariant">#115293</color>
+    <color name="onPrimary">#FFFFFF</color>
+
+    <color name="background">#121212</color>
+    <color name="surface">#1E1E1E</color>
+    <color name="onSurface">#E0E0E0</color>
+    <color name="onBackground">#E0E0E0</color>
+</resources>
