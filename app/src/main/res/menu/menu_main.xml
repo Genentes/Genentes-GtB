@@ -5,14 +5,14 @@
     <!-- Option Exporter -->
     <item
         android:id="@+id/action_export"
-        android:title="Exporter les données"
         android:icon="@android:drawable/ic_menu_save"
+        android:title="@string/exportData"
         app:showAsAction="never" />
 
     <!-- Option Importer -->
     <item
         android:id="@+id/action_import"
-        android:title="Importer des données"
+        android:title="@string/importData"
         android:icon="@android:drawable/ic_menu_upload"
         app:showAsAction="never" />
 
