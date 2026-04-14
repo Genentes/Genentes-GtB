@@ -14,8 +14,6 @@
         android:layout_width="0dp"
         android:layout_height="?attr/actionBarSize"
         android:elevation="4dp"
-        android:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar"
-        app:popupTheme="@style/ThemeOverlay.AppCompat.Light"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent">
@@ -26,12 +24,11 @@
                 android:layout_height="wrap_content"
                 android:layout_gravity="center"
                 android:text="@string/main_app_title"
-                android:textColor="@android:color/white"
                 android:textSize="20sp"
                 android:textStyle="bold"
                 android:layout_centerInParent="true" />
     </androidx.appcompat.widget.Toolbar>
-
+    
 
     <!-- 2. Les En-têtes de colonnes (Pour simuler un tableau) -->
     <!-- On utilise un LinearLayout horizontal pour aligner les 3 titres -->

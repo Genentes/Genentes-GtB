@@ -218,26 +218,26 @@ class MainActivity : AppCompatActivity() {
         return when (item.itemId) {
             R.id.action_export -> {
                 lancerExportation()
-                true
             }
             R.id.action_import -> {
                 lancerImportation()
-                true
             }
             else -> super.onOptionsItemSelected(item)
         }
     }
 
-    private fun lancerExportation() {
+    private fun lancerExportation() : Boolean {
         // TODO: Appeler votre fonction de lecture SQLite -> JSON -> Écriture fichier
         // TODO: Lancer l'Intent de partage du fichier
         Toast.makeText(this, "Exportation lancée...", Toast.LENGTH_SHORT).show()
+        return true
     }
 
-    private fun lancerImportation() {
+    private fun lancerImportation() : Boolean {
         // TODO: Lancer un Intent.ACTION_GET_CONTENT pour choisir un fichier .json
         // TODO: Lire le fichier et mettre à jour la BDD
         Toast.makeText(this, "Sélectionnez un fichier JSON", Toast.LENGTH_SHORT).show()
+        return true
     }
 
 

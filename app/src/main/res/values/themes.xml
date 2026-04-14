@@ -17,5 +17,10 @@
 
         <!-- Barre de statut (optionnel, pour harmoniser) -->
         <item name="android:statusBarColor">@color/primaryVariant</item>
+
+        <!-- Toolbar title color -->
+        <item name="titleTextColor">@color/onSurface</item>
+        <!-- Toolbar menu item text color -->
+        <item name="actionMenuTextColor">@color/onSurface</item>
     </style>
 </resources>
