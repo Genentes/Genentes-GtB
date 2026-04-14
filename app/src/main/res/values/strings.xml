@@ -1,4 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Genentes</string>
+    <string name="importData">Importer les données</string>
+    <string name="exportData">Exporter des données</string>
 </resources>

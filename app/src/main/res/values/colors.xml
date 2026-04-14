@@ -11,10 +11,4 @@
     <color name="onSurface">#212121</color>         <!-- Texte noir/gris foncé pour lisibilité max -->
     <color name="onBackground">#212121</color>
 
-    <!-- Couleurs pour le mode sombre (optionnel mais recommandé avec DayNight) -->
-    <color name="primary_dark">#1565C0</color>
-    <color name="background_dark">#121212</color>
-    <color name="surface_dark">#1E1E1E</color>
-    <color name="onSurface_dark">#E0E0E0</color>
-    <color name="onBackground_dark">#E0E0E0</color>
 </resources>

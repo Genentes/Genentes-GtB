@@ -11,10 +11,14 @@ import android.database.Cursor
 import android.text.InputType
 import android.util.Log
 import android.view.LayoutInflater
+import android.view.Menu
+import android.view.MenuItem
 import android.widget.Button
 import android.widget.EditText
 import android.widget.LinearLayout
 import android.widget.TextView
+import android.widget.Toolbar
+import androidx.appcompat.app.ActionBar
 import java.util.Calendar
 
 class MainActivity : AppCompatActivity() {
@@ -34,6 +38,8 @@ class MainActivity : AppCompatActivity() {
 
     private var colonneTri: String = "enfants"
 
+    private lateinit var titreCentre: TextView
+
     private lateinit var headerEnfant: TextView
     private lateinit var headerParents: TextView
     private lateinit var headerDate: TextView
@@ -44,6 +50,18 @@ class MainActivity : AppCompatActivity() {
 
             // 1. Charger le design XML
             setContentView(R.layout.activity_main)
+
+            val toolbar = findViewById<androidx.appcompat.widget.Toolbar>(R.id.maToolbar)
+
+            // 2. La définir comme barre d'action de l'activité
+            // C'est cette ligne qui permet au menuInflater de fonctionner !
+            setSupportActionBar(toolbar)
+            supportActionBar?.displayOptions = ActionBar.DISPLAY_SHOW_CUSTOM
+            supportActionBar?.setDisplayShowTitleEnabled(false)
+
+            // 2. Récupérer le TextView personnalisé et lui donner le texte
+            titreCentre = findViewById(R.id.titreCentre)
+            titreCentre.text = getString(R.string.main_app_title)
 
             headerEnfant = findViewById(R.id.TriEnfant)
             headerParents = findViewById(R.id.TriParent)
@@ -167,16 +185,13 @@ class MainActivity : AppCompatActivity() {
             val fleche = getString(R.string.symbol_arrow_down) // Ou "▼" en dur si vous préférez
             headerEnfant.text = getString(R.string.label_enfant) + "$fleche"
 
-            val btnEnfant = findViewById<TextView>(R.id.TriEnfant)
-            btnEnfant.setOnClickListener {
+            headerEnfant.setOnClickListener {
                 chargerDonneesDepuisBDD("enfant")
             }
-            val btnParent = findViewById<TextView>(R.id.TriParent)
-            btnParent.setOnClickListener{
+            headerParents.setOnClickListener{
                 chargerDonneesDepuisBDD("parents")
             }
-            val btnDate = findViewById<TextView>(R.id.TriDate)
-            btnDate.setOnClickListener {
+            headerDate.setOnClickListener {
                 chargerDonneesDepuisBDD("date")
             }
 
@@ -191,6 +206,40 @@ class MainActivity : AppCompatActivity() {
         super.onResume()
         chargerDonneesDepuisBDD()
     }
+
+    // 1. Gonfler le menu
+    override fun onCreateOptionsMenu(menu: Menu): Boolean {
+        menuInflater.inflate(R.menu.menu_main, menu)
+        return true
+    }
+
+    // 2. Gérer le clic sur les éléments
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        return when (item.itemId) {
+            R.id.action_export -> {
+                lancerExportation()
+            }
+            R.id.action_import -> {
+                lancerImportation()
+            }
+            else -> super.onOptionsItemSelected(item)
+        }
+    }
+
+    private fun lancerExportation() : Boolean {
+        // TODO: Appeler votre fonction de lecture SQLite -> JSON -> Écriture fichier
+        // TODO: Lancer l'Intent de partage du fichier
+        Toast.makeText(this, "Exportation lancée...", Toast.LENGTH_SHORT).show()
+        return true
+    }
+
+    private fun lancerImportation() : Boolean {
+        // TODO: Lancer un Intent.ACTION_GET_CONTENT pour choisir un fichier .json
+        // TODO: Lire le fichier et mettre à jour la BDD
+        Toast.makeText(this, "Sélectionnez un fichier JSON", Toast.LENGTH_SHORT).show()
+        return true
+    }
+
 
     private fun ajouterParents(idEnfant: Long) {
         try {
