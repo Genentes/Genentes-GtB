@@ -20,6 +20,7 @@ import android.widget.TextView
 import android.widget.Toolbar
 import androidx.appcompat.app.ActionBar
 import java.util.Calendar
+import java.util.TimeZone
 
 class MainActivity : AppCompatActivity() {
 
@@ -126,7 +127,7 @@ class MainActivity : AppCompatActivity() {
 
                 // 4. Gestion du clic sur le champ Date pour ouvrir le DatePicker
                 etDate.setOnClickListener {
-                    val calendar = Calendar.getInstance()
+                    val calendar = Calendar.getInstance(TimeZone.getTimeZone("Europe/Zurich"))
                     val year = calendar.get(Calendar.YEAR)
                     val month = calendar.get(Calendar.MONTH)
                     val day = calendar.get(Calendar.DAY_OF_MONTH)
@@ -168,7 +169,7 @@ class MainActivity : AppCompatActivity() {
                             val rowId = bdd.ajouterEnfant(prenom, selectedTimestamp)
 
                             if (rowId != -1L) {
-                                ajouterParents(rowId)
+                               ajouterParents(rowId)
                                 selectedTimestamp = 0L
                                 etDate.text.clear()
                             } else {
