@@ -13,6 +13,8 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 import ch.ecoandco.genentes.R.layout.item_ligne_anniversaire
+import ch.ecoandco.genentes.utils.DateUtils
+
 
 // 1. Une petite classe "modèle" pour transporter les données d'une ligne
 // C'est plus propre que de passer un Cursor directement à l'adapter
@@ -70,11 +72,9 @@ class AnniversaireAdapter(
             // 1. On injecte le texte simple
             holder.textEnfant.text = elementActuel.prenomEnfant
             holder.textParents.text = elementActuel.nomsParents
+            val texteFormate = DateUtils.formatAgeWithQuarters(elementActuel.timestampNaissance)
 
-            // 2. On formate la date (Conversion Long -> "dd/MM/yyyy")
-            val format = SimpleDateFormat("dd.MM.yy", Locale.FRANCE)
-            val dateObjet = Date(elementActuel.timestampNaissance)
-            holder.textDate.text = format.format(dateObjet)
+            holder.textDate.text = texteFormate
 
             // --- AJOUT DU CLIC LONG ICI ---
             holder.itemView.setOnLongClickListener {
