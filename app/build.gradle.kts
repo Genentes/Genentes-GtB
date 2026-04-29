@@ -9,7 +9,7 @@ android {
 
     defaultConfig {
         applicationId = "ch.ecoandco.genentes" // <--- REMPLACEZ CECI aussi par votre vrai nom de package
-        minSdk = 24 // Version minimum d'Android (24 = Android 7.0)
+        minSdk = 26 // Version minimum d'Android (26 = Android 8.0)
         targetSdk = 34
         versionCode = 1
         versionName = "1.0"

@@ -7,9 +7,11 @@ import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
 import android.util.Log
 import java.util.Calendar
+import org.json.JSONObject
+import org.json.JSONArray
 
 
-class MaBaseDeDonnees(context: Context) : SQLiteOpenHelper(context, "anniversaires.db", null, 1) {
+class MaBaseDeDonnees(private val context: Context) : SQLiteOpenHelper(context, "anniversaires.db", null, 1) {
 
     companion object {
         private const val TAG = "MaBaseDeDonnees"
@@ -52,61 +54,36 @@ class MaBaseDeDonnees(context: Context) : SQLiteOpenHelper(context, "anniversair
 
             if (count > 0) return // Si des données existent, on ne fait rien
 
-            // --- INSERTION DES PARENTS ---
-            val values = ContentValues()
+            // Charger les données depuis le fichier sample_data.json
+            val inputStream = context.resources.openRawResource(R.raw.sample_data)
+            val jsonString = inputStream.bufferedReader().use { it.readText() }
 
-            // Parent 1 : Jean Dupont
-            values.put("nomComplet", "Jean B")
-            val idJean = db.insert("parents", null, values).toInt()
-
-            // Parent 2 : Marie Dupont
-            values.clear()
-            values.put("nomComplet", "Marie Dupont")
-            val idMarie = db.insert("parents", null, values).toInt()
-
-            // Parent 3 : Paul Martin
-            values.clear()
-            values.put("nomComplet", "Paul spaces")
-            val idPaul = db.insert("parents", null, values).toInt()
-
-            // --- INSERTION DES ENFANTS ---
-            values.clear()
-
-            // Enfant 1 : Louis (Parents : Jean & Marie)
-            values.put("prenom", "Louis")
-            values.put("dateNaissance", getTimeStamp(2018, 5, 12)) // 12 Mai 2018
-            values.put("idParent1", idJean)
-            values.put("idParent2", idMarie)
-            db.insert("enfants", null, values)
-
-            // Enfant 2 : Sophie (Parents : Jean & Marie)
-            values.clear()
-            values.put("prenom", "Sophie")
-            values.put("dateNaissance", getTimeStamp(2020, 8, 25)) // 25 Août 2020
-            values.put("idParent1", idJean)
-            values.put("idParent2", idMarie)
-            db.insert("enfants", null, values)
-
-            // Enfant 3 : Lucas (Parent : Paul seul)
-            values.clear()
-            values.put("prenom", "Lucas")
-            values.put("dateNaissance", getTimeStamp(2019, 2, 10)) // 10 Février 2019
-            values.put("idParent1", idPaul)
-            values.putNull("idParent2") // Parent unique
-            db.insert("enfants", null, values)
+            importFromJson(jsonString, db)
         } catch (e: Exception) {
             Log.e(TAG, "Erreur dans peuplerDonneesTest", e)
         }
     }
 
-    // Petite fonction utilitaire pour créer un timestamp facilement
-    private fun getTimeStamp(year: Int, month: Int, day: Int): Long {
+    /**
+     * Convert date string in format "dd.MM.yyyy" to milliseconds
+     */
+    private fun parseDateToMillis(dateString: String): Long {
         return try {
-            val calendar = Calendar.getInstance()
-            calendar.set(year, month - 1, day) // Le mois commence à 0 en Java/Kotlin (0=Janvier)
-            calendar.timeInMillis
+            val parts = dateString.split(".")
+            if (parts.size == 3) {
+                val day = parts[0].toInt()
+                val month = parts[1].toInt()
+                val year = parts[2].toInt()
+
+                val calendar = Calendar.getInstance()
+                calendar.set(year, month - 1, day, 0, 0, 0)
+                calendar.set(Calendar.MILLISECOND, 0)
+                calendar.timeInMillis
+            } else {
+                0L
+            }
         } catch (e: Exception) {
-            Log.e(TAG, "Erreur dans getTimeStamp", e)
+            Log.e(TAG, "Erreur lors du parsing de la date: $dateString", e)
             0L
         }
     }
@@ -201,5 +178,210 @@ class MaBaseDeDonnees(context: Context) : SQLiteOpenHelper(context, "anniversair
             Log.e(TAG, "Erreur dans la suppression", e)
             false
         }
+    }
+
+    /**
+     * Export database data to JSON file
+     */
+    fun exportToJson(): String {
+        return try {
+            val parser = DataParser()
+            // Create a simple user person representing the app user
+            val user = createPersonFromDatabase(this.readableDatabase)
+            parser.export(user)
+        } catch (e: Exception) {
+            Log.e(TAG, "Erreur lors de l'export", e)
+            "{}" // Return empty JSON object on error
+        }
+    }
+
+    /**
+     * Import from JSON file and populate database
+     */
+    fun importFromJson(json: String, db: SQLiteDatabase = this.writableDatabase): Boolean {
+        return try {
+            val parser = DataParser()
+            val person = parser.import(json)
+            if (person != null) {
+                clearDatabase(db)
+                populateDatabaseFromPerson(db, person)
+                Log.i(TAG, "Données importées avec succès")
+                true
+            } else {
+                Log.e(TAG, "Échec du parsing du fichier JSON")
+                false
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Erreur lors de l'import", e)
+            false
+        }
+    }
+
+    /**
+     * Clear database tables
+     */
+    private fun clearDatabase(db: SQLiteDatabase) {
+        try {
+            db.delete("enfants", null, null)
+            db.delete("parents", null, null)
+        } catch (e: Exception) {
+            Log.e(TAG, "Erreur lors du nettoyage de la BDD", e)
+        }
+    }
+
+    /**
+     * Populate database from Person object
+     */
+    private fun populateDatabaseFromPerson(db: SQLiteDatabase, person: Person) {
+        try {            
+            // Insérer les parents
+            val parentValues = ContentValues()
+            val enfantValues = ContentValues()
+            for (parent in person.amis.filter { it.enfants.isNotEmpty() }) {
+                parentValues.clear()
+                parentValues.put("id", parent.id)
+                parentValues.put("nomComplet", "${parent.prenom} ${parent.nom}")
+                db.insert("parents", null, parentValues)
+                if (parent.conjoint != null) {
+                    parentValues.clear()
+                    parentValues.put("id", parent.conjoint!!.id)
+                    parentValues.put("nomComplet", "${parent.conjoint!!.prenom} ${parent.conjoint!!.nom}")
+                    db.insert("parents", null, parentValues)
+                }
+                for (enfant in parent.enfants) {
+                    enfantValues.clear()
+                    enfantValues.put("id", enfant.id)
+                    enfantValues.put("prenom", enfant.prenom)
+                    val dateMillis = enfant.dateNaissance?.let { parseDateToMillis(it) } ?: 0L
+                    enfantValues.put("dateNaissance", dateMillis)
+                    enfantValues.put("idParent1", parent.id)
+                    
+                    // Add second parent if exists
+                    parent.conjoint?.let { conjoint ->
+                        enfantValues.put("idParent2", conjoint.id)
+                    } ?: run {
+                        enfantValues.putNull("idParent2")
+                    }
+                    
+                    db.insert("enfants", null, enfantValues)
+                }
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Erreur lors du remplissage de la BDD", e)
+        }
+    }
+
+    /**
+     * Populate Person from database
+     */
+    private fun createPersonFromDatabase(db: SQLiteDatabase): Person {
+
+        // Create the root person (user/"Me")
+        val rootPerson = Person(
+            id = 0,
+            prenom = "Me",
+            nom = ""
+        )
+
+        var nextId = 1;
+
+        try {            
+            // Query all parents from database
+            val parentCursor = db.rawQuery("SELECT id, nomComplet FROM parents", null)
+            val parentMap = mutableMapOf<Int, Person>()
+            
+            if (parentCursor.moveToFirst()) {
+                do {
+                    val parentId = parentCursor.getInt(0)
+                    val nomComplet = parentCursor.getString(1)
+                    val parts = nomComplet.split(" ", limit = 2)
+                    val prenom = parts[0]
+                    val nom = if (parts.size > 1) parts[1] else ""
+                    
+                    parentMap[parentId] = Person(
+                        id = nextId++,
+                        prenom = prenom,
+                        nom = nom
+                    )
+                } while (parentCursor.moveToNext())
+            }
+            parentCursor.close()
+            
+            // Query all children and build relationships
+            val enfantCursor = db.rawQuery(
+                "SELECT id, prenom, dateNaissance, idParent1, idParent2 FROM enfants",
+                null
+            )
+            
+            if (enfantCursor.moveToFirst()) {
+                do {
+                    val enfantId = enfantCursor.getInt(0)
+                    val prenom = enfantCursor.getString(1)
+                    val dateNaissance = enfantCursor.getLong(2)
+                    val idParent1 = enfantCursor.getInt(3)
+                    val idParent2 = if (enfantCursor.isNull(4)) null else enfantCursor.getInt(4)
+                    
+                    // Convert milliseconds back to date string "dd.MM.yyyy"
+                    val dateString = if (dateNaissance != 0L) {
+                        val calendar = Calendar.getInstance()
+                        calendar.timeInMillis = dateNaissance
+                        val day = calendar.get(Calendar.DAY_OF_MONTH).toString().padStart(2, '0')
+                        val month = (calendar.get(Calendar.MONTH) + 1).toString().padStart(2, '0')
+                        val year = calendar.get(Calendar.YEAR)
+                        "$day.$month.$year"
+                    } else {
+                        null
+                    }
+                    
+                    val enfant = Person(
+                        id = nextId++,
+                        prenom = prenom,
+                        nom = "",
+                        dateNaissance = dateString
+                    )
+                    
+                    // Add child to parent1
+                    if (parentMap.containsKey(idParent1)) {
+                        val parent1 = parentMap[idParent1]!!
+                        parent1.enfants = parent1.enfants + enfant
+                    }
+                    
+                    // Add child to parent2 if exists
+                    if (idParent2 != null && parentMap.containsKey(idParent2)) {
+                        val parent2 = parentMap[idParent2]!!
+                        parent2.enfants = parent2.enfants + enfant
+                    }
+                } while (enfantCursor.moveToNext())
+            }
+            enfantCursor.close()
+            
+            // Build conjoint relationships
+            val parentIds = parentMap.keys.toList()
+            for (i in parentIds.indices) {
+                for (j in i + 1 until parentIds.size) {
+                    val parent1 = parentMap[parentIds[i]]!!
+                    val parent2 = parentMap[parentIds[j]]!!
+                    
+                    // Check if they have common children, which indicates they are a couple
+                    val children1 = parent1.enfants.map { it.id }.toSet()
+                    val children2 = parent2.enfants.map { it.id }.toSet()
+                    val commonChildren = children1.intersect(children2)
+                    
+                    if (commonChildren.isNotEmpty()) {
+                        parent1.conjoint = parent2
+                        parent2.conjoint = parent1
+                    }
+                }
+            }
+            
+            // Set all parents as amis (friends) of the root person
+            rootPerson.amis = parentMap.values.toList()
+
+            
+        } catch (e: Exception) {
+            Log.e(TAG, "Erreur lors de la création d'un objet Person à partir de la BDD", e)
+        }
+
+        return rootPerson
     }
 }

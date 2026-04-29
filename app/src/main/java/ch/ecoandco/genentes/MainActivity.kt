@@ -19,8 +19,14 @@ import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toolbar
 import androidx.appcompat.app.ActionBar
+import android.content.Intent
+import androidx.activity.result.contract.ActivityResultContracts
+import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.TimeZone
+import java.util.Locale
+import ch.ecoandco.genentes.DataParser
+import ch.ecoandco.genentes.Person
 
 class MainActivity : AppCompatActivity() {
 
@@ -44,6 +50,71 @@ class MainActivity : AppCompatActivity() {
     private lateinit var headerEnfant: TextView
     private lateinit var headerParents: TextView
     private lateinit var headerDate: TextView
+
+    // File picker launcher for import
+    private val filePickerLauncher = registerForActivityResult(
+        ActivityResultContracts.GetContent()
+    ) { uri ->
+        if (uri != null) {
+            // 1. Affichage de la boîte de dialogue de confirmation
+            android.app.AlertDialog.Builder(this)
+                .setTitle("Attention : Remplacement des données")
+                .setMessage("L'importation de ce fichier va effacer intégralement votre base de données actuelle. Cette action est irréversible. Voulez-vous vraiment continuer ?")
+                .setIcon(android.R.drawable.ic_dialog_alert)
+                .setPositiveButton("Oui, importer (Effacer tout)") { _, _ ->
+                    // 2. Exécution seulement si l'utilisateur clique sur "Oui"
+                    effectuerImport(uri)
+                }
+                .setNegativeButton("Annuler", null) // Le 'null' ferme simplement la boîte sans action
+                .show()
+        }
+    }
+
+    // Fonction helper pour isoler la logique d'import (plus propre)
+    private fun effectuerImport(uri: android.net.Uri) {
+        try {
+            val inputStream = contentResolver.openInputStream(uri)
+            val jsonContent = inputStream?.bufferedReader().use { it?.readText() }
+
+            if (jsonContent != null) {
+                // Appel à votre fonction qui vide et remplit la BDD
+                if (bdd.importFromJson(jsonContent)) {
+                    chargerDonneesDepuisBDD()
+                    Toast.makeText(this, "Données importées avec succès", Toast.LENGTH_LONG).show()
+                } else {
+                    Toast.makeText(this, "Erreur lors de l'import", Toast.LENGTH_LONG).show()
+                }
+            } else {
+                Toast.makeText(this, "Impossible de lire le fichier", Toast.LENGTH_LONG).show()
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Erreur lors de la lecture du fichier", e)
+            Toast.makeText(this, "Erreur: ${e.message}", Toast.LENGTH_LONG).show()
+        }
+    }
+    // File saver launcher for export
+    private val fileSaverLauncher = registerForActivityResult(
+        ActivityResultContracts.CreateDocument("application/json")
+    ) { uri ->
+        if (uri != null) {
+            try {
+                val timeStamp = SimpleDateFormat("yyyy_MM_dd_HHmmss", Locale.getDefault()).format(Calendar.getInstance().time)
+                val fileName = "anniversaires_export_$timeStamp.json"
+                
+                // Get data as JSON string
+                val jsonContent = bdd.exportToJson() // This should return the JSON string directly
+                
+                // Write to the chosen URI
+                contentResolver.openOutputStream(uri)?.use { outputStream ->
+                    outputStream.write(jsonContent.toByteArray())
+                }
+                Toast.makeText(this, "Fichier sauvegardé avec succès", Toast.LENGTH_SHORT).show()
+            } catch (e: Exception) {
+                Log.e(TAG, "Erreur lors de la sauvegarde", e)
+                Toast.makeText(this, "Erreur: ${e.message}", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         try {
@@ -228,16 +299,26 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun lancerExportation() : Boolean {
-        // TODO: Appeler votre fonction de lecture SQLite -> JSON -> Écriture fichier
-        // TODO: Lancer l'Intent de partage du fichier
-        Toast.makeText(this, "Exportation lancée...", Toast.LENGTH_SHORT).show()
+        try {
+            val timeStamp = SimpleDateFormat("yyyy_MM_dd_HHmmss", Locale.getDefault()).format(Calendar.getInstance().time)
+            val fileName = "anniversaires_export_$timeStamp.json"
+            
+            // Launch file saver to let user choose location
+            fileSaverLauncher.launch(fileName)
+        } catch (e: Exception) {
+            Log.e(TAG, "Erreur lors de l'exportation", e)
+            Toast.makeText(this, "Erreur: ${e.message}", Toast.LENGTH_SHORT).show()
+        }
         return true
     }
 
     private fun lancerImportation() : Boolean {
-        // TODO: Lancer un Intent.ACTION_GET_CONTENT pour choisir un fichier .json
-        // TODO: Lire le fichier et mettre à jour la BDD
-        Toast.makeText(this, "Sélectionnez un fichier JSON", Toast.LENGTH_SHORT).show()
+        try {
+            filePickerLauncher.launch("application/json")
+        } catch (e: Exception) {
+            Log.e(TAG, "Erreur lors de l'import", e)
+            Toast.makeText(this, "Erreur: ${e.message}", Toast.LENGTH_SHORT).show()
+        }
         return true
     }
 
