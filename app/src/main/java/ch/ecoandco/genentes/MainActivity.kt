@@ -56,24 +56,42 @@ class MainActivity : AppCompatActivity() {
         ActivityResultContracts.GetContent()
     ) { uri ->
         if (uri != null) {
-            try {
-                val inputStream = contentResolver.openInputStream(uri)
-                val jsonContent = inputStream?.bufferedReader().use { it?.readText() }
-                if (jsonContent != null) {
-                    if (bdd.importFromJson(jsonContent)) {
-                        chargerDonneesDepuisBDD()
-                        Toast.makeText(this, "Données importées avec succès", Toast.LENGTH_LONG).show()
-                    } else {
-                        Toast.makeText(this, "Erreur lors de l'import", Toast.LENGTH_LONG).show()
-                    }
+            // 1. Affichage de la boîte de dialogue de confirmation
+            android.app.AlertDialog.Builder(this)
+                .setTitle("Attention : Remplacement des données")
+                .setMessage("L'importation de ce fichier va effacer intégralement votre base de données actuelle. Cette action est irréversible. Voulez-vous vraiment continuer ?")
+                .setIcon(android.R.drawable.ic_dialog_alert)
+                .setPositiveButton("Oui, importer (Effacer tout)") { _, _ ->
+                    // 2. Exécution seulement si l'utilisateur clique sur "Oui"
+                    effectuerImport(uri)
                 }
-            } catch (e: Exception) {
-                Log.e(TAG, "Erreur lors de la lecture du fichier", e)
-                Toast.makeText(this, "Erreur: ${e.message}", Toast.LENGTH_LONG).show()
-            }
+                .setNegativeButton("Annuler", null) // Le 'null' ferme simplement la boîte sans action
+                .show()
         }
     }
 
+    // Fonction helper pour isoler la logique d'import (plus propre)
+    private fun effectuerImport(uri: android.net.Uri) {
+        try {
+            val inputStream = contentResolver.openInputStream(uri)
+            val jsonContent = inputStream?.bufferedReader().use { it?.readText() }
+
+            if (jsonContent != null) {
+                // Appel à votre fonction qui vide et remplit la BDD
+                if (bdd.importFromJson(jsonContent)) {
+                    chargerDonneesDepuisBDD()
+                    Toast.makeText(this, "Données importées avec succès", Toast.LENGTH_LONG).show()
+                } else {
+                    Toast.makeText(this, "Erreur lors de l'import", Toast.LENGTH_LONG).show()
+                }
+            } else {
+                Toast.makeText(this, "Impossible de lire le fichier", Toast.LENGTH_LONG).show()
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Erreur lors de la lecture du fichier", e)
+            Toast.makeText(this, "Erreur: ${e.message}", Toast.LENGTH_LONG).show()
+        }
+    }
     // File saver launcher for export
     private val fileSaverLauncher = registerForActivityResult(
         ActivityResultContracts.CreateDocument("application/json")
