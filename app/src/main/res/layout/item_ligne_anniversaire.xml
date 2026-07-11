@@ -17,8 +17,7 @@
         android:layout_height="wrap_content"
         android:layout_weight="0.38"
         android:text="@string/label_parents"
-        android:textSize="@dimen/text_size_large"
-        android:textStyle="bold" />
+        android:textSize="@dimen/text_size_large" />
 
     <TextView
         android:id="@+id/textEnfant"
@@ -26,7 +25,8 @@
         android:layout_height="wrap_content"
         android:layout_weight="0.38"
         android:text="@string/label_enfant"
-        android:textSize="@dimen/text_size_normal" />
+        android:textSize="@dimen/text_size_normal"
+        android:textStyle="bold" />
 
     <TextView
         android:id="@+id/textDate"
