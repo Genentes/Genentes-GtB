@@ -47,23 +47,23 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent">
 
-        <!-- Colonne 1 : Parents (38% de la largeur) -->
+        <!-- Colonne 1 : Parents (35% de la largeur) -->
         <TextView
             android:id="@+id/TriParent"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_weight="0.38"
+            android:layout_weight="0.35"
             android:text="@string/label_parents"
             android:textSize="@dimen/text_size_large"
             android:fontFeatureSettings="smcp"
             style="?attr/textAppearanceLabelLarge" />
 
-        <!-- Colonne 2 : Enfant (38% de la largeur) -->
+        <!-- Colonne 2 : Enfant (40% de la largeur) -->
         <TextView
             android:id="@+id/TriEnfant"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_weight="0.38"
+            android:layout_weight="0.40"
             android:text="@string/label_enfant"
             android:textSize="@dimen/text_size_normal"
             android:fontFeatureSettings="smcp"
@@ -74,7 +74,7 @@
             android:id="@+id/TriDate"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_weight="0.24"
+            android:layout_weight="0.25"
             android:text="@string/label_date"
             android:textSize="@dimen/text_size_large"
             android:fontFeatureSettings="smcp"

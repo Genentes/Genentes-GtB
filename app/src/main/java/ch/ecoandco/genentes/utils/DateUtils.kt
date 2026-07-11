@@ -28,16 +28,16 @@ object DateUtils {
 
         val quartText = when {
             fraction < 0.001 -> " \uD83C\uDF82"
-            fraction < 0.25 -> ""
-            fraction < 0.50 -> "¼"
-            fraction < 0.75 -> "½"
-            fraction < 0.98 -> "¾ (J < 7 jours)"
-            fraction < 0.995 -> "¾ (J-2)"
-            fraction < 0.999 -> "¾ (J-1)"
+            fraction < 0.25 -> " ans"
+            fraction < 0.50 -> "¼ ans"
+            fraction < 0.75 -> "½ ans"
+            fraction < 0.98 -> "¾ ans (J < 7 jours)"
+            fraction < 0.995 -> "¾ ans (J-2)"
+            fraction < 0.999 -> "¾ ans (J-1)"
             else -> ""
         }
 
         val format = DateTimeFormatter.ofPattern("dd.MM.yyyy", Locale.FRANCE)
-        return "${dateNaissance.format(format)} [$annees$quartText ans]"
+        return "${dateNaissance.format(format)} [$annees$quartText]"
     }
 }
