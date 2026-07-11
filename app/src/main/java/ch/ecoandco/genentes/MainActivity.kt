@@ -43,7 +43,7 @@ class MainActivity : AppCompatActivity() {
     private val listeEnfants = mutableListOf<LigneAnniversaire>()
     private var selectedTimestamp: Long = 0L
 
-    private var colonneTri: String = "enfants"
+    private var colonneTri: String = "date"
 
     private lateinit var titreCentre: TextView
 
@@ -414,8 +414,8 @@ class MainActivity : AppCompatActivity() {
             val argumentTri = when (colonneAUtiliser) {
                 "parents" -> "parents"
                 "date"    -> "date" // Pas de COLLATE NOCASE nécessaire pour des dates (Long/Int)
-                "enfants"      -> "enfants" // Valeur par défaut (enfants)
-                else   -> "enfants"
+                "enfants"      -> "enfants"
+                else   -> "date"
             }
 
             // Exécuter la requête SQL (avec les JOIN)
