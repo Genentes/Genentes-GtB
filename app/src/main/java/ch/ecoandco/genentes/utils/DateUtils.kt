@@ -31,7 +31,7 @@ object DateUtils {
             fraction < 0.25 -> " ans"
             fraction < 0.50 -> "¼ ans"
             fraction < 0.75 -> "½ ans"
-            fraction < 0.98 -> "¾ ans (J < 7 jours)"
+            fraction < 0.990 -> "¾ ans"
             fraction < 0.995 -> "¾ ans (J-2)"
             fraction < 0.999 -> "¾ ans (J-1)"
             else -> ""
