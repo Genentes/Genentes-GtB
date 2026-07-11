@@ -15,7 +15,7 @@
         android:id="@+id/textParents"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_weight="0.37"
+        android:layout_weight="0.36"
         android:text="@string/label_parents"
         android:textSize="@dimen/text_size_normal" />
 
@@ -32,7 +32,7 @@
         android:id="@+id/textDate"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_weight="0.24"
+        android:layout_weight="0.25"
         android:text="@string/label_date"
         android:textSize="@dimen/text_size_normal"
         android:gravity="end" />
