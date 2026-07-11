@@ -414,7 +414,7 @@ class MainActivity : AppCompatActivity() {
             val argumentTri = when (colonneAUtiliser) {
                 "parents" -> "parents"
                 "date"    -> "date" // Pas de COLLATE NOCASE nécessaire pour des dates (Long/Int)
-                "enfants"      -> "enfants"
+                "enfant"      -> "enfants"
                 else   -> "date"
             }
 
