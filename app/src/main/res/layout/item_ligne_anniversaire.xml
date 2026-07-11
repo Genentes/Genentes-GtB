@@ -12,27 +12,27 @@
     android:background="?attr/selectableItemBackground">
 
     <TextView
-        android:id="@+id/textEnfant"
+        android:id="@+id/textParents"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_weight="0.4"
-        android:text="@string/label_enfant"
+        android:layout_weight="0.38"
+        android:text="@string/label_parents"
         android:textSize="@dimen/text_size_large"
         android:textStyle="bold" />
 
     <TextView
-        android:id="@+id/textParents"
+        android:id="@+id/textEnfant"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_weight="0.4"
-        android:text="@string/label_parents"
+        android:layout_weight="0.38"
+        android:text="@string/label_enfant"
         android:textSize="@dimen/text_size_normal" />
 
     <TextView
         android:id="@+id/textDate"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_weight="0.2"
+        android:layout_weight="0.24"
         android:text="@string/label_date"
         android:textSize="@dimen/text_size_normal"
         android:gravity="end" />
