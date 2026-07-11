@@ -17,7 +17,7 @@
         android:layout_height="wrap_content"
         android:layout_weight="0.38"
         android:text="@string/label_parents"
-        android:textSize="@dimen/text_size_large" />
+        android:textSize="@dimen/text_size_normal" />
 
     <TextView
         android:id="@+id/textEnfant"

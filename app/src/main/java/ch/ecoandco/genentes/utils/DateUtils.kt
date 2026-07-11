@@ -31,13 +31,13 @@ object DateUtils {
             fraction < 0.25 -> ""
             fraction < 0.50 -> "¼"
             fraction < 0.75 -> "½"
-            fraction < 0.95 -> "¾"
+            fraction < 0.98 -> "¾ (J < 7 jours)"
             fraction < 0.995 -> "¾ (J-2)"
             fraction < 0.999 -> "¾ (J-1)"
             else -> ""
         }
 
-        val format = DateTimeFormatter.ofPattern("dd.MM.yy", Locale.FRANCE)
-        return "${dateNaissance.format(format)} [$annees$quartText]"
+        val format = DateTimeFormatter.ofPattern("dd.MM.yyyy", Locale.FRANCE)
+        return "${dateNaissance.format(format)} [$annees$quartText ans]"
     }
 }
