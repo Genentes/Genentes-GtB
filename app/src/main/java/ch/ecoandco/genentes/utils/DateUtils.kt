@@ -37,7 +37,18 @@ object DateUtils {
             else -> ""
         }
 
+        return "$annees$quartText"
+    }
+
+    fun formatAge(timestampMillis: Long): String? {
+        val zoneSuisse = ZoneId.of("Europe/Zurich")
+        val dateNaissance = java.time.Instant.ofEpochMilli(timestampMillis)
+            .atZone(zoneSuisse)
+            .toLocalDate()
+        val aujourdhui = LocalDate.now(zoneSuisse)
+        if (dateNaissance.isAfter(aujourdhui)) return null
+
         val format = DateTimeFormatter.ofPattern("dd.MM.yyyy", Locale.FRANCE)
-        return "${dateNaissance.format(format)} [$annees$quartText]"
+        return "${dateNaissance.format(format)}"
     }
 }

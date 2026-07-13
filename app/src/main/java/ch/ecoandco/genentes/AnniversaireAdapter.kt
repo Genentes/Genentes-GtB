@@ -70,9 +70,9 @@ class AnniversaireAdapter(
             val elementActuel = listeDonnees[position]
 
             // 1. On injecte le texte simple
-            holder.textEnfant.text = elementActuel.prenomEnfant
+            holder.textEnfant.text = "${elementActuel.prenomEnfant}\n${DateUtils.formatAgeWithQuarters(elementActuel.timestampNaissance)}"
             holder.textParents.text = elementActuel.nomsParents
-            val texteFormate = DateUtils.formatAgeWithQuarters(elementActuel.timestampNaissance)
+            val texteFormate = DateUtils.formatAge(elementActuel.timestampNaissance)
 
             holder.textDate.text = texteFormate
 
