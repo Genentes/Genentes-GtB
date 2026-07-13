@@ -14,6 +14,10 @@ import java.util.Date
 import java.util.Locale
 import ch.ecoandco.genentes.R.layout.item_ligne_anniversaire
 import ch.ecoandco.genentes.utils.DateUtils
+import android.text.Spannable
+import android.text.SpannableString
+import android.text.style.StyleSpan
+import android.graphics.Typeface
 
 
 // 1. Une petite classe "modèle" pour transporter les données d'une ligne
@@ -69,10 +73,22 @@ class AnniversaireAdapter(
             // On récupère l'objet correspondant à la ligne actuelle (0, 1, 2...)
             val elementActuel = listeDonnees[position]
 
+            val prenom = elementActuel.prenomEnfant
+            val ageInfo = DateUtils.formatAgeWithQuarters(elementActuel.timestampNaissance)
+            val spannableText = SpannableString("$prenom\n$ageInfo")
+
+// Application du style GRAS uniquement sur la longueur du prénom
+            spannableText.setSpan(
+                StyleSpan(Typeface.BOLD),
+                0, // Début : index 0
+                prenom.length, // Fin : longueur du prénom
+                Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
+            )
+
             // 1. On injecte le texte simple
-            holder.textEnfant.text = elementActuel.prenomEnfant
+            holder.textEnfant.text = spannableText
             holder.textParents.text = elementActuel.nomsParents
-            val texteFormate = DateUtils.formatAgeWithQuarters(elementActuel.timestampNaissance)
+            val texteFormate = DateUtils.formatAge(elementActuel.timestampNaissance)
 
             holder.textDate.text = texteFormate
 

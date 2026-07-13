@@ -69,14 +69,14 @@
             android:fontFeatureSettings="smcp"
             style="?attr/textAppearanceLabelLarge" />
 
-        <!-- Colonne 3 : Date (24% de la largeur) -->
+        <!-- Colonne 3 : Date (25% de la largeur) -->
         <TextView
             android:id="@+id/TriDate"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="0.25"
             android:text="@string/label_date"
-            android:textSize="@dimen/text_size_large"
+            android:textSize="@dimen/text_size_normal"
             android:fontFeatureSettings="smcp"
             style="?attr/textAppearanceLabelLarge"
             android:gravity="end" /> <!-- Texte aligné à droite -->

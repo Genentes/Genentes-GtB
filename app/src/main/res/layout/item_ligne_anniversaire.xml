@@ -25,8 +25,7 @@
         android:layout_height="wrap_content"
         android:layout_weight="0.39"
         android:text="@string/label_enfant"
-        android:textSize="@dimen/text_size_normal"
-        android:textStyle="bold" />
+        android:textSize="@dimen/text_size_normal" />
 
     <TextView
         android:id="@+id/textDate"
