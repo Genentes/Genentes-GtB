@@ -89,23 +89,32 @@ class MaBaseDeDonnees(private val context: Context) : SQLiteOpenHelper(context, 
     }
 
     // Votre fonction de récupération (à garder telle quelle)
-    fun recupererTousLesEnfantsAvecParents(quelTri: String = "enfants"): android.database.Cursor {
+    fun recupererTousLesEnfantsAvecParents(quelTri: String = "date"): android.database.Cursor {
         return try {
             val colonneTri = when (quelTri) {
                 "parents" -> "p1.nomComplet COLLATE NOCASE ASC"
-                "date"    -> "e.dateNaissance ASC" // Pas de COLLATE NOCASE nécessaire pour des dates (Long/Int)
-                else      -> "e.prenom COLLATE NOCASE ASC" // Valeur par défaut (enfants)
+                "enfants" -> "e.prenom COLLATE NOCASE ASC"
+                "date"    -> """
+                CASE 
+                    WHEN strftime('%m-%d', e.dateNaissance/1000, 'unixepoch') >= strftime('%m-%d', 'now') 
+                    THEN strftime('%Y', 'now') || '-' || strftime('%m-%d', e.dateNaissance/1000, 'unixepoch')
+                    ELSE (strftime('%Y', 'now') + 1) || '-' || strftime('%m-%d', e.dateNaissance/1000, 'unixepoch')
+                END ASC
+            """.trimIndent().replace("\n", " ")
+                else      -> "e.dateNaissance ASC"
             }
+
             val db = this.readableDatabase
             val query = """
-                SELECT e.id as enfantId, e.prenom as enfantPrenom, e.dateNaissance,
-                       p1.nomComplet as parent1,
-                       p2.nomComplet as parent2
-                FROM enfants e
-                JOIN parents p1 ON e.idParent1 = p1.id
-                LEFT JOIN parents p2 ON e.idParent2 = p2.id
-                ORDER BY $colonneTri 
-            """.trimIndent()
+            SELECT e.id as enfantId, e.prenom as enfantPrenom, e.dateNaissance,
+                   p1.nomComplet as parent1,
+                   p2.nomComplet as parent2
+            FROM enfants e
+            JOIN parents p1 ON e.idParent1 = p1.id
+            LEFT JOIN parents p2 ON e.idParent2 = p2.id
+            ORDER BY $colonneTri 
+        """.trimIndent()
+
             db.rawQuery(query, null)
         } catch (e: Exception) {
             Log.e(TAG, "Erreur dans recupererTousLesEnfantsAvecParents", e)
