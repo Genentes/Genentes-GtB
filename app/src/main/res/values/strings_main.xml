@@ -3,7 +3,7 @@
     <string name="main_app_title">👾 Enfants des copains 👾</string>
     <string name="label_enfant">Qui déjà ?</string>
     <string name="label_parents">Copains</string>
-    <string name="label_date">Next B day</string>
+    <string name="label_date">Anni</string>
     <string name="symbol_arrow_down">▼</string>
     <string name="main_button_add">Ajouter un enfant</string>
 </resources>

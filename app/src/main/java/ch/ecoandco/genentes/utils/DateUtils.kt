@@ -31,9 +31,7 @@ object DateUtils {
             fraction < 0.25 -> " ans"
             fraction < 0.50 -> "¼ ans"
             fraction < 0.75 -> "½ ans"
-            fraction < 0.990 -> "¾ ans"
-            fraction < 0.995 -> "¾ ans (J-2)"
-            fraction < 0.999 -> "¾ ans (J-1)"
+            fraction < 0.999 -> "¾ ans"
             else -> ""
         }
 
@@ -48,7 +46,20 @@ object DateUtils {
         val aujourdhui = LocalDate.now(zoneSuisse)
         if (dateNaissance.isAfter(aujourdhui)) return null
 
+        val annees = ChronoUnit.YEARS.between(dateNaissance, aujourdhui)
+
+        var prochainAnniversaire = dateNaissance.plusYears(annees)
+        if (prochainAnniversaire.isBefore(aujourdhui)) {
+            prochainAnniversaire = prochainAnniversaire.plusYears(1)
+        }
+        val joursJusquaAnniv = ChronoUnit.DAYS.between(aujourdhui, prochainAnniversaire)
+        val textComplement: String? = if (joursJusquaAnniv < 30) {
+            "\n➣ $joursJusquaAnniv jours"
+        } else {
+            "" // Ou une chaîne vide "" si vous préférez
+        }
+
         val format = DateTimeFormatter.ofPattern("dd.MM.yyyy", Locale.FRANCE)
-        return "${dateNaissance.format(format)}"
+        return "${dateNaissance.format(format)}$textComplement"
     }
 }
