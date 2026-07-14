@@ -89,66 +89,20 @@
         android:layout_width="match_parent"
         android:layout_height="0dp"
         app:layout_constraintTop_toBottomOf="@id/enTetes"
-        app:layout_constraintBottom_toTopOf="@id/layoutBottom"
+        app:layout_constraintBottom_toTopOf="@id/boutonAjouter"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         android:clipToPadding="false" />
 
-    <LinearLayout
-        android:id="@+id/layoutBottom"
+    <!-- 4. Le Bouton d'action (En bas de l'écran) -->
+    <Button
+        android:id="@+id/boutonAjouter"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        app:layout_constraintTop_toBottomOf="@id/recyclerViewAnniversaires"
-        android:orientation="vertical"
-        android:layout_alignParentBottom="true">
-
-        <!-- NOUVELLE LIGNE : Filtres par catégories (Scrollable horizontalement) -->
-        <HorizontalScrollView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:fillViewport="true"
-            android:scrollbars="none">
-
-            <LinearLayout
-                android:id="@+id/categoryFilterContainer"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:padding="8dp">
-
-                <!-- Les boutons seront ajoutés ici dynamiquement ou en dur -->
-                <!-- Exemple statique pour tester : -->
-                <Button android:text="Tous" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginEnd="4dp"/>
-                <Button android:text="Travail" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginEnd="4dp"/>
-                <Button android:text="Enfance" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginEnd="4dp"/>
-
-            </LinearLayout>
-        </HorizontalScrollView>
-
-        <!-- TA BARRE EXISTANTE (Déplacée ici, juste en dessous des filtres) -->
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:background="#EEEEEE"
-            android:padding="8dp">
-
-            <!-- Ton bouton "Ajouter un" existant -->
-            <!-- 4. Le Bouton d'action (En bas de l'écran) -->
-            <Button
-                android:id="@+id/boutonAjouter"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="@string/main_button_add"
-                android:layout_marginTop="16dp"
-                app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintEnd_toEndOf="parent" />
-
-
-        </LinearLayout>
-
-    </LinearLayout>
-
+        android:text="@string/main_button_add"
+        android:layout_marginTop="16dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
