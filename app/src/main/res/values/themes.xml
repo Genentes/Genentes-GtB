@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- res/values/themes.xml -->
 <resources>
-    <style name="Theme.Genentes" parent="Theme.Material3.DayNight.NoActionBar">
+    <style name="Theme.EnfantsDesCopains" parent="Theme.Material3.DayNight.NoActionBar">
         <!-- Couleurs primaires (Boutons, barre d'état, accents) -->
         <item name="colorPrimary">@color/primary</item>
         <item name="colorPrimaryVariant">@color/primaryVariant</item>
