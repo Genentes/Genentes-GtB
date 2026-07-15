@@ -8,11 +8,11 @@
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
-        android:theme="@style/Theme.Genentes">
+        android:theme="@style/Theme.EnfantsDesCopains">
 
         <!-- Votre activité principale -->
         <activity
-            android:name=".MainActivity"
+            android:name="ch.ecoandco.enfantsDesCopains.MainActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -23,7 +23,7 @@
         <!-- FileProvider for sharing exported files -->
         <provider
             android:name="androidx.core.content.FileProvider"
-            android:authorities="ch.ecoandco.genentes.fileprovider"
+            android:authorities="ch.ecoandco.enfantsDesCopains.fileprovider"
             android:exported="false"
             android:grantUriPermissions="true">
             <meta-data

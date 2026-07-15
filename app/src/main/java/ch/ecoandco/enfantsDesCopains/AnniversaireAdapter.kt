@@ -1,4 +1,4 @@
-package ch.ecoandco.genentes // Adaptez avec votre vrai nom de package
+package ch.ecoandco.enfantsDesCopains // Adaptez avec votre vrai nom de package
 
 import android.app.AlertDialog
 import android.view.LayoutInflater
@@ -9,11 +9,8 @@ import android.widget.TextView
 import android.util.Log
 import android.view.HapticFeedbackConstants
 import androidx.recyclerview.widget.RecyclerView
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
-import ch.ecoandco.genentes.R.layout.item_ligne_anniversaire
-import ch.ecoandco.genentes.utils.DateUtils
+import ch.ecoandco.enfantsDesCopains.R.layout.item_ligne_anniversaire
+import ch.ecoandco.enfantsDesCopains.utils.DateUtils
 import android.text.Spannable
 import android.text.SpannableString
 import android.text.style.StyleSpan

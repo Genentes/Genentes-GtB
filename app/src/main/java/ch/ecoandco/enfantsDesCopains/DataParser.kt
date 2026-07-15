@@ -1,10 +1,8 @@
-package ch.ecoandco.genentes
+package ch.ecoandco.enfantsDesCopains
 
-import android.content.Context
 import android.util.Log
 import org.json.JSONArray
 import org.json.JSONObject
-import java.io.File
 
 /**
  * Classe de données universelle représentant toute personne du système (parents, enfants, conjoint, amis)

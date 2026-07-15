@@ -4,11 +4,11 @@ plugins {
 }
 
 android {
-    namespace = "ch.ecoandco.genentes" // <--- REMPLACEZ CECI par votre vrai nom de package trouvé plus tôt !
+    namespace = "ch.ecoandco.enfantsDesCopains" // <--- REMPLACEZ CECI par votre vrai nom de package trouvé plus tôt !
     compileSdk = 34 // Ou la version installée chez vous (33, 34, 35...)
 
     defaultConfig {
-        applicationId = "ch.ecoandco.genentes" // <--- REMPLACEZ CECI aussi par votre vrai nom de package
+        applicationId = "ch.ecoandco.enfantsDesCopains" // <--- REMPLACEZ CECI aussi par votre vrai nom de package
         minSdk = 26 // Version minimum d'Android (26 = Android 8.0)
         targetSdk = 34
         versionCode = 1

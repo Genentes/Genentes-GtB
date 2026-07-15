@@ -1,4 +1,4 @@
-package ch.ecoandco.genentes
+package ch.ecoandco.enfantsDesCopains
 
 import android.content.ContentValues
 import android.content.Context
@@ -7,8 +7,6 @@ import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
 import android.util.Log
 import java.util.Calendar
-import org.json.JSONObject
-import org.json.JSONArray
 
 
 class MaBaseDeDonnees(private val context: Context) : SQLiteOpenHelper(context, "anniversaires.db", null, 1) {
