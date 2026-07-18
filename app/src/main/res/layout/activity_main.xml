@@ -109,20 +109,20 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:fillViewport="true"
-            android:scrollbars="none"
-            android:background="#F5F5F5"> <!-- Petit fond gris pour séparer -->
+            android:scrollbars="horizontal">
 
             <LinearLayout
                 android:id="@+id/categoryFilterContainer"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
-                android:padding="8dp">
+                android:padding="2dp">
 
                 <!-- Ces boutons seront générés ou ajoutés ici -->
-                <Button android:text="Tous" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginEnd="4dp" style="@style/Widget.Material3.Button.TonalButton"/>
+                <Button android:text="Copains" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginEnd="4dp" style="@style/Widget.Material3.Button.TonalButton"/>
+                <Button android:text="Famille" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginEnd="4dp" style="@style/Widget.Material3.Button.TonalButton"/>
                 <Button android:text="Travail" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginEnd="4dp" style="@style/Widget.Material3.Button.TonalButton"/>
-                <Button android:text="Enfance" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginEnd="4dp" style="@style/Widget.Material3.Button.TonalButton"/>
+                <Button android:text="Autre" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginEnd="4dp" style="@style/Widget.Material3.Button.TonalButton"/>
 
             </LinearLayout>
         </HorizontalScrollView>
