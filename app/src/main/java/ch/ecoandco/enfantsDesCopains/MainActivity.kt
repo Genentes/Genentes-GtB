@@ -1,4 +1,4 @@
-package ch.ecoandco.genentes // <--- IMPORTANT : Vérifiez que ceci correspond à votre vrai package
+package ch.ecoandco.enfantsDesCopains // <--- IMPORTANT : Vérifiez que ceci correspond à votre vrai package
 
 import android.app.AlertDialog
 import android.app.DatePickerDialog
@@ -10,23 +10,18 @@ import androidx.recyclerview.widget.RecyclerView
 import android.database.Cursor
 import android.text.InputType
 import android.util.Log
-import android.view.LayoutInflater
 import android.view.Menu
 import android.view.MenuItem
 import android.widget.Button
 import android.widget.EditText
 import android.widget.LinearLayout
 import android.widget.TextView
-import android.widget.Toolbar
 import androidx.appcompat.app.ActionBar
-import android.content.Intent
 import androidx.activity.result.contract.ActivityResultContracts
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.TimeZone
 import java.util.Locale
-import ch.ecoandco.genentes.DataParser
-import ch.ecoandco.genentes.Person
 
 class MainActivity : AppCompatActivity() {
 

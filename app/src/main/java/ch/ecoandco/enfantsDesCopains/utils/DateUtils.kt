@@ -1,4 +1,4 @@
-package ch.ecoandco.genentes.utils // <-- Cette ligne doit correspondre à l'emplacement de votre fichier
+package ch.ecoandco.enfantsDesCopains.utils // <-- Cette ligne doit correspondre à l'emplacement de votre fichier
 
 import java.time.LocalDate
 import java.time.ZoneId
