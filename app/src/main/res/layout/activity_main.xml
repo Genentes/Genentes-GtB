@@ -116,13 +116,13 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
-                android:padding="1dp">
+                android:padding="2dp">
 
                 <!-- Ces boutons seront générés ou ajoutés ici -->
-                <Button android:text="👾👾👾" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginEnd="2dp" style="@style/Widget.Material3.Button.TonalButton"/>
-                <Button android:text="Famille" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginEnd="2dp" style="@style/Widget.Material3.Button.TonalButton"/>
-                <Button android:text="Travail" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginEnd="2dp" style="@style/Widget.Material3.Button.TonalButton"/>
-                <Button android:text="Autre" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginEnd="2dp" style="@style/Widget.Material3.Button.TonalButton"/>
+                <Button android:text="👾" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginEnd="4dp" style="@style/Widget.Material3.Button.TonalButton"/>
+                <Button android:text="Famille" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginEnd="4dp" style="@style/Widget.Material3.Button.TonalButton"/>
+                <Button android:text="Travail" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginEnd="4dp" style="@style/Widget.Material3.Button.TonalButton"/>
+                <Button android:text="Autre" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginEnd="4dp" style="@style/Widget.Material3.Button.TonalButton"/>
 
             </LinearLayout>
         </HorizontalScrollView>
