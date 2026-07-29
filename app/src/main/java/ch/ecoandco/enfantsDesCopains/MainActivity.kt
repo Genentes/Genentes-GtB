@@ -12,9 +12,11 @@ import android.text.InputType
 import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
+import android.widget.ArrayAdapter
 import android.widget.Button
 import android.widget.EditText
 import android.widget.LinearLayout
+import android.widget.Spinner
 import android.widget.TextView
 import androidx.appcompat.app.ActionBar
 import androidx.activity.result.contract.ActivityResultContracts
@@ -338,8 +340,32 @@ class MainActivity : AppCompatActivity() {
                 inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_FLAG_CAP_WORDS
             }
 
+            //Définir la catégorie
+
+            val definirCategorie = Spinner(context).apply {  // --- NOUVEL ÉLÉMENT : Sélecteur de Catégorie ---
+                // 1. Définir les options disponibles
+                val categories = arrayOf("copains", "famille", "travail", "autre")
+
+                // 2. Créer l'adaptateur pour afficher la liste (layout simple natif Android)
+                val adapter = ArrayAdapter(
+                    context,
+                    android.R.layout.simple_spinner_item, // Layout pour l'élément sélectionné
+                    categories
+                )
+
+                // 3. Définir le layout pour la liste déroulante (quand on clique)
+                adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+
+                // 4. Attacher l'adaptateur au Spinner
+                this.adapter = adapter
+
+                // Optionnel : Sélectionner "copains" par défaut (index 0)
+                setSelection(0)
+            }
+
             layout.addView(etParent1)
             layout.addView(etParent2)
+            layout.addView(definirCategorie)
 
             AlertDialog.Builder(context)
                 .setTitle("Informations des parents")
