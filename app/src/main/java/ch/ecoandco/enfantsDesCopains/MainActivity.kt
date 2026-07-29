@@ -341,8 +341,19 @@ class MainActivity : AppCompatActivity() {
             }
 
             //Définir la catégorie
+            // --- 1. Création du Titre (TextView) ---
+            val labelCategorie = TextView(context).apply {
+                text = "Ajouté à"
+                // Optionnel : Mise en forme pour ressembler à un titre de champ
+                textSize = 14f
+                setTypeface(null, android.graphics.Typeface.BOLD) // Mettre en gras
+                setPadding(0, 40, 0, 8) // Marge haut (40), Bas (8) pour coller un peu au spinner
+                // Si votre app supporte les thèmes sombres/clair, évitez de coder la couleur en dur,
+                // sinon vous pouvez ajouter: setTextColor(Color.BLACK) ou une ressource de couleur
+            }
 
-            val definirCategorie = Spinner(context).apply {  // --- NOUVEL ÉLÉMENT : Sélecteur de Catégorie ---
+// --- 2. Création du Spinner (Votre code existant) ---
+            val spinnerCategorie = Spinner(context).apply {
                 // 1. Définir les options disponibles
                 val categories = arrayOf("copains", "famille", "travail", "autre")
 
@@ -365,7 +376,9 @@ class MainActivity : AppCompatActivity() {
 
             layout.addView(etParent1)
             layout.addView(etParent2)
-            layout.addView(definirCategorie)
+                layout.addView(labelCategorie)      // Ajout du titre en premier
+                layout.addView(spinnerCategorie)    // Ajout du spinner juste après
+
 
             AlertDialog.Builder(context)
                 .setTitle("Informations des parents")
