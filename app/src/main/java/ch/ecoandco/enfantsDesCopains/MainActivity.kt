@@ -392,7 +392,7 @@ class MainActivity : AppCompatActivity() {
                             val CategorieSelectionnee = spinnerCategorie.selectedItem.toString().trim()
 
                             // 1. Insertion Parent 1
-                            val idParent1 = bdd.ajouterParent(Parent1)
+                            val idParent1 = bdd.ajouterParent(nomComplet = Parent1, groupe = CategorieSelectionnee)
 
                             if (idParent1 == -1L) {
                                 throw Exception("Échec insertion Parent 1 (Vérifiez la table 'Parents')")
@@ -404,7 +404,7 @@ class MainActivity : AppCompatActivity() {
                             var idParent2: Long? = null
 
                             if (Parent2.isNotEmpty()) {
-                                idParent2 = bdd.ajouterParent(Parent2)
+                                idParent2 = bdd.ajouterParent(nomComplet =Parent2, groupe = CategorieSelectionnee)
                                 if (idParent2 == -1L) {
                                     throw Exception("Échec insertion Parent 2")
                                 }
