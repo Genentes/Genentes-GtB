@@ -12,9 +12,11 @@ import android.text.InputType
 import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
+import android.widget.ArrayAdapter
 import android.widget.Button
 import android.widget.EditText
 import android.widget.LinearLayout
+import android.widget.Spinner
 import android.widget.TextView
 import androidx.appcompat.app.ActionBar
 import androidx.activity.result.contract.ActivityResultContracts
@@ -52,7 +54,7 @@ class MainActivity : AppCompatActivity() {
     ) { uri ->
         if (uri != null) {
             // 1. Affichage de la boîte de dialogue de confirmation
-            android.app.AlertDialog.Builder(this)
+            AlertDialog.Builder(this)
                 .setTitle("Attention : Remplacement des données")
                 .setMessage("L'importation de ce fichier va effacer intégralement votre base de données actuelle. Cette action est irréversible. Voulez-vous vraiment continuer ?")
                 .setIcon(android.R.drawable.ic_dialog_alert)
@@ -239,10 +241,10 @@ class MainActivity : AppCompatActivity() {
                                 selectedTimestamp = 0L
                                 etDate.text.clear()
                             } else {
-                                android.widget.Toast.makeText(context, "Erreur lors de l'ajout", android.widget.Toast.LENGTH_SHORT).show()
+                                Toast.makeText(context, "Erreur lors de l'ajout", Toast.LENGTH_SHORT).show()
                             }
                         } else {
-                            android.widget.Toast.makeText(context, "Veuillez remplir tous les champs", android.widget.Toast.LENGTH_SHORT).show()
+                            Toast.makeText(context, "Veuillez remplir tous les champs", Toast.LENGTH_SHORT).show()
                         }
                     }
                     .setNegativeButton("Annuler", null)
@@ -338,8 +340,45 @@ class MainActivity : AppCompatActivity() {
                 inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_FLAG_CAP_WORDS
             }
 
+            //Définir la catégorie
+            // --- 1. Création du Titre (TextView) ---
+            val labelCategorie = TextView(context).apply {
+                text = "Ajouté à"
+                // Optionnel : Mise en forme pour ressembler à un titre de champ
+                textSize = 14f
+                setTypeface(null, android.graphics.Typeface.BOLD) // Mettre en gras
+                setPadding(0, 40, 0, 8) // Marge haut (40), Bas (8) pour coller un peu au spinner
+                // Si votre app supporte les thèmes sombres/clair, évitez de coder la couleur en dur,
+                // sinon vous pouvez ajouter: setTextColor(Color.BLACK) ou une ressource de couleur
+            }
+
+// --- 2. Création du Spinner (Votre code existant) ---
+            val spinnerCategorie = Spinner(context).apply {
+                // 1. Définir les options disponibles
+                val categories = arrayOf("copains", "famille", "travail", "autre")
+
+                // 2. Créer l'adaptateur pour afficher la liste (layout simple natif Android)
+                val adapter = ArrayAdapter(
+                    context,
+                    android.R.layout.simple_spinner_item, // Layout pour l'élément sélectionné
+                    categories
+                )
+
+                // 3. Définir le layout pour la liste déroulante (quand on clique)
+                adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+
+                // 4. Attacher l'adaptateur au Spinner
+                this.adapter = adapter
+
+                // Optionnel : Sélectionner "copains" par défaut (index 0)
+                setSelection(0)
+            }
+
             layout.addView(etParent1)
             layout.addView(etParent2)
+                layout.addView(labelCategorie)      // Ajout du titre en premier
+                layout.addView(spinnerCategorie)    // Ajout du spinner juste après
+
 
             AlertDialog.Builder(context)
                 .setTitle("Informations des parents")
@@ -349,12 +388,16 @@ class MainActivity : AppCompatActivity() {
                         val Parent1 = etParent1.text.toString().trim()
 
                         if (Parent1.isNotEmpty()) {
+
+                            val CategorieSelectionnee = spinnerCategorie.selectedItem.toString().trim()
+
                             // 1. Insertion Parent 1
                             val idParent1 = bdd.ajouterParent(Parent1)
 
                             if (idParent1 == -1L) {
                                 throw Exception("Échec insertion Parent 1 (Vérifiez la table 'Parents')")
                             }
+
 
                             // 2. Insertion Parent 2 (Optionnel)
                             val Parent2 = etParent2.text.toString().trim()
@@ -372,7 +415,8 @@ class MainActivity : AppCompatActivity() {
                             val success = bdd.mettreAJourParentsEnfant(idEnfant, idParent1, idParent2)
 
                             if (success) {
-                                Toast.makeText(context, "Parents enregistrés avec succès !", Toast.LENGTH_SHORT).show()
+                                val message = "Parents enregistrés avec succès - ${CategorieSelectionnee}."
+                                Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
                                 chargerDonneesDepuisBDD()
                             } else {
                                 throw Exception("Échec mise à jour de l'enfant (Vérifiez les colonnes idParent1/2)")
