@@ -132,11 +132,12 @@ class MaBaseDeDonnees(private val context: Context) : SQLiteOpenHelper(context, 
     }
 
     // N'oubliez pas votre fonction ajouterParent si vous voulez tester le bouton plus tard
-    fun ajouterParent(nomComplet: String): Long {
+    fun ajouterParent(nomComplet: String, groupe: String): Long {
         return try {
             val db = this.writableDatabase
             val values = ContentValues().apply {
                 put("nomComplet", nomComplet)
+                put("groupe", groupe)
             }
             // insert retourne l'ID de la ligne créée, ou -1 en cas d'erreur
             db.insert("parents", null, values)
