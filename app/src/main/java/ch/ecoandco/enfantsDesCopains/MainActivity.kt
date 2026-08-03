@@ -54,7 +54,7 @@ class MainActivity : AppCompatActivity() {
     ) { uri ->
         if (uri != null) {
             // 1. Affichage de la boîte de dialogue de confirmation
-            android.app.AlertDialog.Builder(this)
+            AlertDialog.Builder(this)
                 .setTitle("Attention : Remplacement des données")
                 .setMessage("L'importation de ce fichier va effacer intégralement votre base de données actuelle. Cette action est irréversible. Voulez-vous vraiment continuer ?")
                 .setIcon(android.R.drawable.ic_dialog_alert)
@@ -241,10 +241,10 @@ class MainActivity : AppCompatActivity() {
                                 selectedTimestamp = 0L
                                 etDate.text.clear()
                             } else {
-                                android.widget.Toast.makeText(context, "Erreur lors de l'ajout", android.widget.Toast.LENGTH_SHORT).show()
+                                Toast.makeText(context, "Erreur lors de l'ajout", Toast.LENGTH_SHORT).show()
                             }
                         } else {
-                            android.widget.Toast.makeText(context, "Veuillez remplir tous les champs", android.widget.Toast.LENGTH_SHORT).show()
+                            Toast.makeText(context, "Veuillez remplir tous les champs", Toast.LENGTH_SHORT).show()
                         }
                     }
                     .setNegativeButton("Annuler", null)
