@@ -388,12 +388,16 @@ class MainActivity : AppCompatActivity() {
                         val Parent1 = etParent1.text.toString().trim()
 
                         if (Parent1.isNotEmpty()) {
+
+                            val CategorieSelectionnee = spinnerCategorie.selectedItem.toString().trim()
+
                             // 1. Insertion Parent 1
                             val idParent1 = bdd.ajouterParent(Parent1)
 
                             if (idParent1 == -1L) {
                                 throw Exception("Échec insertion Parent 1 (Vérifiez la table 'Parents')")
                             }
+
 
                             // 2. Insertion Parent 2 (Optionnel)
                             val Parent2 = etParent2.text.toString().trim()
@@ -411,7 +415,8 @@ class MainActivity : AppCompatActivity() {
                             val success = bdd.mettreAJourParentsEnfant(idEnfant, idParent1, idParent2)
 
                             if (success) {
-                                Toast.makeText(context, "Parents enregistrés avec succès !", Toast.LENGTH_SHORT).show()
+                                val message = "Parents enregistrés avec succès - ${CategorieSelectionnee}."
+                                Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
                                 chargerDonneesDepuisBDD()
                             } else {
                                 throw Exception("Échec mise à jour de l'enfant (Vérifiez les colonnes idParent1/2)")
