@@ -1,11 +1,11 @@
 [
   { "id": 0, "prenom": "Me", "relations": { "amis": [1, 3, 7] } },
-  { "id": 1, "prenom": "Jean B", "nom": "Dupont", "relations": { "conjoint": 2, "enfants": [4, 5] } },
-  { "id": 2, "prenom": "Marie", "nom": "Dupont" },
-  { "id": 3, "prenom": "Paul", "nom": "spaces", "relations": { "enfants": [6] } },
+  { "id": 1, "prenom": "Jean B", "nom": "Dupont", "groupe": "copains", "relations": { "conjoint": 2, "enfants": [4, 5] } },
+  { "id": 2, "prenom": "Marie", "nom": "Dupont", "groupe": "copains"},
+  { "id": 3, "prenom": "Paul", "nom": "spaces", "groupe": "copains",  "relations": { "enfants": [6] } },
   { "id": 4, "prenom": "Louis", "naissance": "12.05.2018" },
   { "id": 5, "prenom": "Sophie", "naissance": "15.08.2020" },
   { "id": 6, "prenom": "Lucas", "naissance": "10.02.2019" },
-  { "id": 7, "prenom": "Alice", "nom": "Martin", "relations": { "conjoint": 8 } },
-  { "id": 8, "prenom": "Bob", "nom": "Martin" }
+  { "id": 7, "prenom": "Alice", "nom": "Martin", "groupe": "copains", "relations": { "conjoint": 8 } },
+  { "id": 8, "prenom": "Bob", "nom": "Martin", "groupe": "copains"}
 ]

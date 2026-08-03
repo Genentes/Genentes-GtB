@@ -9,7 +9,7 @@ import android.util.Log
 import java.util.Calendar
 
 
-class MaBaseDeDonnees(private val context: Context) : SQLiteOpenHelper(context, "anniversaires.db", null, 1) {
+class MaBaseDeDonnees(private val context: Context) : SQLiteOpenHelper(context, "anniversaires.db", null, 2) {
 
     companion object {
         private const val TAG = "MaBaseDeDonnees"
@@ -18,7 +18,7 @@ class MaBaseDeDonnees(private val context: Context) : SQLiteOpenHelper(context, 
     override fun onCreate(db: SQLiteDatabase) {
         try {
             // 1. Création des tables (votre code précédent)
-            val createParents = """CREATE TABLE parents (id INTEGER PRIMARY KEY AUTOINCREMENT, nomComplet TEXT)"""
+            val createParents = """CREATE TABLE parents (id INTEGER PRIMARY KEY AUTOINCREMENT, nomComplet TEXT, groupe TEXT)"""
             val createEnfants = """CREATE TABLE enfants (id INTEGER PRIMARY KEY AUTOINCREMENT, prenom TEXT, dateNaissance INTEGER, idParent1 INTEGER, idParent2 INTEGER)"""
 
             db.execSQL(createParents)
@@ -32,13 +32,24 @@ class MaBaseDeDonnees(private val context: Context) : SQLiteOpenHelper(context, 
     }
 
     override fun onUpgrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) {
-        try {
-            db.execSQL("DROP TABLE IF EXISTS enfants")
-            db.execSQL("DROP TABLE IF EXISTS parents")
-            onCreate(db)
-        } catch (e: Exception) {
-            Log.e(TAG, "Erreur dans onUpgrade", e)
+        Log.d(TAG, "Migration de la version $oldVersion vers $newVersion")
+
+        // Gestion pas à pas des migrations
+        // Si on passe de 1 à 2 (ou plus), on exécute le bloc 1->2
+        if (oldVersion < 2) {
+            try {
+                // Ajout de la colonne 'groupe' à la table 'parents'
+                // IF NOT EXISTS évite une erreur si la colonne existe déjà (sécurité)
+                db.execSQL("ALTER TABLE parents ADD COLUMN groupe TEXT")
+                Log.d(TAG, "Mise à jour de la table de données avec succès.")
+            } catch (e: Exception) {
+                Log.e(TAG, "Erreur lors de la mise a jour.", e)
+            }
         }
+
+        // Si vous avez une version 3 plus tard, vous ajouterez un bloc :
+        // if (oldVersion < 3) { ... }
+
     }
 
     // --- NOUVELLE FONCTION : Insère des faux données si la table est vide ---
