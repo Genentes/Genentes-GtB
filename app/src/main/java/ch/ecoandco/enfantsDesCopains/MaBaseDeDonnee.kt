@@ -98,7 +98,7 @@ class MaBaseDeDonnees(private val context: Context) : SQLiteOpenHelper(context, 
     }
 
     // Votre fonction de récupération (à garder telle quelle)
-    fun recupererTousLesEnfantsAvecParents(quelTri: String = "date"): android.database.Cursor {
+    fun recupererTousLesEnfantsAvecParents(quelTri: String = "date", quelGroupe: String? = "null"): android.database.Cursor {
         return try {
             val colonneTri = when (quelTri) {
                 "parents" -> "p1.nomComplet COLLATE NOCASE ASC"
@@ -113,6 +113,11 @@ class MaBaseDeDonnees(private val context: Context) : SQLiteOpenHelper(context, 
                 else      -> "e.dateNaissance ASC"
             }
 
+            val groupeTri = if (quelGroupe == null || quelGroupe == "null") {
+                "p1.groupe = 'copains' OR p1.groupe IS NULL"
+            } else {
+                "p1.groupe = '$quelGroupe'"
+            }
             val db = this.readableDatabase
             val query = """
             SELECT e.id as enfantId, e.prenom as enfantPrenom, e.dateNaissance,
@@ -121,8 +126,10 @@ class MaBaseDeDonnees(private val context: Context) : SQLiteOpenHelper(context, 
             FROM enfants e
             JOIN parents p1 ON e.idParent1 = p1.id
             LEFT JOIN parents p2 ON e.idParent2 = p2.id
+            WHERE $groupeTri
             ORDER BY $colonneTri 
         """.trimIndent()
+            android.util.Log.d("DEBUG_SQL", "Requête générée : $query")
 
             db.rawQuery(query, null)
         } catch (e: Exception) {

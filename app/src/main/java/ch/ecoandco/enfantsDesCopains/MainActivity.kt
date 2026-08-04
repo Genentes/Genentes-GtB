@@ -42,11 +42,18 @@ class MainActivity : AppCompatActivity() {
 
     private var colonneTri: String = "date"
 
+    private var groupeActive: String = "copains"
+
     private lateinit var titreCentre: TextView
 
     private lateinit var headerEnfant: TextView
     private lateinit var headerParents: TextView
     private lateinit var headerDate: TextView
+
+    private lateinit var groupeCopains: TextView
+    private lateinit var groupeFamille: TextView
+    private lateinit var groupeTravail: TextView
+    private lateinit var groupeAutre: TextView
 
     // File picker launcher for import
     private val filePickerLauncher = registerForActivityResult(
@@ -135,6 +142,11 @@ class MainActivity : AppCompatActivity() {
             headerEnfant = findViewById(R.id.TriEnfant)
             headerParents = findViewById(R.id.TriParent)
             headerDate = findViewById(R.id.TriDate)
+
+            groupeCopains = findViewById(R.id.boutonGroupeCopains)
+            groupeFamille = findViewById(R.id.boutonGroupeFamille)
+            groupeTravail = findViewById(R.id.boutonGroupeTravail)
+            groupeAutre = findViewById(R.id.boutonGroupeAutre)
 
             // 2. Initialiser la Base de Données
             // Cela va déclencher onCreate() dans MaBaseDeDonnees et insérer les données de test
@@ -264,6 +276,18 @@ class MainActivity : AppCompatActivity() {
                 chargerDonneesDepuisBDD("date")
             }
 
+            groupeCopains.setOnClickListener {
+                chargerDonneesDepuisBDD(argumentGroupe = null)
+            }
+            groupeFamille.setOnClickListener {
+                chargerDonneesDepuisBDD(argumentGroupe = "famille")
+            }
+            groupeTravail.setOnClickListener {
+                chargerDonneesDepuisBDD(argumentGroupe = "travail")
+            }
+            groupeAutre.setOnClickListener {
+                chargerDonneesDepuisBDD(argumentGroupe = "autre")
+            }
         } catch (e: Exception) {
             Log.e(TAG, "Erreur dans onCreate", e)
             Toast.makeText(this, "Erreur: ${e.message}", Toast.LENGTH_LONG).show()
@@ -444,7 +468,7 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun chargerDonneesDepuisBDD(quelTri: String? = null) {
+    private fun chargerDonneesDepuisBDD(quelTri: String? = null, argumentGroupe: String? = "null") {
         try {
             // Vider la liste actuelle (au cas où on recharge)
             listeEnfants.clear()
@@ -458,7 +482,7 @@ class MainActivity : AppCompatActivity() {
             }
 
             // Exécuter la requête SQL (avec les JOIN)
-            val curseur: Cursor = bdd.recupererTousLesEnfantsAvecParents(argumentTri)
+            val curseur: Cursor = bdd.recupererTousLesEnfantsAvecParents(argumentTri, argumentGroupe)
             try {
                 // Parcourir le curseur ligne par ligne (comme un while(fetch) en PHP)
                 while (curseur.moveToNext()) {
@@ -515,7 +539,7 @@ class MainActivity : AppCompatActivity() {
 
             // Optionnel : Afficher un message si la liste est vide (débug)
             if (listeEnfants.isEmpty()) {
-                Toast.makeText(this, "Aucun enfant trouvé dans la BDD", Toast.LENGTH_LONG).show()
+                Toast.makeText(this, "Personne en vue \uD83D\uDD2D", Toast.LENGTH_SHORT).show()
             }
 
             // Rafraîchir l'affichage si l'adapter est déjà attaché.
