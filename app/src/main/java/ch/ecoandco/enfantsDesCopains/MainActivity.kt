@@ -444,7 +444,7 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun chargerDonneesDepuisBDD(quelTri: String? = null) {
+    private fun chargerDonneesDepuisBDD(quelTri: String? = null, argumentGroupe: String = "copains") {
         try {
             // Vider la liste actuelle (au cas où on recharge)
             listeEnfants.clear()
@@ -458,7 +458,7 @@ class MainActivity : AppCompatActivity() {
             }
 
             // Exécuter la requête SQL (avec les JOIN)
-            val curseur: Cursor = bdd.recupererTousLesEnfantsAvecParents(argumentTri)
+            val curseur: Cursor = bdd.recupererTousLesEnfantsAvecParents(argumentTri, argumentGroupe)
             try {
                 // Parcourir le curseur ligne par ligne (comme un while(fetch) en PHP)
                 while (curseur.moveToNext()) {

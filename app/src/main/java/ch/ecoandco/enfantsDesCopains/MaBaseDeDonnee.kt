@@ -98,7 +98,7 @@ class MaBaseDeDonnees(private val context: Context) : SQLiteOpenHelper(context, 
     }
 
     // Votre fonction de récupération (à garder telle quelle)
-    fun recupererTousLesEnfantsAvecParents(quelTri: String = "date"): android.database.Cursor {
+    fun recupererTousLesEnfantsAvecParents(quelTri: String = "date", quelGroupe: String = "copains"): android.database.Cursor {
         return try {
             val colonneTri = when (quelTri) {
                 "parents" -> "p1.nomComplet COLLATE NOCASE ASC"
@@ -117,10 +117,12 @@ class MaBaseDeDonnees(private val context: Context) : SQLiteOpenHelper(context, 
             val query = """
             SELECT e.id as enfantId, e.prenom as enfantPrenom, e.dateNaissance,
                    p1.nomComplet as parent1,
-                   p2.nomComplet as parent2
+                   p2.nomComplet as parent2, 
+                   p1.groupe as groupeCible
             FROM enfants e
             JOIN parents p1 ON e.idParent1 = p1.id
             LEFT JOIN parents p2 ON e.idParent2 = p2.id
+            WHERE groupeCible = $quelGroupe
             ORDER BY $colonneTri 
         """.trimIndent()
 
