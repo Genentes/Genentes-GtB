@@ -444,7 +444,7 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun chargerDonneesDepuisBDD(quelTri: String? = null, argumentGroupe: String = "copains") {
+    private fun chargerDonneesDepuisBDD(quelTri: String? = null, argumentGroupe: String? = "null") {
         try {
             // Vider la liste actuelle (au cas où on recharge)
             listeEnfants.clear()
