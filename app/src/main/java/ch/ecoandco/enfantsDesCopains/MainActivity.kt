@@ -42,6 +42,8 @@ class MainActivity : AppCompatActivity() {
 
     private var colonneTri: String = "date"
 
+    private var groupeActive: String = "copains"
+
     private lateinit var titreCentre: TextView
 
     private lateinit var headerEnfant: TextView
@@ -274,6 +276,18 @@ class MainActivity : AppCompatActivity() {
                 chargerDonneesDepuisBDD("date")
             }
 
+            groupeCopains.setOnClickListener {
+                chargerDonneesDepuisBDD(argumentGroupe = null)
+            }
+            groupeFamille.setOnClickListener {
+                chargerDonneesDepuisBDD(argumentGroupe = "famille")
+            }
+            groupeTravail.setOnClickListener {
+                chargerDonneesDepuisBDD(argumentGroupe = "travail")
+            }
+            groupeAutre.setOnClickListener {
+                chargerDonneesDepuisBDD(argumentGroupe = "autre")
+            }
         } catch (e: Exception) {
             Log.e(TAG, "Erreur dans onCreate", e)
             Toast.makeText(this, "Erreur: ${e.message}", Toast.LENGTH_LONG).show()
@@ -525,7 +539,7 @@ class MainActivity : AppCompatActivity() {
 
             // Optionnel : Afficher un message si la liste est vide (débug)
             if (listeEnfants.isEmpty()) {
-                Toast.makeText(this, "Aucun enfant trouvé dans la BDD", Toast.LENGTH_LONG).show()
+                Toast.makeText(this, "Personne en vue \uD83D\uDD2D", Toast.LENGTH_SHORT).show()
             }
 
             // Rafraîchir l'affichage si l'adapter est déjà attaché.
