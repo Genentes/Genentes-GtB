@@ -48,6 +48,11 @@ class MainActivity : AppCompatActivity() {
     private lateinit var headerParents: TextView
     private lateinit var headerDate: TextView
 
+    private lateinit var groupeCopains: TextView
+    private lateinit var groupeFamille: TextView
+    private lateinit var groupeTravail: TextView
+    private lateinit var groupeAutre: TextView
+
     // File picker launcher for import
     private val filePickerLauncher = registerForActivityResult(
         ActivityResultContracts.GetContent()
@@ -135,6 +140,11 @@ class MainActivity : AppCompatActivity() {
             headerEnfant = findViewById(R.id.TriEnfant)
             headerParents = findViewById(R.id.TriParent)
             headerDate = findViewById(R.id.TriDate)
+
+            groupeCopains = findViewById(R.id.boutonGroupeCopains)
+            groupeFamille = findViewById(R.id.boutonGroupeFamille)
+            groupeTravail = findViewById(R.id.boutonGroupeTravail)
+            groupeAutre = findViewById(R.id.boutonGroupeAutre)
 
             // 2. Initialiser la Base de Données
             // Cela va déclencher onCreate() dans MaBaseDeDonnees et insérer les données de test
