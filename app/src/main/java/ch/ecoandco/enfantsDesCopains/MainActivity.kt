@@ -468,7 +468,7 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun chargerDonneesDepuisBDD(quelTri: String? = null, argumentGroupe: String? = "null") {
+    private fun chargerDonneesDepuisBDD(quelTri: String? = null, argumentGroupe: String? = null) {
         try {
             // Vider la liste actuelle (au cas où on recharge)
             listeEnfants.clear()
@@ -529,9 +529,9 @@ class MainActivity : AppCompatActivity() {
                         )
                     )
                 }
-
-               this.groupeActive = argumentGroupe
-
+                if (argumentGroupe != null && argumentGroupe != "null") {
+                    this.groupeActive = argumentGroupe
+                }
                 mettreAJourIndicateursTri(argumentTri)
             }
             finally {
