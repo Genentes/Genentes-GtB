@@ -533,7 +533,7 @@ class MainActivity : AppCompatActivity() {
                 if (argumentGroupe != null && argumentGroupe != "null") {
                     this.groupeActive = argumentGroupe
                 }
-                mettreAJourIndicateursTri(argumentTri)
+                mettreAJourIndicateursTri(colonneAUtiliser)
             }
             finally {
                 // IMPORTANT : Toujours fermer le curseur pour libérer la mémoire
@@ -579,13 +579,13 @@ class MainActivity : AppCompatActivity() {
         headerDate.text = getString(R.string.label_date)
         // 1. Réinitialiser tous les headers sans flèche
         val texteAvecFleche = when (colonneActive) {
-            "enfants" -> getString(R.string.label_enfant) + " $fleche"
+            "enfant" -> getString(R.string.label_enfant) + " $fleche"
             "parents" -> getString(idStringTitre) + " $fleche"
             "date"    -> getString(R.string.label_date) + " $fleche"
             else      -> ""
         }
         when (colonneActive) {
-            "enfants" -> headerEnfant.text = texteAvecFleche
+            "enfant" -> headerEnfant.text = texteAvecFleche
             "parents" -> headerParents.text = texteAvecFleche
             "date"    -> headerDate.text = texteAvecFleche
         }
