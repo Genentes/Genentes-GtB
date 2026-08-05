@@ -2,7 +2,10 @@
 <resources>
     <string name="main_app_title">👾 Enfants des copains 👾</string>
     <string name="label_enfant">Qui déjà ?</string>
-    <string name="label_parents">Copains</string>
+    <string name="label_parents_copains">Copains</string>
+    <string name="label_parents_famille">Famille</string>
+    <string name="label_parents_travail">Travail</string>
+    <string name="label_parents_autre">Autre</string>
     <string name="label_date">Né.e le</string>
     <string name="symbol_arrow_down">▼</string>
     <string name="main_button_add">Ajouter un enfant</string>

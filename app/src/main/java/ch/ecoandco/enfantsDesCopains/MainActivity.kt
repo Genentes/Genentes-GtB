@@ -277,16 +277,16 @@ class MainActivity : AppCompatActivity() {
             }
 
             groupeCopains.setOnClickListener {
-                chargerDonneesDepuisBDD(argumentGroupe = null)
+                chargerDonneesDepuisBDD(colonneTri, "copains")
             }
             groupeFamille.setOnClickListener {
-                chargerDonneesDepuisBDD(argumentGroupe = "famille")
+                chargerDonneesDepuisBDD(colonneTri, "famille")
             }
             groupeTravail.setOnClickListener {
-                chargerDonneesDepuisBDD(argumentGroupe = "travail")
+                chargerDonneesDepuisBDD(colonneTri, "travail")
             }
             groupeAutre.setOnClickListener {
-                chargerDonneesDepuisBDD(argumentGroupe = "autre")
+                chargerDonneesDepuisBDD(colonneTri, "autre")
             }
         } catch (e: Exception) {
             Log.e(TAG, "Erreur dans onCreate", e)
@@ -468,11 +468,12 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun chargerDonneesDepuisBDD(quelTri: String? = null, argumentGroupe: String? = "null") {
+    private fun chargerDonneesDepuisBDD(quelTri: String? = null, argumentGroupe: String? = null) {
         try {
             // Vider la liste actuelle (au cas où on recharge)
             listeEnfants.clear()
             val colonneAUtiliser = quelTri ?: colonneTri
+            val groupeAUtiliser = argumentGroupe ?: groupeActive
 
             val argumentTri = when (colonneAUtiliser) {
                 "parents" -> "parents"
@@ -482,7 +483,7 @@ class MainActivity : AppCompatActivity() {
             }
 
             // Exécuter la requête SQL (avec les JOIN)
-            val curseur: Cursor = bdd.recupererTousLesEnfantsAvecParents(argumentTri, argumentGroupe)
+            val curseur: Cursor = bdd.recupererTousLesEnfantsAvecParents(argumentTri, groupeAUtiliser)
             try {
                 // Parcourir le curseur ligne par ligne (comme un while(fetch) en PHP)
                 while (curseur.moveToNext()) {
@@ -529,7 +530,10 @@ class MainActivity : AppCompatActivity() {
                         )
                     )
                 }
-                mettreAJourIndicateursTri(argumentTri)
+                if (argumentGroupe != null && argumentGroupe != "null") {
+                    this.groupeActive = argumentGroupe
+                }
+                mettreAJourIndicateursTri(colonneAUtiliser)
             }
             finally {
                 // IMPORTANT : Toujours fermer le curseur pour libérer la mémoire
@@ -563,18 +567,25 @@ class MainActivity : AppCompatActivity() {
 
         colonneTri = colonneActive
 
+        val idStringTitre = when (groupeActive) {
+            "famille" -> R.string.label_parents_famille
+            "travail" -> R.string.label_parents_travail
+            "autre" -> R.string.label_parents_autre
+            else -> R.string.label_parents_copains // Cas null ou défaut
+        }
+
         headerEnfant.text = getString(R.string.label_enfant)
-        headerParents.text = getString(R.string.label_parents)
+        headerParents.text = getString(idStringTitre)
         headerDate.text = getString(R.string.label_date)
         // 1. Réinitialiser tous les headers sans flèche
         val texteAvecFleche = when (colonneActive) {
-            "enfants" -> getString(R.string.label_enfant) + " $fleche"
-            "parents" -> getString(R.string.label_parents) + " $fleche"
+            "enfant" -> getString(R.string.label_enfant) + " $fleche"
+            "parents" -> getString(idStringTitre) + " $fleche"
             "date"    -> getString(R.string.label_date) + " $fleche"
             else      -> ""
         }
         when (colonneActive) {
-            "enfants" -> headerEnfant.text = texteAvecFleche
+            "enfant" -> headerEnfant.text = texteAvecFleche
             "parents" -> headerParents.text = texteAvecFleche
             "date"    -> headerDate.text = texteAvecFleche
         }
