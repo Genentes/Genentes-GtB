@@ -277,16 +277,16 @@ class MainActivity : AppCompatActivity() {
             }
 
             groupeCopains.setOnClickListener {
-                chargerDonneesDepuisBDD(argumentGroupe = "copains")
+                chargerDonneesDepuisBDD(colonneTri, "copains")
             }
             groupeFamille.setOnClickListener {
-                chargerDonneesDepuisBDD(argumentGroupe = "famille")
+                chargerDonneesDepuisBDD(colonneTri, "famille")
             }
             groupeTravail.setOnClickListener {
-                chargerDonneesDepuisBDD(argumentGroupe = "travail")
+                chargerDonneesDepuisBDD(colonneTri, "travail")
             }
             groupeAutre.setOnClickListener {
-                chargerDonneesDepuisBDD(argumentGroupe = "autre")
+                chargerDonneesDepuisBDD(colonneTri, "autre")
             }
         } catch (e: Exception) {
             Log.e(TAG, "Erreur dans onCreate", e)
@@ -473,6 +473,7 @@ class MainActivity : AppCompatActivity() {
             // Vider la liste actuelle (au cas où on recharge)
             listeEnfants.clear()
             val colonneAUtiliser = quelTri ?: colonneTri
+            val groupeAUtiliser = argumentGroupe ?: groupeActive
 
             val argumentTri = when (colonneAUtiliser) {
                 "parents" -> "parents"
@@ -482,7 +483,7 @@ class MainActivity : AppCompatActivity() {
             }
 
             // Exécuter la requête SQL (avec les JOIN)
-            val curseur: Cursor = bdd.recupererTousLesEnfantsAvecParents(argumentTri, argumentGroupe)
+            val curseur: Cursor = bdd.recupererTousLesEnfantsAvecParents(argumentTri, groupeAUtiliser)
             try {
                 // Parcourir le curseur ligne par ligne (comme un while(fetch) en PHP)
                 while (curseur.moveToNext()) {
