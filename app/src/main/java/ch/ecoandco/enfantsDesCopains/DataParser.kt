@@ -11,6 +11,7 @@ import org.json.JSONObject
  * @param id Identifiant unique de la personne
  * @param prenom Prénom de la personne
  * @param nom Nom de famille (optionnel)
+ * @param groupe Groupe (optionnel)
  * @param conjointId ID de référence au conjoint (stocké avant la résolution)
  * @param conjoint Objet Person du conjoint (après résolution des références)
  * @param enfantIds Liste des IDs des enfants (stockée avant la résolution)
@@ -23,6 +24,7 @@ class Person(
     val id: Int,
     val prenom: String,
     val nom: String = "",
+    val groupe: String = "",
     val conjointId: Int? = null,
     var conjoint: Person? = null,
     val enfantIds: List<Int> = emptyList(),
@@ -95,7 +97,8 @@ class DataParser {
         val id = jsonObject.getInt("id")
         val prenom = jsonObject.getString("prenom")
         val nom = if (jsonObject.has("nom")) jsonObject.getString("nom") else ""
-        
+        val groupe = if (jsonObject.has("groupe")) jsonObject.getString("groupe") else ""
+
         // Initialisation des IDs de référence (à None/vide par défaut)
         var conjointId: Int? = null
         var enfantIds = listOf<Int>()
@@ -143,6 +146,7 @@ class DataParser {
             id = id,
             prenom = prenom,
             nom = nom,
+            groupe = groupe,
             conjointId = conjointId,
             enfantIds = enfantIds,
             amisIds = amisIds,
@@ -175,6 +179,9 @@ class DataParser {
                 // Ajoute le nom s'il existe
                 if (p.nom.isNotEmpty()) {
                     personJson.put("nom", p.nom)
+                }
+                if (p.groupe.isNotEmpty()) {
+                    personJson.put("groupe", p.groupe)
                 }
                 // Ajoute la date de naissance s'elle existe
                 if (p.dateNaissance != null) {
