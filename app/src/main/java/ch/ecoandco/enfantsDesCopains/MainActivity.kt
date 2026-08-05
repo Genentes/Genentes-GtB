@@ -277,7 +277,7 @@ class MainActivity : AppCompatActivity() {
             }
 
             groupeCopains.setOnClickListener {
-                chargerDonneesDepuisBDD(argumentGroupe = null)
+                chargerDonneesDepuisBDD(argumentGroupe = "copains")
             }
             groupeFamille.setOnClickListener {
                 chargerDonneesDepuisBDD(argumentGroupe = "famille")

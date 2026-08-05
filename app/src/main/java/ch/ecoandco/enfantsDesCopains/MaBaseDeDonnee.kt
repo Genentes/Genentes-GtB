@@ -113,7 +113,7 @@ class MaBaseDeDonnees(private val context: Context) : SQLiteOpenHelper(context, 
                 else      -> "e.dateNaissance ASC"
             }
 
-            val groupeTri = if (quelGroupe == null || quelGroupe == "null") {
+            val groupeTri = if (quelGroupe == null || quelGroupe == "null" || quelGroupe == "copains") {
                 "p1.groupe = 'copains' OR p1.groupe IS NULL"
             } else {
                 "p1.groupe = '$quelGroupe'"
