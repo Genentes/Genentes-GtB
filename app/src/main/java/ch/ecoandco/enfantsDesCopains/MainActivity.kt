@@ -529,6 +529,9 @@ class MainActivity : AppCompatActivity() {
                         )
                     )
                 }
+
+               this.groupeActive = argumentGroupe
+
                 mettreAJourIndicateursTri(argumentTri)
             }
             finally {
@@ -563,13 +566,20 @@ class MainActivity : AppCompatActivity() {
 
         colonneTri = colonneActive
 
+        val idStringTitre = when (groupeActive) {
+            "famille" -> R.string.label_parents_famille
+            "travail" -> R.string.label_parents_travail
+            "autre" -> R.string.label_parents_autre
+            else -> R.string.label_parents_copains // Cas null ou défaut
+        }
+
         headerEnfant.text = getString(R.string.label_enfant)
-        headerParents.text = getString(R.string.label_parents)
+        headerParents.text = getString(idStringTitre)
         headerDate.text = getString(R.string.label_date)
         // 1. Réinitialiser tous les headers sans flèche
         val texteAvecFleche = when (colonneActive) {
             "enfants" -> getString(R.string.label_enfant) + " $fleche"
-            "parents" -> getString(R.string.label_parents) + " $fleche"
+            "parents" -> getString(idStringTitre) + " $fleche"
             "date"    -> getString(R.string.label_date) + " $fleche"
             else      -> ""
         }
