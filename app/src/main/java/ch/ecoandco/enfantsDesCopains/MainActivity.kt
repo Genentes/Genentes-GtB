@@ -397,12 +397,10 @@ class MainActivity : AppCompatActivity() {
                 // Optionnel : Sélectionner "copains" par défaut (index 0)
                 setSelection(0)
             }
-
-            layout.addView(etParent1)
-            layout.addView(etParent2)
                 layout.addView(labelCategorie)      // Ajout du titre en premier
                 layout.addView(spinnerCategorie)    // Ajout du spinner juste après
-
+            layout.addView(etParent1)
+            layout.addView(etParent2)
 
             AlertDialog.Builder(context)
                 .setTitle("Informations des parents")
