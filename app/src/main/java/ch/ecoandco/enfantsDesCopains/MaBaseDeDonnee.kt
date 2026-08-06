@@ -266,6 +266,7 @@ class MaBaseDeDonnees(private val context: Context) : SQLiteOpenHelper(context, 
             for (parent in person.amis.filter { it.enfants.isNotEmpty() }) {
                 parentValues.clear()
                 parentValues.put("id", parent.id)
+                parentValues.put("groupe", parent.groupe)
                 parentValues.put("nomComplet", "${parent.prenom} ${parent.nom}")
                 db.insert("parents", null, parentValues)
                 if (parent.conjoint != null) {
@@ -306,14 +307,15 @@ class MaBaseDeDonnees(private val context: Context) : SQLiteOpenHelper(context, 
         val rootPerson = Person(
             id = 0,
             prenom = "Me",
-            nom = ""
+            nom = "",
+            groupe = ""
         )
 
         var nextId = 1;
 
         try {            
             // Query all parents from database
-            val parentCursor = db.rawQuery("SELECT id, nomComplet FROM parents", null)
+            val parentCursor = db.rawQuery("SELECT id, nomComplet, groupe FROM parents", null)
             val parentMap = mutableMapOf<Int, Person>()
             
             if (parentCursor.moveToFirst()) {
@@ -323,11 +325,13 @@ class MaBaseDeDonnees(private val context: Context) : SQLiteOpenHelper(context, 
                     val parts = nomComplet.split(" ", limit = 2)
                     val prenom = parts[0]
                     val nom = if (parts.size > 1) parts[1] else ""
-                    
+                    val groupe = parentCursor.getString(2)
+
                     parentMap[parentId] = Person(
                         id = nextId++,
                         prenom = prenom,
-                        nom = nom
+                        nom = nom,
+                        groupe = groupe
                     )
                 } while (parentCursor.moveToNext())
             }
