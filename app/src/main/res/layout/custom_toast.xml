@@ -5,8 +5,8 @@
         android:orientation="horizontal"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:background="#DD333333"
-    android:padding="16dp"
+        android:background="#DD64125E"
+    android:padding="14dp"
     android:gravity="center_vertical">
 
     <ImageView
