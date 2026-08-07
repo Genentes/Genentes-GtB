@@ -10,6 +10,8 @@ import androidx.recyclerview.widget.RecyclerView
 import android.database.Cursor
 import android.text.InputType
 import android.util.Log
+import android.view.Gravity
+import android.view.LayoutInflater
 import android.view.Menu
 import android.view.MenuItem
 import android.widget.ArrayAdapter
@@ -119,6 +121,18 @@ class MainActivity : AppCompatActivity() {
             }
         }
     }
+
+        private fun afficherToastPersonnalise(message: String) {
+            val layout = LayoutInflater.from(this).inflate(R.layout.custom_toast, null)
+            val textView = layout.findViewById<TextView>(R.id.toast_text)
+            textView.text = message
+
+            val toast = Toast(this)
+            toast.duration = Toast.LENGTH_SHORT
+            toast.setView(layout)
+            toast.setGravity(Gravity.BOTTOM or Gravity.CENTER_HORIZONTAL, 0, 100)
+            toast.show()
+        }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         try {
@@ -541,7 +555,7 @@ class MainActivity : AppCompatActivity() {
 
             // Optionnel : Afficher un message si la liste est vide (débug)
             if (listeEnfants.isEmpty()) {
-                Toast.makeText(this, "Personne en vue \uD83D\uDD2D", Toast.LENGTH_SHORT).show()
+                afficherToastPersonnalise("Personne en vue \uD83D\uDD2D")
             }
 
             // Rafraîchir l'affichage si l'adapter est déjà attaché.
