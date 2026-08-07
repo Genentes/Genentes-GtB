@@ -86,16 +86,16 @@ class MainActivity : AppCompatActivity() {
                 // Appel à votre fonction qui vide et remplit la BDD
                 if (bdd.importFromJson(jsonContent)) {
                     chargerDonneesDepuisBDD()
-                    Toast.makeText(this, "Données importées avec succès", Toast.LENGTH_LONG).show()
+                    afficherToastPersonnalise("Données importées avec succès")
                 } else {
-                    Toast.makeText(this, "Erreur lors de l'import", Toast.LENGTH_LONG).show()
+                    afficherToastPersonnalise("Erreur lors de l'import")
                 }
             } else {
-                Toast.makeText(this, "Impossible de lire le fichier", Toast.LENGTH_LONG).show()
+                afficherToastPersonnalise("Impossible de lire le fichier")
             }
         } catch (e: Exception) {
             Log.e(TAG, "Erreur lors de la lecture du fichier", e)
-            Toast.makeText(this, "Erreur: ${e.message}", Toast.LENGTH_LONG).show()
+            afficherToastPersonnalise("Erreur: ${e.message}")
         }
     }
     // File saver launcher for export
@@ -114,10 +114,10 @@ class MainActivity : AppCompatActivity() {
                 contentResolver.openOutputStream(uri)?.use { outputStream ->
                     outputStream.write(jsonContent.toByteArray())
                 }
-                Toast.makeText(this, "Fichier sauvegardé avec succès", Toast.LENGTH_SHORT).show()
+                afficherToastPersonnalise("Fichier sauvegardé avec succès")
             } catch (e: Exception) {
                 Log.e(TAG, "Erreur lors de la sauvegarde", e)
-                Toast.makeText(this, "Erreur: ${e.message}", Toast.LENGTH_SHORT).show()
+                afficherToastPersonnalise("Erreur: ${e.message}")
             }
         }
     }
@@ -267,10 +267,10 @@ class MainActivity : AppCompatActivity() {
                                 selectedTimestamp = 0L
                                 etDate.text.clear()
                             } else {
-                                Toast.makeText(context, "Erreur lors de l'ajout", Toast.LENGTH_SHORT).show()
+                                afficherToastPersonnalise("Erreur lors de l'ajout")
                             }
                         } else {
-                            Toast.makeText(context, "Veuillez remplir tous les champs", Toast.LENGTH_SHORT).show()
+                            afficherToastPersonnalise("Veuillez remplir tous les champs")
                         }
                     }
                     .setNegativeButton("Annuler", null)
@@ -304,7 +304,7 @@ class MainActivity : AppCompatActivity() {
             }
         } catch (e: Exception) {
             Log.e(TAG, "Erreur dans onCreate", e)
-            Toast.makeText(this, "Erreur: ${e.message}", Toast.LENGTH_LONG).show()
+            afficherToastPersonnalise("Erreur: ${e.message}")
         }
 
     }
@@ -342,7 +342,7 @@ class MainActivity : AppCompatActivity() {
             fileSaverLauncher.launch(fileName)
         } catch (e: Exception) {
             Log.e(TAG, "Erreur lors de l'exportation", e)
-            Toast.makeText(this, "Erreur: ${e.message}", Toast.LENGTH_SHORT).show()
+            afficherToastPersonnalise("Erreur: ${e.message}")
         }
         return true
     }
@@ -352,7 +352,7 @@ class MainActivity : AppCompatActivity() {
             filePickerLauncher.launch("application/json")
         } catch (e: Exception) {
             Log.e(TAG, "Erreur lors de l'import", e)
-            Toast.makeText(this, "Erreur: ${e.message}", Toast.LENGTH_SHORT).show()
+            afficherToastPersonnalise("Erreur: ${e.message}")
         }
         return true
     }
@@ -452,31 +452,27 @@ class MainActivity : AppCompatActivity() {
 
                             if (success) {
                                 val message = "Parents enregistrés avec succès - ${CategorieSelectionnee}."
-                                Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
+                                afficherToastPersonnalise(message)
                                 chargerDonneesDepuisBDD()
                             } else {
                                 throw Exception("Échec mise à jour de l'enfant (Vérifiez les colonnes idParent1/2)")
                             }
 
                         } else {
-                            Toast.makeText(context, "Le premier parent est obligatoire.", Toast.LENGTH_SHORT).show()
+                            afficherToastPersonnalise("Le premier parent est obligatoire. ")
                         }
 
                     } catch (e: Exception) {
                         // C'EST ICI QUE VOUS VERREZ L'ERREUR SANS PLANTER
                         Log.e(TAG, "Erreur pendant l'enregistrement des parents", e)
-                        android.widget.Toast.makeText(
-                            context,
-                            "Erreur : ${e.message}",
-                            android.widget.Toast.LENGTH_LONG
-                        ).show()
+                        afficherToastPersonnalise("Erreur : ${e.message}")
                     }
                 }
                 .setNegativeButton("Passer", null)
                 .show()
         } catch (e: Exception) {
             Log.e(TAG, "Erreur dans ajouterParents", e)
-            Toast.makeText(this, "Erreur: ${e.message}", Toast.LENGTH_LONG).show()
+            afficherToastPersonnalise("Erreur: ${e.message}")
         }
     }
 
@@ -555,7 +551,7 @@ class MainActivity : AppCompatActivity() {
 
             // Optionnel : Afficher un message si la liste est vide (débug)
             if (listeEnfants.isEmpty()) {
-                afficherToastPersonnalise("Personne en vue \uD83D\uDD2D")
+                afficherToastPersonnalise("Personne en vue \uD83D\uDD2D ")
             }
 
             // Rafraîchir l'affichage si l'adapter est déjà attaché.
@@ -566,11 +562,7 @@ class MainActivity : AppCompatActivity() {
         catch(e : Exception)
         {
             Log.e(TAG, "Erreur dans chargerDonneesDepuisBDD", e)
-            Toast.makeText(
-                this,
-                e.message ?: "Une erreur est survenue lors du chargement des données",
-                Toast.LENGTH_LONG
-            ).show()
+            afficherToastPersonnalise(e.message ?: "Une erreur est survenue lors du chargement des données")
         }
     }
 
