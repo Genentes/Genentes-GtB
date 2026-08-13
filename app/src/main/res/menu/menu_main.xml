@@ -11,7 +11,7 @@
 
     <!-- Option ChangeCatégorie -->
     <item
-        android:id="@+id/change_category"
+        android:id="@+id/action_change_category"
         android:title="@string/changeCategory"
         app:showAsAction="never" />
 
@@ -24,7 +24,7 @@
 
     <!-- Option Exporter sélection -->
     <item
-        android:id="@+id/export_selection"
+        android:id="@+id/action_export_selection"
         android:title="@string/exportSelection"
         app:showAsAction="never" />
 

@@ -104,9 +104,6 @@ class MainActivity : AppCompatActivity() {
     ) { uri ->
         if (uri != null) {
             try {
-                val timeStamp = SimpleDateFormat("yyyy_MM_dd_HHmmss", Locale.getDefault()).format(Calendar.getInstance().time)
-                val fileName = "anniversaires_export_$timeStamp.json"
-                
                 // Get data as JSON string
                 val jsonContent = bdd.exportToJson() // This should return the JSON string directly
                 
@@ -329,6 +326,12 @@ class MainActivity : AppCompatActivity() {
             R.id.action_import -> {
                 lancerImportation()
             }
+            R.id.action_export_selection -> {
+                exportSelection()
+            }
+            R.id.action_change_category -> {
+                changeCategorie()
+            }
             else -> super.onOptionsItemSelected(item)
         }
     }
@@ -381,7 +384,7 @@ class MainActivity : AppCompatActivity() {
             //Définir la catégorie
             // --- 1. Création du Titre (TextView) ---
             val labelCategorie = TextView(context).apply {
-                text = "À ajouter à la catégorie : "
+                text = "@string/labelChoixCategorie"
                 // Optionnel : Mise en forme pour ressembler à un titre de champ
                 textSize = 14f
                 setTypeface(null, android.graphics.Typeface.BOLD) // Mettre en gras
