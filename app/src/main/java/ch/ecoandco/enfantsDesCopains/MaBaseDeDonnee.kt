@@ -101,7 +101,7 @@ class MaBaseDeDonnees(private val context: Context) : SQLiteOpenHelper(context, 
     fun recupererTousLesEnfantsAvecParents(quelTri: String = "date", quelGroupe: String? = "null"): android.database.Cursor {
         return try {
             val colonneTri = when (quelTri) {
-                "parents" -> "p1.nomComplet COLLATE NOCASE ASC"
+                "parents" -> "p1.nomComplet COLLATE NOCASE ASC, e.prenom COLLATE NOCASE ASC"
                 "enfants" -> "e.prenom COLLATE NOCASE ASC"
                 "date"    -> """
                 CASE 

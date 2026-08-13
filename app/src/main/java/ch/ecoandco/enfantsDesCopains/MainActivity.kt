@@ -258,7 +258,7 @@ class MainActivity : AppCompatActivity() {
                         val prenom = etPrenom.text.toString().trim()
 
                         // Validation simple
-                        if (prenom.isNotEmpty() && selectedTimestamp > 0L) {
+                        if (prenom.isNotEmpty() && selectedTimestamp != 0L) {
                             // Appel de votre fonction d'ajout (à adapter pour inclure la date)
                             val rowId = bdd.ajouterEnfant(prenom, selectedTimestamp)
 
@@ -381,7 +381,7 @@ class MainActivity : AppCompatActivity() {
             //Définir la catégorie
             // --- 1. Création du Titre (TextView) ---
             val labelCategorie = TextView(context).apply {
-                text = "Ajouté à"
+                text = "À ajouter à la catégorie : "
                 // Optionnel : Mise en forme pour ressembler à un titre de champ
                 textSize = 14f
                 setTypeface(null, android.graphics.Typeface.BOLD) // Mettre en gras
