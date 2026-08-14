@@ -330,7 +330,7 @@ class MainActivity : AppCompatActivity() {
                 exportSelection()
             }
             R.id.action_change_category -> {
-                changeCategorie()
+                envoiVersCategorie()
             }
             else -> super.onOptionsItemSelected(item)
         }
@@ -360,6 +360,17 @@ class MainActivity : AppCompatActivity() {
         return true
     }
 
+    private fun exportSelection() : Boolean {
+        val messageES = "Exportation Sélection " + groupeActive
+        afficherToastPersonnalise(messageES)
+        return true
+    }
+
+    private fun envoiVersCategorie() : Boolean {
+        val messageEVC = "Envoi vers autre catégorie que " + groupeActive
+        afficherToastPersonnalise(messageEVC)
+        return true
+    }
 
     private fun ajouterParents(idEnfant: Long) {
         try {
