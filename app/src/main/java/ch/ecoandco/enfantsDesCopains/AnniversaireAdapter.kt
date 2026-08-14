@@ -28,12 +28,50 @@ data class LigneAnniversaire(
 
 // 2. La classe Adapter principale
 class AnniversaireAdapter(
-    private val listeDonnees: List<LigneAnniversaire>, // La liste complète à afficher
-    private val onSupprimer: (Int) -> Unit         // NOUVEAU : Une fonction qui prend un ID (Int)
+    // On passe une fonction qui renvoie la liste à jour à chaque fois
+    private val getListeDonnees: () -> List<LigneAnniversaire>,
+    private val onSupprimer: (Int) -> Unit
 ) : RecyclerView.Adapter<AnniversaireAdapter.MonViewHolder>() {
 
     companion object {
         private const val TAG = "AnniversaireAdapter"
+    }
+
+    // --- GESTION DU MODE SÉLECTION ---
+    var isSelectionMode = false
+        private set // Modifiable uniquement via les méthodes publiques
+
+    private val selectedIds = HashSet<Int>()
+
+    // Callback pour prévenir l'Activity quand le nombre de sélectionnés change
+    var onSelectionChanged: ((Int) -> Unit)? = null
+
+    // --- MÉTHODES PUBLIQUES DE CONTRÔLE ---
+
+    fun activerModeSelection() {
+        isSelectionMode = true
+        selectedIds.clear()
+        notifyDataSetChanged()
+    }
+
+    fun desactiverModeSelection() {
+        isSelectionMode = false
+        selectedIds.clear()
+        notifyDataSetChanged()
+    }
+
+    fun getSelectedIds(): Set<Int> {
+        return HashSet(selectedIds)
+    }
+
+    fun toggleSelection(id: Int, position: Int) {
+        if (selectedIds.contains(id)) {
+            selectedIds.remove(id)
+        } else {
+            selectedIds.add(id)
+        }
+        notifyItemChanged(position)
+        onSelectionChanged?.invoke(selectedIds.size)
     }
 
     // --- ÉTAPE A : Le ViewHolder ---
@@ -42,6 +80,7 @@ class AnniversaireAdapter(
         val textEnfant: TextView = itemView.findViewById(R.id.textEnfant)
         val textParents: TextView = itemView.findViewById(R.id.textParents)
         val textDate: TextView = itemView.findViewById(R.id.textDate)
+        val checkBox: CheckBox = itemView.findViewById(R.id.checkBoxSelection)
     }
 
     // --- ÉTAPE B : Création de la vue (Quand on a besoin d'une nouvelle ligne) ---
@@ -59,6 +98,8 @@ class AnniversaireAdapter(
                 addView(TextView(parent.context).apply { id = R.id.textEnfant })
                 addView(TextView(parent.context).apply { id = R.id.textParents })
                 addView(TextView(parent.context).apply { id = R.id.textDate })
+                // Ajout manuel d'une checkbox pour le fallback si nécessaire,
+                // mais ici on suppose que le XML principal est corrigé.
             }
             MonViewHolder(fallbackView)
         }
@@ -67,10 +108,65 @@ class AnniversaireAdapter(
     // --- ÉTAPE C : Remplissage des données (Le cœur du réacteur) ---
     override fun onBindViewHolder(holder: MonViewHolder, position: Int) {
         try {
-            // On récupère l'objet correspondant à la ligne actuelle (0, 1, 2...)
-            val elementActuel = listeDonnees[position]
 
-            val prenom = elementActuel.prenomEnfant
+            // On récupère la liste FRAÎCHE à chaque bind
+            val listeActuelle = getListeDonnees()
+
+            // Sécurité : si la position est hors limite (cas rare de concurrence)
+            if (position >= listeActuelle.size) return
+
+            val elementActuel = listeActuelle[position]
+
+            // 1. Gestion de la visibilité de la CheckBox
+            holder.checkBox.visibility = if (isSelectionMode) View.VISIBLE else View.GONE
+
+            // 2. Gestion de l'état et des écouteurs selon le mode
+            if (isSelectionMode) {
+                // Mode SÉLECTION activé
+                holder.checkBox.isChecked = selectedIds.contains(elementActuel.idEnfant)
+
+                // On définit le listener de la checkbox
+                holder.checkBox.setOnCheckedChangeListener { _, isChecked ->
+                    toggleSelection(elementActuel.idEnfant, position)
+                }
+
+                // Clic sur la ligne = cocher/décocher
+                holder.itemView.setOnClickListener {
+                    holder.checkBox.isChecked = !holder.checkBox.isChecked
+                }
+
+                // On désactive le clic long en mode sélection
+                holder.itemView.setOnLongClickListener(null)
+
+            } else {
+                // Mode NORMAL
+                holder.checkBox.setOnCheckedChangeListener(null)
+                holder.checkBox.isChecked = false
+
+                // Réactivation du Clic Long pour la suppression
+                holder.itemView.setOnLongClickListener {
+                    val pos = holder.bindingAdapterPosition
+                    if (pos == RecyclerView.NO_POSITION) return@setOnLongClickListener true
+
+                    holder.itemView.isHapticFeedbackEnabled = true
+                    holder.itemView.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
+
+                    AlertDialog.Builder(holder.itemView.context)
+                        .setTitle("Supprimer ?")
+                        .setMessage("Voulez-vous vraiment supprimer la ligne de ${elementActuel.prenomEnfant} ?")
+                        .setPositiveButton("Oui") { _, _ ->
+                            onSupprimer(elementActuel.idEnfant)
+                        }
+                        .setNegativeButton("Annuler", null)
+                        .show()
+                    true
+                }
+
+                // En mode normal, le clic court ne fait rien (ou peut lancer un détail si tu veux)
+                holder.itemView.setOnClickListener(null)
+            }
+
+           val prenom = elementActuel.prenomEnfant
             val ageInfo = DateUtils.formatAgeWithQuarters(elementActuel.timestampNaissance)
             val spannableText = SpannableString("$prenom\n$ageInfo")
 
@@ -88,40 +184,7 @@ class AnniversaireAdapter(
             val texteFormate = DateUtils.formatAge(elementActuel.timestampNaissance)
 
             holder.textDate.text = texteFormate
-
-            // --- AJOUT DU CLIC LONG ICI ---
-            holder.itemView.setOnLongClickListener {
-                // 1. Récupérer la position actuelle et sûre
-                val position = holder.bindingAdapterPosition
-
-                // 2. Vérification de sécurité CRUCIALE
-                // Si la position est NO_POSITION, on ne fait rien (l'élément a peut-être déjà bougé/disparu)
-                if (position == RecyclerView.NO_POSITION) {
-                    return@setOnLongClickListener true
-                }
-
-                // 1. Feedback visuel immédiat (optionnel mais recommandé)
-                // Cela fait vibrer le téléphone très brièvement si autorisé
-                holder.itemView.isHapticFeedbackEnabled = true
-                holder.itemView.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
-
-                // 2. Votre logique de suppression
-                // On peut afficher une confirmation avant de supprimer pour éviter les erreurs
-                AlertDialog.Builder(holder.itemView.context)
-                    .setTitle("Supprimer ?")
-                    .setMessage("Voulez-vous vraiment supprimer la ligne de ${elementActuel.prenomEnfant} ?")
-                    .setPositiveButton("Oui") { _, _ ->
-                            onSupprimer(elementActuel.idEnfant)
-                    }
-                    .setNegativeButton("Annuler", null)
-                    .show()
-
-                // Retourner true pour indiquer qu'on a bien géré l'événement
-                // (cela empêche le clic court de se déclencher aussi)
-                true
             }
-            // Astuce : Si vous voulez trier par ordre de date pour les anniversaires à venir,
-            // c'est ici qu'on pourrait ajouter de la logique visuelle (ex: couleur différente si c'est bientôt)
         } catch (e: Exception) {
             Log.e(TAG, "Erreur dans onBindViewHolder", e)
         }
@@ -130,7 +193,7 @@ class AnniversaireAdapter(
     // --- ÉTAPE D : Combien de lignes ? ---
     override fun getItemCount(): Int {
         return try {
-            listeDonnees.size
+            getListeDonnees().size
         } catch (e: Exception) {
             Log.e(TAG, "Erreur dans getItemCount", e)
             0

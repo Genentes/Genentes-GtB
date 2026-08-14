@@ -163,15 +163,28 @@ class MainActivity : AppCompatActivity() {
             // Cela va déclencher onCreate() dans MaBaseDeDonnees et insérer les données de test
             bdd = MaBaseDeDonnees(this)
 
-            // 3. Récupérer les éléments du XML (RecyclerView)
-            recyclerView = findViewById(R.id.recyclerViewAnniversaires)
-
-            // Configurer le RecyclerView pour une liste verticale
+            // Initialisation du RecyclerView
+            recyclerView = findViewById(R.id.recyclerViewAnniversaires) // Vérifie que l'ID correspond à ton XML
             recyclerView.layoutManager = LinearLayoutManager(this)
 
-            // 4. Charger les données depuis la BDD et remplir la liste
-            chargerDonneesDepuisBDD()
+// Création de l'adapter avec la référence dynamique à la liste
+            adaptateur = AnniversaireAdapter(
+                getListeDonnees = { listeEnfants }, // C'est ici que la magie opère
+                onSupprimer = { idEnfant ->
+                    supprimerDonnee(idEnfant) // Ta fonction existante
+                }
+            )
 
+// Lien entre l'adapter et le RecyclerView
+            recyclerView.adapter = adaptateur
+
+// Optionnel : Écouter les changements de sélection pour mettre à jour un compteur
+            adaptateur.onSelectionChanged = { nombre ->
+                mettreAJourTitreSelection(nombre)
+            }
+
+// Lancement du premier chargement
+            chargerDonneesDepuisBDD()
             // 5. Créer et attacher l'Adapter
             // On passe la liste remplie à l'adapter
             adaptateur = AnniversaireAdapter(
@@ -360,17 +373,66 @@ class MainActivity : AppCompatActivity() {
         return true
     }
 
-    private fun exportSelection() : Boolean {
-        val messageES = "Exportation Sélection " + groupeActive
-        afficherToastPersonnalise(messageES)
-        return true
-    }
 
     private fun envoiVersCategorie() : Boolean {
         val messageEVC = "Envoi vers autre catégorie que " + groupeActive
         afficherToastPersonnalise(messageEVC)
         return true
     }
+
+
+    // Fonction appelée par ton bouton "Sélectionner" (à créer dans ton menu ou layout)
+    private fun lancerModeSelection() {
+        adaptateur.activerModeSelection()
+        afficherBarreActionSelection(true)
+    }
+
+    // Affiche ou cache la barre avec les boutons "Annuler" et "Exporter"
+    private fun afficherBarreActionSelection(afficher: Boolean) {
+        // Assure-toi d'avoir un LinearLayout ou un cadre avec l'ID 'layoutSelection' dans ton XML principal
+        // et qu'il est en 'gone' par défaut.
+        val layoutSelection = findViewById<View>(R.id.layoutSelection)
+        layoutSelection.visibility = if (afficher) View.VISIBLE else View.GONE
+
+        if (afficher) {
+            // Bouton Annuler
+            findViewById<Button>(R.id.btnAnnulerSelection).setOnClickListener {
+                adaptateur.desactiverModeSelection()
+                afficherBarreActionSelection(false)
+            }
+
+            // Bouton Exporter
+            findViewById<Button>(R.id.btnExporterSelection).setOnClickListener {
+                val ids = adaptateur.getSelectedIds()
+                if (ids.isEmpty()) {
+                    afficherToastPersonnalise("Aucune donnée sélectionnée")
+                } else {
+                    exporterSelection(ids)
+                    adaptateur.desactiverModeSelection()
+                    afficherBarreActionSelection(false)
+                }
+            }
+            mettreAJourTitreSelection(0)
+        }
+    }
+
+    // Met à jour le texte "X élément(s) sélectionné(s)"
+    private fun mettreAJourTitreSelection(count: Int) {
+        val textView = findViewById<TextView>(R.id.textTitreSelection)
+        textView.text = "$count élément(s) sélectionné(s)"
+    }
+
+    // Fonction squelette pour l'export (à compléter ensuite)
+    private fun exporterSelection(ids: Set<Int>) {
+        afficherToastPersonnalise("Export de ${ids.size} éléments demandé !")
+        // TODO: C'est ici que nous coderons la génération du JSON et le partage de fichier
+        // 1. Récupérer les objets complets via bdd.recupererEnfantsParIds(ids)
+        // 2. Créer le JSON
+        // 3. Lancer le Intent de partage
+    }
+
+// N'oublie pas d'ajouter un bouton "Sélectionner" dans ton menu ou ton layout
+// qui appelle lancerModeSelection()
 
     private fun ajouterParents(idEnfant: Long) {
         try {
