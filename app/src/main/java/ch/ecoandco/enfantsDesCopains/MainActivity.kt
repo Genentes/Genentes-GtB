@@ -14,6 +14,7 @@ import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.Menu
 import android.view.MenuItem
+import android.view.View
 import android.widget.ArrayAdapter
 import android.widget.Button
 import android.widget.EditText
@@ -171,7 +172,7 @@ class MainActivity : AppCompatActivity() {
             adaptateur = AnniversaireAdapter(
                 getListeDonnees = { listeEnfants }, // C'est ici que la magie opère
                 onSupprimer = { idEnfant ->
-                    supprimerDonnee(idEnfant) // Ta fonction existante
+                    bdd.deleteLine(idEnfant) // Ta fonction existante
                 }
             )
 
@@ -340,7 +341,7 @@ class MainActivity : AppCompatActivity() {
                 lancerImportation()
             }
             R.id.action_export_selection -> {
-                exportSelection()
+                lancerModeSelection()
             }
             R.id.action_change_category -> {
                 envoiVersCategorie()
