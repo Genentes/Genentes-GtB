@@ -22,10 +22,4 @@
         android:title="@string/exportData"
         app:showAsAction="never" />
 
-    <!-- Option Exporter sélection -->
-    <item
-        android:id="@+id/action_export_selection"
-        android:title="@string/exportSelection"
-        app:showAsAction="never" />
-
 </menu>

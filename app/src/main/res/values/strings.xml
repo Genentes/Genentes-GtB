@@ -2,7 +2,6 @@
 <resources>
     <string name="app_name">Enfants des copains</string>
     <string name="importData">Importer des données</string>
-    <string name="exportData">Exporter tout</string>
-    <string name="changeCategory">Exporter une sélection</string>
-    <string name="exportSelection">Envoyer vers une autre catégorie</string>
+    <string name="exportData">Sauvegarder tout</string>
+    <string name="changeCategory">Export sélection / Changer catégorie</string>
 </resources>

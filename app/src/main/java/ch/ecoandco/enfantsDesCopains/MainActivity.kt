@@ -340,11 +340,8 @@ class MainActivity : AppCompatActivity() {
             R.id.action_import -> {
                 lancerImportation()
             }
-            R.id.action_export_selection -> {
-                lancerModeSelection()
-            }
             R.id.action_change_category -> {
-                envoiVersCategorie()
+                lancerModeSelection()
             }
             else -> super.onOptionsItemSelected(item)
         }
@@ -374,14 +371,6 @@ class MainActivity : AppCompatActivity() {
         return true
     }
 
-
-    private fun envoiVersCategorie() : Boolean {
-        val messageEVC = "Envoi vers autre catégorie que " + groupeActive
-        afficherToastPersonnalise(messageEVC)
-        return true
-    }
-
-
     // Fonction appelée par ton bouton "Sélectionner" (à créer dans ton menu ou layout)
     private fun lancerModeSelection() : Boolean {
         adaptateur.activerModeSelection()
@@ -391,8 +380,6 @@ class MainActivity : AppCompatActivity() {
 
     // Affiche ou cache la barre avec les boutons "Annuler" et "Exporter"
     private fun afficherBarreActionSelection(afficher: Boolean) {
-        // Assure-toi d'avoir un LinearLayout ou un cadre avec l'ID 'layoutSelection' dans ton XML principal
-        // et qu'il est en 'gone' par défaut.
         val layoutSelection = findViewById<View>(R.id.layoutSelection)
         layoutSelection.visibility = if (afficher) View.VISIBLE else View.GONE
 
@@ -429,15 +416,12 @@ class MainActivity : AppCompatActivity() {
 
     // Fonction squelette pour l'export (à compléter ensuite)
     private fun exporterSelection(ids: Set<Int>) {
-        afficherToastPersonnalise("Export de ${ids.size} éléments demandé !")
+        afficherToastPersonnalise("Export des éléments ${ids.toString()} .")
         // TODO: C'est ici que nous coderons la génération du JSON et le partage de fichier
         // 1. Récupérer les objets complets via bdd.recupererEnfantsParIds(ids)
         // 2. Créer le JSON
         // 3. Lancer le Intent de partage
     }
-
-// N'oublie pas d'ajouter un bouton "Sélectionner" dans ton menu ou ton layout
-// qui appelle lancerModeSelection()
 
     private fun ajouterParents(idEnfant: Long) {
         try {
