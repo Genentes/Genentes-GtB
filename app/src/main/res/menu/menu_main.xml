@@ -2,6 +2,13 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
+    <!-- Option Importer -->
+    <item
+        android:id="@+id/action_import"
+        android:title="@string/importData"
+        android:icon="@android:drawable/ic_menu_upload"
+        app:showAsAction="never" />
+
     <!-- Option Exporter -->
     <item
         android:id="@+id/action_export"
@@ -9,11 +16,11 @@
         android:title="@string/exportData"
         app:showAsAction="never" />
 
-    <!-- Option Importer -->
+    <!-- Option ChangeCatégorie -->
     <item
-        android:id="@+id/action_import"
-        android:title="@string/importData"
-        android:icon="@android:drawable/ic_menu_upload"
+        android:id="@+id/action_change_category"
+        android:title="@string/changeCategory"
         app:showAsAction="never" />
+
 
 </menu>

@@ -7,6 +7,7 @@
     <string name="label_parents_travail">Travail</string>
     <string name="label_parents_autre">Autre</string>
     <string name="label_date">Né.e le</string>
+    <string name="label_choixCategorie">À ajouter à la catégorie :</string>
     <string name="symbol_arrow_down">▼</string>
     <string name="main_button_add">Ajouter un enfant</string>
 </resources>

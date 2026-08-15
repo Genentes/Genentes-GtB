@@ -104,6 +104,50 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent">
 
+        <LinearLayout
+            android:id="@+id/layoutSelection"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="12dp"
+            android:background="#E3F2FD"
+            android:visibility="gone"
+            android:layout_marginTop="8dp">
+
+            <!-- Le compteur -->
+            <TextView
+                android:id="@+id/textTitreSelection"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="0 élément(s) sélectionné(s)"
+                android:textStyle="bold"
+                android:textColor="#1565C0"
+                android:layout_marginBottom="8dp"/>
+
+            <!-- Les boutons alignés horizontalement -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="end">
+
+                <Button
+                    android:id="@+id/btnAnnulerSelection"
+                    style="@style/Widget.MaterialComponents.Button.TextButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Annuler"
+                    android:layout_marginEnd="8dp"/>
+
+                <Button
+                    android:id="@+id/btnExporterSelection"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Exporter" />
+            </LinearLayout>
+        </LinearLayout>
+
+
         <!-- A. La nouvelle ligne de filtres (Catégories) -->
         <HorizontalScrollView
             android:layout_width="match_parent"
@@ -128,6 +172,12 @@
         </HorizontalScrollView>
 
         <!-- B. Ton bouton "Ajouter" existant (Déplacé ici) -->
+        <LinearLayout
+            android:id="@+id/boutonAjouterContainer"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:padding="2dp">
         <Button
             android:id="@+id/boutonAjouter"
             android:layout_width="match_parent"
@@ -135,6 +185,7 @@
             android:text="@string/main_button_add"
             android:layout_margin="0dp" /> <!-- On enlève le margin top car il est collé au filtre -->
 
+    </LinearLayout>
     </LinearLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

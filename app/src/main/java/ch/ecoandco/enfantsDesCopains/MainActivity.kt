@@ -1,5 +1,6 @@
 package ch.ecoandco.enfantsDesCopains // <--- IMPORTANT : Vérifiez que ceci correspond à votre vrai package
 
+import android.annotation.SuppressLint
 import android.app.AlertDialog
 import android.app.DatePickerDialog
 import android.os.Bundle
@@ -14,6 +15,7 @@ import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.Menu
 import android.view.MenuItem
+import android.view.View
 import android.widget.ArrayAdapter
 import android.widget.Button
 import android.widget.EditText
@@ -104,9 +106,6 @@ class MainActivity : AppCompatActivity() {
     ) { uri ->
         if (uri != null) {
             try {
-                val timeStamp = SimpleDateFormat("yyyy_MM_dd_HHmmss", Locale.getDefault()).format(Calendar.getInstance().time)
-                val fileName = "anniversaires_export_$timeStamp.json"
-                
                 // Get data as JSON string
                 val jsonContent = bdd.exportToJson() // This should return the JSON string directly
                 
@@ -166,19 +165,32 @@ class MainActivity : AppCompatActivity() {
             // Cela va déclencher onCreate() dans MaBaseDeDonnees et insérer les données de test
             bdd = MaBaseDeDonnees(this)
 
-            // 3. Récupérer les éléments du XML (RecyclerView)
-            recyclerView = findViewById(R.id.recyclerViewAnniversaires)
-
-            // Configurer le RecyclerView pour une liste verticale
+            // Initialisation du RecyclerView
+            recyclerView = findViewById(R.id.recyclerViewAnniversaires) // Vérifie que l'ID correspond à ton XML
             recyclerView.layoutManager = LinearLayoutManager(this)
 
-            // 4. Charger les données depuis la BDD et remplir la liste
-            chargerDonneesDepuisBDD()
+// Création de l'adapter avec la référence dynamique à la liste
+            adaptateur = AnniversaireAdapter(
+                getListeDonnees = { listeEnfants }, // C'est ici que la magie opère
+                onSupprimer = { idEnfant ->
+                    bdd.deleteLine(idEnfant) // Ta fonction existante
+                }
+            )
 
+// Lien entre l'adapter et le RecyclerView
+            recyclerView.adapter = adaptateur
+
+// Optionnel : Écouter les changements de sélection pour mettre à jour un compteur
+            adaptateur.onSelectionChanged = { nombre ->
+                mettreAJourTitreSelection(nombre)
+            }
+
+// Lancement du premier chargement
+            chargerDonneesDepuisBDD()
             // 5. Créer et attacher l'Adapter
             // On passe la liste remplie à l'adapter
             adaptateur = AnniversaireAdapter(
-                listeEnfants,
+                { listeEnfants },
                         onSupprimer = { idEnfant ->
                     // C'est ici que vous avez accès à votre variable 'bdd' !
                     bdd.deleteLine(idEnfant)
@@ -329,6 +341,9 @@ class MainActivity : AppCompatActivity() {
             R.id.action_import -> {
                 lancerImportation()
             }
+            R.id.action_change_category -> {
+                lancerModeSelection()
+            }
             else -> super.onOptionsItemSelected(item)
         }
     }
@@ -357,7 +372,56 @@ class MainActivity : AppCompatActivity() {
         return true
     }
 
+    // Fonction appelée par ton bouton "Sélectionner" (à créer dans ton menu ou layout)
+    private fun lancerModeSelection() : Boolean {
+        adaptateur.activerModeSelection()
+        afficherBarreActionSelection(true)
+        return true
+    }
 
+    // Affiche ou cache la barre avec les boutons "Annuler" et "Exporter"
+    private fun afficherBarreActionSelection(afficher: Boolean) {
+        val layoutSelection = findViewById<View>(R.id.layoutSelection)
+        layoutSelection.visibility = if (afficher) View.VISIBLE else View.GONE
+
+        if (afficher) {
+            // Bouton Annuler
+            findViewById<Button>(R.id.btnAnnulerSelection).setOnClickListener {
+                adaptateur.desactiverModeSelection()
+                afficherBarreActionSelection(false)
+            }
+
+            // Bouton Exporter
+            findViewById<Button>(R.id.btnExporterSelection).setOnClickListener {
+                val ids = adaptateur.getSelectedIds()
+                if (ids.isEmpty()) {
+                    afficherToastPersonnalise("Aucune donnée sélectionnée")
+                } else {
+                    exporterSelection(ids)
+                    adaptateur.desactiverModeSelection()
+                    afficherBarreActionSelection(false)
+                }
+            }
+            mettreAJourTitreSelection(0)
+        }
+    }
+
+    // Met à jour le texte "X élément(s) sélectionné(s)"
+    private fun mettreAJourTitreSelection(count: Int) {
+        val textView = findViewById<TextView>(R.id.textTitreSelection)
+        textView.text = "$count élément(s) sélectionné(s)"
+    }
+
+    // Fonction squelette pour l'export (à compléter ensuite)
+    private fun exporterSelection(ids: Set<Int>) {
+        afficherToastPersonnalise("Export des éléments ${ids.toString()} .")
+        // TODO: C'est ici que nous coderons la génération du JSON et le partage de fichier
+        // 1. Récupérer les objets complets via bdd.recupererEnfantsParIds(ids)
+        // 2. Créer le JSON
+        // 3. Lancer le Intent de partage
+    }
+
+    @SuppressLint("SetTextI18n")
     private fun ajouterParents(idEnfant: Long) {
         try {
             val context = this
@@ -381,7 +445,7 @@ class MainActivity : AppCompatActivity() {
             //Définir la catégorie
             // --- 1. Création du Titre (TextView) ---
             val labelCategorie = TextView(context).apply {
-                text = "À ajouter à la catégorie : "
+                text = getString(R.string.label_choixCategorie)
                 // Optionnel : Mise en forme pour ressembler à un titre de champ
                 textSize = 14f
                 setTypeface(null, android.graphics.Typeface.BOLD) // Mettre en gras
@@ -409,7 +473,13 @@ class MainActivity : AppCompatActivity() {
                 this.adapter = adapter
 
                 // Optionnel : Sélectionner "copains" par défaut (index 0)
-                setSelection(0)
+                val positionCatActuelle = when (groupeActive) {
+                    "famille" -> 1
+                    "travail" -> 2
+                    "autre" -> 3
+                    else -> 0
+                }
+                setSelection(positionCatActuelle)
             }
                 layout.addView(labelCategorie)      // Ajout du titre en premier
                 layout.addView(spinnerCategorie)    // Ajout du spinner juste après

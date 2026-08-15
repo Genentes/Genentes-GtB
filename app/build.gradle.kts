@@ -12,7 +12,7 @@ android {
         minSdk = 26 // Version minimum d'Android (26 = Android 8.0)
         targetSdk = 34
         versionCode = 2
-        versionName = "1.1"
+        versionName = "1.2"
     }
 
     buildTypes {

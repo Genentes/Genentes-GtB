@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Enfants des copains</string>
-    <string name="importData">Importer les données</string>
-    <string name="exportData">Exporter des données</string>
+    <string name="importData">Importer des données</string>
+    <string name="exportData">Exporter tout (sauvegarde)</string>
+    <string name="changeCategory">Export sélection / change catégorie</string>
 </resources>
