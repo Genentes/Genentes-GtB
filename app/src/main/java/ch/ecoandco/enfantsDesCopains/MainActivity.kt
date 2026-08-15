@@ -384,7 +384,7 @@ class MainActivity : AppCompatActivity() {
         val layoutSelection = findViewById<View>(R.id.layoutSelection)
         layoutSelection.visibility = if (afficher) View.VISIBLE else View.GONE
 
-        val layoutHabituelCategories = findViewById<View>(R.id.categoryFilterContainer)
+        val layoutHabituelCategories = findViewById<View>(R.id.boutonAjouterContainer)
         layoutHabituelCategories.visibility = if (afficher) View.GONE else View.VISIBLE
 
         if (afficher) {
@@ -448,7 +448,7 @@ class MainActivity : AppCompatActivity() {
             //Définir la catégorie
             // --- 1. Création du Titre (TextView) ---
             val labelCategorie = TextView(context).apply {
-                text = "@string/label_choixCategorie"
+                text = R.string.label_choixCategorie
                 // Optionnel : Mise en forme pour ressembler à un titre de champ
                 textSize = 14f
                 setTypeface(null, android.graphics.Typeface.BOLD) // Mettre en gras

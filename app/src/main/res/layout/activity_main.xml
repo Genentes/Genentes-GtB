@@ -172,6 +172,12 @@
         </HorizontalScrollView>
 
         <!-- B. Ton bouton "Ajouter" existant (Déplacé ici) -->
+        <LinearLayout
+            android:id="@+id/boutonAjouterContainer"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:padding=2dp">
         <Button
             android:id="@+id/boutonAjouter"
             android:layout_width="match_parent"
@@ -179,6 +185,7 @@
             android:text="@string/main_button_add"
             android:layout_margin="0dp" /> <!-- On enlève le margin top car il est collé au filtre -->
 
+    </LinearLayout>
     </LinearLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>
