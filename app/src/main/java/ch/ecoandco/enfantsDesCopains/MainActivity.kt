@@ -189,7 +189,7 @@ class MainActivity : AppCompatActivity() {
             // 5. Créer et attacher l'Adapter
             // On passe la liste remplie à l'adapter
             adaptateur = AnniversaireAdapter(
-                listeEnfants,
+                { listeEnfants },
                         onSupprimer = { idEnfant ->
                     // C'est ici que vous avez accès à votre variable 'bdd' !
                     bdd.deleteLine(idEnfant)
@@ -383,9 +383,10 @@ class MainActivity : AppCompatActivity() {
 
 
     // Fonction appelée par ton bouton "Sélectionner" (à créer dans ton menu ou layout)
-    private fun lancerModeSelection() {
+    private fun lancerModeSelection() : Boolean {
         adaptateur.activerModeSelection()
         afficherBarreActionSelection(true)
+        return true
     }
 
     // Affiche ou cache la barre avec les boutons "Annuler" et "Exporter"

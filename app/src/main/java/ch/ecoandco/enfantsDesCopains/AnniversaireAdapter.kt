@@ -15,6 +15,7 @@ import android.text.Spannable
 import android.text.SpannableString
 import android.text.style.StyleSpan
 import android.graphics.Typeface
+import android.widget.CheckBox
 
 
 // 1. Une petite classe "modèle" pour transporter les données d'une ligne
@@ -88,7 +89,7 @@ class AnniversaireAdapter(
         return try {
             // On transforme le XML "item_ligne_anniversaire.xml" en un objet View Java
             val vueLigne = LayoutInflater.from(parent.context)
-                .inflate(R.layout.item_ligne_anniversaire, parent, false)
+                .inflate(item_ligne_anniversaire, parent, false)
 
             MonViewHolder(vueLigne)
         } catch (e: Exception) {
@@ -185,7 +186,7 @@ class AnniversaireAdapter(
 
             holder.textDate.text = texteFormate
             }
-        } catch (e: Exception) {
+        catch (e: Exception) {
             Log.e(TAG, "Erreur dans onBindViewHolder", e)
         }
     }
