@@ -1,5 +1,6 @@
 package ch.ecoandco.enfantsDesCopains // <--- IMPORTANT : Vérifiez que ceci correspond à votre vrai package
 
+import android.annotation.SuppressLint
 import android.app.AlertDialog
 import android.app.DatePickerDialog
 import android.os.Bundle
@@ -423,6 +424,7 @@ class MainActivity : AppCompatActivity() {
         // 3. Lancer le Intent de partage
     }
 
+    @SuppressLint("SetTextI18n")
     private fun ajouterParents(idEnfant: Long) {
         try {
             val context = this
@@ -446,7 +448,7 @@ class MainActivity : AppCompatActivity() {
             //Définir la catégorie
             // --- 1. Création du Titre (TextView) ---
             val labelCategorie = TextView(context).apply {
-                text = "@string/labelChoixCategorie"
+                text = "@string/label_choixCategorie"
                 // Optionnel : Mise en forme pour ressembler à un titre de champ
                 textSize = 14f
                 setTypeface(null, android.graphics.Typeface.BOLD) // Mettre en gras
@@ -474,7 +476,13 @@ class MainActivity : AppCompatActivity() {
                 this.adapter = adapter
 
                 // Optionnel : Sélectionner "copains" par défaut (index 0)
-                setSelection(0)
+                val positionCatActuelle = when (groupeActive) {
+                    "famille" -> 1
+                    "travail" -> 2
+                    "autre" -> 3
+                    else -> 0
+                }
+                setSelection(positionCatActuelle)
             }
                 layout.addView(labelCategorie)      // Ajout du titre en premier
                 layout.addView(spinnerCategorie)    // Ajout du spinner juste après

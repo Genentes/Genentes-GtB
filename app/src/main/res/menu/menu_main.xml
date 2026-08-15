@@ -9,17 +9,18 @@
         android:icon="@android:drawable/ic_menu_upload"
         app:showAsAction="never" />
 
-    <!-- Option ChangeCatégorie -->
-    <item
-        android:id="@+id/action_change_category"
-        android:title="@string/changeCategory"
-        app:showAsAction="never" />
-
     <!-- Option Exporter -->
     <item
         android:id="@+id/action_export"
         android:icon="@android:drawable/ic_menu_save"
         android:title="@string/exportData"
         app:showAsAction="never" />
+
+    <!-- Option ChangeCatégorie -->
+    <item
+        android:id="@+id/action_change_category"
+        android:title="@string/changeCategory"
+        app:showAsAction="never" />
+
 
 </menu>
