@@ -385,6 +385,9 @@ class MainActivity : AppCompatActivity() {
         val layoutSelection = findViewById<View>(R.id.layoutSelection)
         layoutSelection.visibility = if (afficher) View.VISIBLE else View.GONE
 
+        val layoutBouton = findViewById<View>(R.id.boutonAjouterContainer)
+        layoutBouton.visibility = if (afficher) View.GONE else View.VISIBLE
+
         if (afficher) {
             // Bouton Annuler
             findViewById<Button>(R.id.btnAnnulerSelection).setOnClickListener {
