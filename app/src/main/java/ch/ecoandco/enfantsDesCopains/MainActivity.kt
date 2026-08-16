@@ -185,20 +185,8 @@ class MainActivity : AppCompatActivity() {
                 mettreAJourTitreSelection(nombre)
                 afficherToastPersonnalise("Un de plus")
             }
-
 // Lancement du premier chargement
             chargerDonneesDepuisBDD()
-            // 5. Créer et attacher l'Adapter
-            // On passe la liste remplie à l'adapter
-            adaptateur = AnniversaireAdapter(
-                { listeEnfants },
-                        onSupprimer = { idEnfant ->
-                    // C'est ici que vous avez accès à votre variable 'bdd' !
-                    bdd.deleteLine(idEnfant)
-                    chargerDonneesDepuisBDD()
-                }
-            )
-            recyclerView.adapter = adaptateur
 
             val boutonAjouter = findViewById<Button>(R.id.boutonAjouter)
 
@@ -406,7 +394,7 @@ class MainActivity : AppCompatActivity() {
                     afficherBarreActionSelection(false)
                 }
             }
-            mettreAJourTitreSelection(0)
+            mettreAJourTitreSelection(1)
         }
     }
 
