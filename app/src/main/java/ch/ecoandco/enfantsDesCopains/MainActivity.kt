@@ -394,7 +394,7 @@ class MainActivity : AppCompatActivity() {
                     afficherBarreActionSelection(false)
                 }
             }
-            mettreAJourTitreSelection(1)
+            mettreAJourTitreSelection(0)
         }
     }
 
