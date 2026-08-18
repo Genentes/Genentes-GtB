@@ -352,7 +352,7 @@ class MainActivity : AppCompatActivity() {
         try {
             // 1. Récupérer TOUTES les personnes depuis la BDD
             // Assurez-vous d'avoir une fonction dans votre BDD qui renvoie List<Person>
-            val toutesLesPersonnes = bdd.recupererToutesLesPersonnes()
+            val toutesLesPersonnes = bdd.chargerToutesLesPersonnes()
 
             if (toutesLesPersonnes.isEmpty()) {
                 afficherToastPersonnalise("La base de données est vide.")
@@ -399,7 +399,7 @@ class MainActivity : AppCompatActivity() {
     private fun lancerExportationSelection(idsEnfantsSelectionnes: List<Int>) {
         try {
             // 1. Récupérer TOUTES les personnes (nécessaire pour retrouver les parents par correspondance)
-            val toutesLesPersonnes = bdd.recupererToutesLesPersonnes()
+            val toutesLesPersonnes = bdd.chargerToutesLesPersonnes()
 
             if (toutesLesPersonnes.isEmpty()) {
                 afficherToastPersonnalise("La base de données est vide.")
@@ -486,9 +486,13 @@ class MainActivity : AppCompatActivity() {
 
     // Fonction squelette pour l'export (à compléter ensuite)
     private fun exporterSelection(ids: Set<Int>) {
-        afficherToastPersonnalise("Export des éléments ${ids.toString()} .")
-        // TODO: C'est ici que nous coderons la génération du JSON et le partage de fichier
-        lancerExportationSelection(listOf(${ids.toString()}))
+        afficherToastPersonnalise("Export des éléments : $ids")
+
+        // Conversion simple de Set en List
+        val listeIds: List<Int> = ids.toList()
+
+        // On passe directement la liste
+        lancerExportationSelection(listeIds)
     }
 
     @SuppressLint("SetTextI18n")

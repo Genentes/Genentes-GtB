@@ -25,11 +25,11 @@ class Person(
     val prenom: String,
     val nom: String = "",
     val groupe: String = "",
-    val conjointId: Int? = null,
+    var conjointId: Int? = null,
     var conjoint: Person? = null,
     var enfantIds: List<Int> = emptyList(),
     var enfants: List<Person> = emptyList(),
-    val amisIds: List<Int> = emptyList(),
+    var amisIds: List<Int> = emptyList(),
     var amis: List<Person> = emptyList(),
     val dateNaissance: String? = null
 )
