@@ -417,13 +417,18 @@ class MaBaseDeDonnees(private val context: Context) : SQLiteOpenHelper(context, 
 
     /* UTILE POUR EXPORTER UNE SELECTION SEULEMENT */
 
-    private fun chargerToutesLesPersonnes(db: SQLiteDatabase): List<Person> {
+    fun chargerToutesLesPersonnes(): List<Person> {
+        val db = this.readableDatabase
         val personMap = mutableMapOf<Int, Person>()
+        Log.d("DB_DEBUG", "Début chargement. Base ouverte : ${db.isOpen}")
 
         try {
             // 1. Charger les parents (ID originaux conservés)
             val parentCursor = db.rawQuery("SELECT id, nomComplet, groupe FROM parents", null)
+            Log.d("DB_DEBUG", "Requête parents lancée. Nombre de lignes trouvées : ${parentCursor.count}")
+
             if (parentCursor.moveToFirst()) {
+                var count = 0
                 do {
                     val idOriginal = parentCursor.getInt(0)
                     val nomComplet = parentCursor.getString(1)
@@ -439,19 +444,29 @@ class MaBaseDeDonnees(private val context: Context) : SQLiteOpenHelper(context, 
                         enfantIds = emptyList(),
                         enfants = emptyList()
                     )
+                    count++
                 } while (parentCursor.moveToNext())
-            }
+                Log.d("DB_DEBUG", "Parents traités : $count")
+            } else { Log.d("DB_DEBUG", "AUCUN parent trouvé dans la base !") }
+
             parentCursor.close()
 
             // 2. Charger les enfants et faire les liens
             val enfantCursor = db.rawQuery("SELECT id, prenom, dateNaissance, idParent1, idParent2 FROM enfants", null)
+            Log.d("DB_DEBUG", "Requête enfants lancée. Nombre de lignes trouvées : ${enfantCursor.count}")
+
             if (enfantCursor.moveToFirst()) {
+                var count = 0
                 do {
                     val idOriginal = enfantCursor.getInt(0)
                     val prenom = enfantCursor.getString(1)
                     val dateNaissanceLong = enfantCursor.getLong(2)
                     val idParent1 = enfantCursor.getInt(3)
                     val idParent2 = if (enfantCursor.isNull(4)) null else enfantCursor.getInt(4)
+// VÉRIFICATION CRUCIAL : Est-ce que le parent existe dans la map ?
+                    val parentExiste = personMap.containsKey(idParent1)
+                    Log.d("DB_DEBUG", "Enfant ID:$idOriginal -> Parent1 ID:$idParent1 (Existe dans map ? $parentExiste)")
+
 
                     // Conversion date (identique à avant)
                     val dateString = if (dateNaissanceLong != 0L) {
@@ -474,6 +489,15 @@ class MaBaseDeDonnees(private val context: Context) : SQLiteOpenHelper(context, 
                     // On ajoute l'enfant à la map globale pour qu'il soit trouvé si on a besoin de lui plus tard
                     personMap[idOriginal] = enfant
 
+                    // Vérification après ajout
+            if (parentExiste) {
+                 Log.d("DB_DEBUG", "Lien enfant->parent1 établi pour ID $idOriginal")
+            } else {
+                Log.d(
+                    "DB_DEBUG",
+                    "ERREUR: Parent1 $idParent1 introuvable pour l'enfant $idOriginal !"
+                )
+            }
                     // --- MISE À JOUR MANUELLE DES PARENTS (SANS COPY) ---
 
                     // Parent 1
@@ -497,8 +521,11 @@ class MaBaseDeDonnees(private val context: Context) : SQLiteOpenHelper(context, 
                             parent2.enfantIds = nouvelleListeIds
                         }
                     }
-
+                    count++
                 } while (enfantCursor.moveToNext())
+                        Log.d("DB_DEBUG", "Enfants traités : $count")
+            } else {
+                Log.d("DB_DEBUG", "AUCUN enfant trouvé dans la base !")
             }
             enfantCursor.close()
 
@@ -519,8 +546,10 @@ class MaBaseDeDonnees(private val context: Context) : SQLiteOpenHelper(context, 
                     }
                 }
             }
+                Log.d("DB_DEBUG", "Taille finale de la map : ${personMap.size}")
+                Log.d("DB_DEBUG", "IDs dans la map : ${personMap.keys}")
 
-            return personMap.values.toList()
+                return personMap.values.toList()
 
         } catch (e: Exception) {
             Log.e("DB_LOAD", "Erreur chargement", e)
