@@ -414,4 +414,131 @@ class MaBaseDeDonnees(private val context: Context) : SQLiteOpenHelper(context, 
 
         return rootPerson
     }
+
+    /* UTILE POUR EXPORTER UNE SELECTION SEULEMENT */
+
+    private fun chargerToutesLesPersonnes(db: SQLiteDatabase): List<Person> {
+        val personMap = mutableMapOf<Int, Person>()
+
+        try {
+            // 1. Charger tous les parents en gardant leur ID d'origine
+            val parentCursor = db.rawQuery("SELECT id, nomComplet, groupe FROM parents", null)
+
+            if (parentCursor.moveToFirst()) {
+                do {
+                    val idOriginal = parentCursor.getInt(0)
+                    val nomComplet = parentCursor.getString(1)
+                    val groupe = parentCursor.getString(2)
+
+                    // Découpage Nom/Prénom (votre logique existante)
+                    val parts = nomComplet.split(" ", limit = 2)
+                    val prenom = parts[0]
+                    val nom = if (parts.size > 1) parts[1] else ""
+
+                    // CRUCIAL : On utilise idOriginal, pas nextId++
+                    personMap[idOriginal] = Person(
+                        id = idOriginal,
+                        prenom = prenom,
+                        nom = nom,
+                        groupe = groupe,
+                        enfantIds = emptyList(), // Sera rempli après
+                        enfants = emptyList()    // Sera rempli après
+                    )
+                } while (parentCursor.moveToNext())
+            }
+            parentCursor.close()
+
+            // 2. Charger tous les enfants en gardant leur ID d'origine
+            val enfantCursor = db.rawQuery(
+                "SELECT id, prenom, dateNaissance, idParent1, idParent2 FROM enfants",
+                null
+            )
+
+            if (enfantCursor.moveToFirst()) {
+                do {
+                    val idOriginal = enfantCursor.getInt(0)
+                    val prenom = enfantCursor.getString(1)
+                    val dateNaissanceLong = enfantCursor.getLong(2)
+                    val idParent1 = enfantCursor.getInt(3)
+                    val idParent2 = if (enfantCursor.isNull(4)) null else enfantCursor.getInt(4)
+
+                    // Conversion Date
+                    val dateString = if (dateNaissanceLong != 0L) {
+                        val calendar = Calendar.getInstance()
+                        calendar.timeInMillis = dateNaissanceLong
+                        "${calendar.get(Calendar.DAY_OF_MONTH).toString().padStart(2, '0')}." +
+                                "${(calendar.get(Calendar.MONTH) + 1).toString().padStart(2, '0')}." +
+                                "${calendar.get(Calendar.YEAR)}"
+                    } else null
+
+                    val enfant = Person(
+                        id = idOriginal, // CRUCIAL : ID original
+                        prenom = prenom,
+                        nom = "",
+                        dateNaissance = dateString,
+                        enfantIds = emptyList(),
+                        enfants = emptyList()
+                    )
+
+                    personMap[idOriginal] = enfant
+
+                    // 3. Mise à jour des liens (Listes d'IDs et Objets)
+                    // Note: Comme Person est une data class (ou classe avec vars), on peut modifier les propriétés
+
+                    // Lien vers Parent 1
+                    personMap[idParent1]?.let { parent1 ->
+                        // Ajout de l'ID dans la liste des IDs (pour le JSON)
+                        val newIds = parent1.enfantIds + idOriginal
+                        // On doit recréer l'objet ou modifier la liste si c'est une var mutable
+                        // Astuce: Si enfantIds est val List, on doit remplacer l'objet dans la map
+                        val updatedParent1 = parent1.copy(
+                            enfantIds = newIds,
+                            enfants = parent1.enfants + enfant
+                        )
+                        personMap[idParent1] = updatedParent1
+                    }
+
+                    // Lien vers Parent 2
+                    if (idParent2 != null) {
+                        personMap[idParent2]?.let { parent2 ->
+                            val newIds = parent2.enfantIds + idOriginal
+                            val updatedParent2 = parent2.copy(
+                                enfantIds = newIds,
+                                enfants = parent2.enfants + enfant
+                            )
+                            personMap[idParent2] = updatedParent2
+                        }
+                    }
+
+                } while (enfantCursor.moveToNext())
+            }
+            enfantCursor.close()
+
+            // 4. Établir les liens Conjoints (Votre logique est bonne)
+            // On optimise légèrement : on ne compare que si les parents ont des enfants communs
+            val parentsList = personMap.values.filter { it.enfants.isNotEmpty() }
+            for (i in parentsList.indices) {
+                for (j in i + 1 until parentsList.size) {
+                    val p1 = parentsList[i]
+                    val p2 = parentsList[j]
+
+                    // Intersection rapide des IDs d'enfants
+                    val common = p1.enfantIds.intersect(p2.enfantIds.toSet())
+
+                    if (common.isNotEmpty()) {
+                        // Mise à jour conjoint
+                        personMap[p1.id] = p1.copy(conjointId = p2.id, conjoint = p2)
+                        personMap[p2.id] = p2.copy(conjointId = p1.id, conjoint = p1)
+                    }
+                }
+            }
+
+            // Retourne la liste complète de tous les objets Person liés
+            return personMap.values.toList()
+
+        } catch (e: Exception) {
+            Log.e("DB_LOAD", "Erreur chargement Personnes", e)
+            return emptyList()
+        }
+    }
 }
