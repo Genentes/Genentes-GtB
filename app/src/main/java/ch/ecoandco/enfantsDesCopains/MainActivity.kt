@@ -196,7 +196,6 @@ class MainActivity : AppCompatActivity() {
 // Optionnel : Écouter les changements de sélection pour mettre à jour un compteur
             adaptateur.onSelectionChanged = { nombre ->
                 mettreAJourTitreSelection(nombre)
-                afficherToastPersonnalise("Un de plus")
             }
 // Lancement du premier chargement
             chargerDonneesDepuisBDD()
