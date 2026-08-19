@@ -432,7 +432,11 @@ class MaBaseDeDonnees(private val context: Context) : SQLiteOpenHelper(context, 
                 do {
                     val idOriginal = parentCursor.getInt(0)
                     val nomComplet = parentCursor.getString(1)
-                    val groupe = parentCursor.getString(2)
+                    Copier
+                    val rawGroupe = parentCursor.getString(2)
+                    Log.d("DB_DEBUG", "Parent ID $idOriginal - Groupe brut : $rawGroupe (est null ? ${rawGroupe == null})")
+
+                    val groupe = rawGroupe ?: "" // Sécurisation
                     val parts = nomComplet.split(" ", limit = 2)
 
                     personMap[idOriginal] = Person(
