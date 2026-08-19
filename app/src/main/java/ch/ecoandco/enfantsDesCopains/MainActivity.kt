@@ -185,6 +185,8 @@ class MainActivity : AppCompatActivity() {
                 getListeDonnees = { listeEnfants }, // C'est ici que la magie opère
                 onSupprimer = { idEnfant ->
                     bdd.deleteLine(idEnfant) // Ta fonction existante
+                    chargerDonneesDepuisBDD()
+                    adaptateur.notifyDataSetChanged()
                 }
             )
 

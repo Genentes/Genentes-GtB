@@ -432,7 +432,6 @@ class MaBaseDeDonnees(private val context: Context) : SQLiteOpenHelper(context, 
                 do {
                     val idOriginal = parentCursor.getInt(0)
                     val nomComplet = parentCursor.getString(1)
-                    Copier
                     val rawGroupe = parentCursor.getString(2)
                     Log.d("DB_DEBUG", "Parent ID $idOriginal - Groupe brut : $rawGroupe (est null ? ${rawGroupe == null})")
 
