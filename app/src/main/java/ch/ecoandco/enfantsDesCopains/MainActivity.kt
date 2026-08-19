@@ -100,23 +100,34 @@ class MainActivity : AppCompatActivity() {
             afficherToastPersonnalise("Erreur: ${e.message}")
         }
     }
+
+    // Variable temporaire pour stocker le JSON généré avant l'écriture du fichier
+    private var jsonEnAttenteEcriture: String? = null
+
     // File saver launcher for export
     private val fileSaverLauncher = registerForActivityResult(
         ActivityResultContracts.CreateDocument("application/json")
     ) { uri ->
         if (uri != null) {
-            try {
-                // Get data as JSON string
-                val jsonContent = bdd.exportToJson() // This should return the JSON string directly
-                
-                // Write to the chosen URI
-                contentResolver.openOutputStream(uri)?.use { outputStream ->
-                    outputStream.write(jsonContent.toByteArray())
+            // On récupère le JSON préparé précédemment
+            val jsonContent = jsonEnAttenteEcriture
+
+            if (jsonContent != null && jsonContent.isNotEmpty()) {
+                try {
+                    // Écriture du fichier
+                    contentResolver.openOutputStream(uri)?.use { outputStream ->
+                        outputStream.write(jsonContent.toByteArray())
+                    }
+                    afficherToastPersonnalise("Fichier sauvegardé avec succès")
+                } catch (e: Exception) {
+                    Log.e(TAG, "Erreur lors de la sauvegarde", e)
+                    afficherToastPersonnalise("Erreur: ${e.message}")
+                } finally {
+                    // Nettoyage : on efface la variable après usage
+                    jsonEnAttenteEcriture = null
                 }
-                afficherToastPersonnalise("Fichier sauvegardé avec succès")
-            } catch (e: Exception) {
-                Log.e(TAG, "Erreur lors de la sauvegarde", e)
-                afficherToastPersonnalise("Erreur: ${e.message}")
+            } else {
+                afficherToastPersonnalise("Erreur: Aucune donnée à exporter.")
             }
         }
     }
@@ -174,6 +185,8 @@ class MainActivity : AppCompatActivity() {
                 getListeDonnees = { listeEnfants }, // C'est ici que la magie opère
                 onSupprimer = { idEnfant ->
                     bdd.deleteLine(idEnfant) // Ta fonction existante
+                    chargerDonneesDepuisBDD()
+                    adaptateur.notifyDataSetChanged()
                 }
             )
 
@@ -183,7 +196,6 @@ class MainActivity : AppCompatActivity() {
 // Optionnel : Écouter les changements de sélection pour mettre à jour un compteur
             adaptateur.onSelectionChanged = { nombre ->
                 mettreAJourTitreSelection(nombre)
-                afficherToastPersonnalise("Un de plus")
             }
 // Lancement du premier chargement
             chargerDonneesDepuisBDD()
@@ -337,18 +349,87 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun lancerExportation() : Boolean {
+    private fun lancerExportation(): Boolean {
         try {
-            val timeStamp = SimpleDateFormat("yyyy_MM_dd_HHmmss", Locale.getDefault()).format(Calendar.getInstance().time)
-            val fileName = "anniversaires_export_$timeStamp.json"
-            
-            // Launch file saver to let user choose location
+            // 1. Récupérer TOUTES les personnes depuis la BDD
+            // Assurez-vous d'avoir une fonction dans votre BDD qui renvoie List<Person>
+            val toutesLesPersonnes = bdd.chargerToutesLesPersonnes()
+
+            if (toutesLesPersonnes.isEmpty()) {
+                afficherToastPersonnalise("La base de données est vide.")
+                return false
+            }
+
+            // 2. Pour un export complet, on prend une personne "racine" (ex: la première)
+            // La fonction export() de DataParser se chargera de trouver tous les liens récursifs.
+            val personneRacine = toutesLesPersonnes.first()
+
+            // 3. Générer le JSON complet
+            val jsonContent = DataParser().export(personneRacine)
+
+            if (jsonContent.isEmpty()) {
+                afficherToastPersonnalise("Erreur lors de la génération du JSON.")
+                return false
+            }
+
+            // 4. Stocker dans la variable tampon
+            jsonEnAttenteEcriture = jsonContent
+
+            // 5. Préparer le nom de fichier et lancer la boîte de dialogue
+            val timeStamp = SimpleDateFormat("yyyy_MM_dd_HHmmss", Locale.getDefault())
+                .format(Calendar.getInstance().time)
+            val fileName = "anniversaires_export_complet_$timeStamp.json"
+
             fileSaverLauncher.launch(fileName)
+
+            return true
+
         } catch (e: Exception) {
             Log.e(TAG, "Erreur lors de l'exportation", e)
             afficherToastPersonnalise("Erreur: ${e.message}")
+            return false
         }
-        return true
+    }
+
+    /**
+     * Lance l'exportation pour une liste spécifique d'IDs d'enfants.
+     * Inclut automatiquement les parents trouvés dans la base.
+     *
+     * @param idsEnfantsSelectionnes La liste des IDs des enfants à exporter (ex: listOf(1, 5, 8))
+     */
+    private fun lancerExportationSelection(idsEnfantsSelectionnes: List<Int>) {
+        try {
+            // 1. Récupérer TOUTES les personnes (nécessaire pour retrouver les parents par correspondance)
+            val toutesLesPersonnes = bdd.chargerToutesLesPersonnes()
+
+            if (toutesLesPersonnes.isEmpty()) {
+                afficherToastPersonnalise("La base de données est vide.")
+                return
+            }
+
+            // 2. Appeler la NOUVELLE fonction de DataParser créée précédemment
+            val dataParser = DataParser()
+            val jsonContent = dataParser.exportChildrenWithParents(toutesLesPersonnes, idsEnfantsSelectionnes)
+
+            if (jsonContent.isEmpty() || jsonContent == "[]") {
+                afficherToastPersonnalise("Aucune donnée trouvée pour cette sélection.")
+                return
+            }
+
+            // 3. Stocker dans la variable tampon
+            jsonEnAttenteEcriture = jsonContent
+
+            // 4. Préparer le nom de fichier et lancer la boîte de dialogue
+            val timeStamp = SimpleDateFormat("yyyy_MM_dd_HHmmss", Locale.getDefault())
+                .format(Calendar.getInstance().time)
+            val fileName = "anniversaires_selection_$timeStamp.json"
+
+            fileSaverLauncher.launch(fileName)
+
+        } catch (e: Exception) {
+            Log.e(TAG, "Erreur export sélection", e)
+            afficherToastPersonnalise("Erreur: ${e.message}")
+        }
     }
 
     private fun lancerImportation() : Boolean {
@@ -406,11 +487,13 @@ class MainActivity : AppCompatActivity() {
 
     // Fonction squelette pour l'export (à compléter ensuite)
     private fun exporterSelection(ids: Set<Int>) {
-        afficherToastPersonnalise("Export des éléments ${ids.toString()} .")
-        // TODO: C'est ici que nous coderons la génération du JSON et le partage de fichier
-        // 1. Récupérer les objets complets via bdd.recupererEnfantsParIds(ids)
-        // 2. Créer le JSON
-        // 3. Lancer le Intent de partage
+        afficherToastPersonnalise("Export des éléments : $ids")
+
+        // Conversion simple de Set en List
+        val listeIds: List<Int> = ids.toList()
+
+        // On passe directement la liste
+        lancerExportationSelection(listeIds)
     }
 
     @SuppressLint("SetTextI18n")

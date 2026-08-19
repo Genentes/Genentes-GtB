@@ -25,11 +25,11 @@ class Person(
     val prenom: String,
     val nom: String = "",
     val groupe: String = "",
-    val conjointId: Int? = null,
+    var conjointId: Int? = null,
     var conjoint: Person? = null,
-    val enfantIds: List<Int> = emptyList(),
+    var enfantIds: List<Int> = emptyList(),
     var enfants: List<Person> = emptyList(),
-    val amisIds: List<Int> = emptyList(),
+    var amisIds: List<Int> = emptyList(),
     var amis: List<Person> = emptyList(),
     val dateNaissance: String? = null
 )
@@ -274,5 +274,125 @@ class DataParser {
         }
         
         return result
+    }
+
+    /**
+     * Exporte uniquement une sélection d'enfants et leurs parents directs.
+     * Idéal pour exporter un sous-ensemble de la base sans tout le graphe (amis, etc.).
+     *
+     * @param allPeople Liste complète de toutes les personnes (parents et enfants) issues de la BDD.
+     * @param childIdsToExport Liste des IDs des enfants à exporter.
+     * @return String JSON contenant uniquement les enfants sélectionnés et leurs parents.
+     */
+    fun exportChildrenWithParents(allPeople: List<Person>, childIdsToExport: List<Int>): String {
+        return try {
+            val exportedIds = mutableSetOf<Int>()
+            val peopleToExport = mutableListOf<Person>()
+
+            // 1. Identifier et ajouter les enfants sélectionnés
+            val selectedChildren = allPeople.filter { it.id in childIdsToExport }
+            if (selectedChildren.isEmpty()) {
+                Log.w(TAG, "Aucun enfant trouvé pour les IDs: $childIdsToExport")
+                return "[]"
+            }
+
+            selectedChildren.forEach {
+                if (it.id !in exportedIds) {
+                    exportedIds.add(it.id)
+                    peopleToExport.add(it)
+                }
+            }
+
+            // 2. Retrouver et ajouter les parents directs
+            // On crée une map pour accéder rapidement aux personnes par leur ID
+            val peopleMap = allPeople.associateBy { it.id }
+
+            selectedChildren.forEach { child ->
+                // Vérifier idParent1 (via conjointId ou logique parent)
+                // Dans votre modèle Person, un parent est souvent vu comme un "conjoint" de l'autre parent
+                // ou simplement une personne qui a cet enfant dans sa liste 'enfants'.
+
+                // Approche la plus robuste avec votre modèle Person :
+                // On cherche dans TOUTE la liste qui a cet enfant dans sa liste 'enfantIds' ou 'enfants'.
+                val parents = allPeople.filter { p ->
+                    p.enfantIds.contains(child.id) || p.enfants.any { e -> e.id == child.id }
+                }
+
+                parents.forEach { parent ->
+                    if (parent.id !in exportedIds) {
+                        exportedIds.add(parent.id)
+                        peopleToExport.add(parent)
+
+                        // Optionnel : Ajouter aussi l'autre parent (le conjoint) si on veut le couple complet
+                        parent.conjoint?.let { conjoint ->
+                            if (conjoint.id !in exportedIds) {
+                                exportedIds.add(conjoint.id)
+                                peopleToExport.add(conjoint)
+                            }
+                        }
+                    }
+                }
+            }
+
+            // 3. Générer le JSON pour ce groupe restreint
+            // On réutilise la logique de création d'objet JSON de votre fonction export() existante
+            buildJsonForPeople(peopleToExport.sortedBy { it.id })
+
+        } catch (e: Exception) {
+            Log.e(TAG, "Erreur export sélection enfants", e)
+            "[]"
+        }
+    }
+
+    /**
+     * Fonction helper privée qui contient la logique de création du JSON.
+     * Extraite de la fonction export() pour être réutilisée ici.
+     */
+    private fun buildJsonForPeople(people: List<Person>): String {
+        val array = mutableListOf<JSONObject>()
+
+        for (p in people) {
+            val personJson = JSONObject()
+            personJson.put("id", p.id)
+            personJson.put("prenom", p.prenom)
+            if (p.nom.isNotEmpty()) personJson.put("nom", p.nom)
+            if (p.groupe.isNotEmpty()) personJson.put("groupe", p.groupe)
+            if (p.dateNaissance != null) personJson.put("naissance", p.dateNaissance)
+
+            val relationsJson = JSONObject()
+            var hasRelations = false
+
+            // Conjoint
+            if (p.conjointId != null) {
+                relationsJson.put("conjoint", p.conjointId)
+                hasRelations = true
+            } else if (p.conjoint != null) {
+                relationsJson.put("conjoint", p.conjoint!!.id)
+                hasRelations = true
+            }
+            // Enfants
+            if (p.enfantIds.isNotEmpty()) {
+                relationsJson.put("enfants", JSONArray(p.enfantIds))
+                hasRelations = true
+            } else if (p.enfants.isNotEmpty()) {
+                relationsJson.put("enfants", JSONArray(p.enfants.map { it.id }))
+                hasRelations = true
+            }
+            // Amis (inclus si présents, même si on n'a pas sélectionné les amis explicitement)
+            if (p.amisIds.isNotEmpty()) {
+                relationsJson.put("amis", JSONArray(p.amisIds))
+                hasRelations = true
+            } else if (p.amis.isNotEmpty()) {
+                relationsJson.put("amis", JSONArray(p.amis.map { it.id }))
+                hasRelations = true
+            }
+
+            if (hasRelations) {
+                personJson.put("relations", relationsJson)
+            }
+            array.add(personJson)
+        }
+
+        return "[\n" + array.joinToString(",\n") { "  " + it.toString() } + "]"
     }
 }
