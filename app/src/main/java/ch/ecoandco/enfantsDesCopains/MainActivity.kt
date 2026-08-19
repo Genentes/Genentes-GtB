@@ -409,17 +409,51 @@ class MainActivity : AppCompatActivity() {
 
             // 2. Appeler la NOUVELLE fonction de DataParser créée précédemment
             val dataParser = DataParser()
-            val jsonContent = dataParser.exportChildrenWithParents(toutesLesPersonnes, idsEnfantsSelectionnes)
+            val jsonTest = dataParser.exportChildrenWithParents(toutesLesPersonnes, idsEnfantsSelectionnes)
 
-            if (jsonContent.isEmpty() || jsonContent == "[]") {
+            if (jsonTest.isEmpty() || jsonTest == "[]") {
                 afficherToastPersonnalise("Aucune donnée trouvée pour cette sélection.")
                 return
             }
 
-            // 3. Stocker dans la variable tampon
+            android.app.AlertDialog.Builder(this)
+                .setTitle("Action pour la sélection")
+                .setMessage("Que souhaitez-vous faire des éléments sélectionnés ?")
+                .setPositiveButton("Exporter en fichier JSON") { _, _ ->
+                    // CHOIX A : Lancer l'exportation vers fichier (votre logique actuelle)
+                    preparerEtLancerExportFichier(idsEnfantsSelectionnes, toutesLesPersonnes)
+                }
+                .setNegativeButton("Changer de catégorie") { _, _ ->
+                    // CHOIX B : Lancer la logique de changement de catégorie
+                    lancerChangementCategorie(idsEnfantsSelectionnes)
+                }
+                .setNeutralButton("Annuler", null) // Ferme simplement la boîte
+                .show()
+
+        } catch (e: Exception) {
+            Log.e(TAG, "Erreur préparation sélection", e)
+            afficherToastPersonnalise("Erreur: ${e.message}")
+        }
+    }
+
+
+
+    /**
+     * Contient l'ancienne logique d'exportation vers fichier.
+     * Elle reçoit les données déjà validées pour éviter de les recharger.
+     */
+    private fun preparerEtLancerExportFichier(
+        idsEnfantsSelectionnes: List<Int>,
+        toutesLesPersonnes: List<Personne> // Adaptez le type 'Personne' selon votre modèle réel
+    ) {
+        try {
+            val dataParser = DataParser()
+            val jsonContent = dataParser.exportChildrenWithParents(toutesLesPersonnes, idsEnfantsSelectionnes)
+
+            // Stocker dans la variable tampon
             jsonEnAttenteEcriture = jsonContent
 
-            // 4. Préparer le nom de fichier et lancer la boîte de dialogue
+            // Préparer le nom de fichier et lancer la boîte de dialogue
             val timeStamp = SimpleDateFormat("yyyy_MM_dd_HHmmss", Locale.getDefault())
                 .format(Calendar.getInstance().time)
             val fileName = "anniversaires_selection_$timeStamp.json"
@@ -427,9 +461,24 @@ class MainActivity : AppCompatActivity() {
             fileSaverLauncher.launch(fileName)
 
         } catch (e: Exception) {
-            Log.e(TAG, "Erreur export sélection", e)
-            afficherToastPersonnalise("Erreur: ${e.message}")
+            Log.e(TAG, "Erreur écriture fichier", e)
+            afficherToastPersonnalise("Erreur lors de l'export: ${e.message}")
         }
+    }
+
+    private fun lancerChangementCategorie(idsEnfantsSelectionnes: List<Int>) {
+        // TODO: Implémenter ici la logique pour :
+        // 1. Demander à l'utilisateur quelle catégorie cible choisir (autre AlertDialog ?)
+        // 2. Mettre à jour la BDD pour ces IDs
+        // 3. Rafraîchir l'affichage
+
+        afficherToastPersonnalise("Fonctionnalité 'Changer catégorie' à implémenter pour : $idsEnfantsSelectionnes")
+
+        // Exemple de structure future :
+        // afficherSelecteurCategorie { categorieCible ->
+        //     bdd.mettreAJourCategorie(idsEnfantsSelectionnes, categorieCible)
+        //     rafraichirListe()
+        // }
     }
 
     private fun lancerImportation() : Boolean {
