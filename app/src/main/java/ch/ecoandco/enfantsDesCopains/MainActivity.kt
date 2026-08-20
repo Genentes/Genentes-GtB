@@ -416,18 +416,54 @@ class MainActivity : AppCompatActivity() {
                 return
             }
 
-            android.app.AlertDialog.Builder(this)
+            val context = this // Adaptez si nécessaire (requireContext())
+
+            // 1. Créer le conteneur pour les boutons personnalisés
+            val containerLayout = android.widget.LinearLayout(context).apply {
+                orientation = android.widget.LinearLayout.VERTICAL
+                setPadding(64, 48, 64, 24) // Padding gauche/droite plus large pour centrer visuellement
+            }
+
+            // 2. Fonction locale pour créer un bouton stylisé
+            fun ajouterBoutonAction(texte: String, action: () -> Unit) {
+                val button = android.widget.Button(context).apply {
+                    text = texte
+                    layoutParams = android.widget.LinearLayout.LayoutParams(
+                        android.widget.LinearLayout.LayoutParams.MATCH_PARENT,
+                        android.widget.LinearLayout.LayoutParams.WRAP_CONTENT
+                    ).apply {
+                        topMargin = 24 // Espace entre les boutons
+                        bottomMargin = 0
+                    }
+                    textSize = 16f
+                    // Optionnel : Mettre en gras
+                    setTypeface(null, android.graphics.Typeface.BOLD)
+
+                    setOnClickListener {
+                        action()
+                        // Le dialog se fermera automatiquement car on ne définit pas de comportement de maintien
+                    }
+                }
+                containerLayout.addView(button)
+            }
+
+            // 3. Ajouter les deux options principales
+            ajouterBoutonAction("Exporter en fichier JSON") {
+                preparerEtLancerExportFichier(idsEnfantsSelectionnes, toutesLesPersonnes)
+            }
+
+            ajouterBoutonAction("Changer de catégorie") {
+                lancerChangementCategorie(idsEnfantsSelectionnes)
+            }
+
+            // 4. Construire l'AlertDialog
+            android.app.AlertDialog.Builder(context)
                 .setTitle("Action pour la sélection")
                 .setMessage("Que souhaitez-vous faire des éléments sélectionnés ?")
-                .setPositiveButton("Exporter en fichier JSON") { _, _ ->
-                    // CHOIX A : Lancer l'exportation vers fichier (votre logique actuelle)
-                    preparerEtLancerExportFichier(idsEnfantsSelectionnes, toutesLesPersonnes)
+                .setView(containerLayout) // <--- C'est ici qu'on insère nos boutons personnalisés
+                .setNegativeButton("Annuler") { dialog, _ ->
+                    dialog.dismiss()
                 }
-                .setNegativeButton("Changer de catégorie") { _, _ ->
-                    // CHOIX B : Lancer la logique de changement de catégorie
-                    lancerChangementCategorie(idsEnfantsSelectionnes)
-                }
-                .setNeutralButton("Annuler", null) // Ferme simplement la boîte
                 .show()
 
         } catch (e: Exception) {
