@@ -444,7 +444,7 @@ class MainActivity : AppCompatActivity() {
      */
     private fun preparerEtLancerExportFichier(
         idsEnfantsSelectionnes: List<Int>,
-        toutesLesPersonnes: List<Personne> // Adaptez le type 'Personne' selon votre modèle réel
+        toutesLesPersonnes: List<Person> // Adaptez le type 'Personne' selon votre modèle réel
     ) {
         try {
             val dataParser = DataParser()
