@@ -333,6 +333,44 @@ class MainActivity : AppCompatActivity() {
         return true
     }
 
+
+    // Fonction appelée par ton bouton "Sélectionner" (à créer dans ton menu ou layout)
+    private fun lancerModeSelection() : Boolean {
+        adaptateur.activerModeSelection()
+        afficherBarreActionSelection(true)
+        return true
+    }
+
+    // Affiche ou cache la barre avec les boutons "Annuler" et "Exporter"
+    private fun afficherBarreActionSelection(afficher: Boolean) {
+        val layoutSelection = findViewById<View>(R.id.layoutSelection)
+        layoutSelection.visibility = if (afficher) View.VISIBLE else View.GONE
+
+        val layoutBouton = findViewById<View>(R.id.boutonAjouterContainer)
+        layoutBouton.visibility = if (afficher) View.GONE else View.VISIBLE
+
+        if (afficher) {
+            // Bouton Annuler
+            findViewById<Button>(R.id.btnAnnulerSelection).setOnClickListener {
+                adaptateur.desactiverModeSelection()
+                afficherBarreActionSelection(false)
+            }
+
+            // Bouton Exporter
+            findViewById<Button>(R.id.btnExporterSelection).setOnClickListener {
+                val ids = adaptateur.getSelectedIds()
+                if (ids.isEmpty()) {
+                    afficherToastPersonnalise("Aucune donnée sélectionnée")
+                } else {
+                    exporterSelection(ids)
+                    adaptateur.desactiverModeSelection()
+                    afficherBarreActionSelection(false)
+                }
+            }
+            mettreAJourTitreSelection(0)
+        }
+    }
+
     // 2. Gérer le clic sur les éléments
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         return when (item.itemId) {
@@ -390,6 +428,19 @@ class MainActivity : AppCompatActivity() {
             return false
         }
     }
+
+
+    private fun lancerImportation() : Boolean {
+        try {
+            filePickerLauncher.launch("application/json")
+        } catch (e: Exception) {
+            Log.e(TAG, "Erreur lors de l'import", e)
+            afficherToastPersonnalise("Erreur: ${e.message}")
+        }
+        return true
+    }
+
+
 
     /**
      * Lance l'exportation pour une liste spécifique d'IDs d'enfants.
@@ -473,7 +524,6 @@ class MainActivity : AppCompatActivity() {
     }
 
 
-
     /**
      * Contient l'ancienne logique d'exportation vers fichier.
      * Elle reçoit les données déjà validées pour éviter de les recharger.
@@ -517,52 +567,6 @@ class MainActivity : AppCompatActivity() {
         // }
     }
 
-    private fun lancerImportation() : Boolean {
-        try {
-            filePickerLauncher.launch("application/json")
-        } catch (e: Exception) {
-            Log.e(TAG, "Erreur lors de l'import", e)
-            afficherToastPersonnalise("Erreur: ${e.message}")
-        }
-        return true
-    }
-
-    // Fonction appelée par ton bouton "Sélectionner" (à créer dans ton menu ou layout)
-    private fun lancerModeSelection() : Boolean {
-        adaptateur.activerModeSelection()
-        afficherBarreActionSelection(true)
-        return true
-    }
-
-    // Affiche ou cache la barre avec les boutons "Annuler" et "Exporter"
-    private fun afficherBarreActionSelection(afficher: Boolean) {
-        val layoutSelection = findViewById<View>(R.id.layoutSelection)
-        layoutSelection.visibility = if (afficher) View.VISIBLE else View.GONE
-
-        val layoutBouton = findViewById<View>(R.id.boutonAjouterContainer)
-        layoutBouton.visibility = if (afficher) View.GONE else View.VISIBLE
-
-        if (afficher) {
-            // Bouton Annuler
-            findViewById<Button>(R.id.btnAnnulerSelection).setOnClickListener {
-                adaptateur.desactiverModeSelection()
-                afficherBarreActionSelection(false)
-            }
-
-            // Bouton Exporter
-            findViewById<Button>(R.id.btnExporterSelection).setOnClickListener {
-                val ids = adaptateur.getSelectedIds()
-                if (ids.isEmpty()) {
-                    afficherToastPersonnalise("Aucune donnée sélectionnée")
-                } else {
-                    exporterSelection(ids)
-                    adaptateur.desactiverModeSelection()
-                    afficherBarreActionSelection(false)
-                }
-            }
-            mettreAJourTitreSelection(0)
-        }
-    }
 
     // Met à jour le texte "X élément(s) sélectionné(s)"
     private fun mettreAJourTitreSelection(count: Int) {
