@@ -52,13 +52,13 @@ class AnniversaireAdapter(
     fun activerModeSelection() {
         isSelectionMode = true
         selectedIds.clear()
-        notifyDataSetChanged()
+        notifyItemRangeChanged(0, itemCount)
     }
 
     fun desactiverModeSelection() {
         isSelectionMode = false
         selectedIds.clear()
-        notifyDataSetChanged()
+        notifyItemRangeChanged(0, itemCount)
     }
 
     fun getSelectedIds(): Set<Int> {
