@@ -35,7 +35,7 @@ class MaBaseDeDonnees(private val context: Context) : SQLiteOpenHelper(context, 
         Log.d(TAG, "Migration de la version $oldVersion vers $newVersion")
 
         // Gestion pas à pas des migrations
-        // Si on passe de 1 à 2 (ou plus), on exécute le bloc 1->2
+        // Si on passe de 1 à 2 (ou plus), on exécute le bloc 1 puis le 2
         if (oldVersion < 2) {
             try {
                 // Ajout de la colonne 'groupe' à la table 'parents'
@@ -52,7 +52,7 @@ class MaBaseDeDonnees(private val context: Context) : SQLiteOpenHelper(context, 
 
     }
 
-    // --- NOUVELLE FONCTION : Insère des faux données si la table est vide ---
+    // --- NOUVELLE FONCTION : Insère des fausses données si la table est vide ---
     private fun peuplerDonneesTest(db: SQLiteDatabase) {
         try {
             // Vérifions si on a déjà des parents (pour ne pas doubler les données à chaque fois)
@@ -132,7 +132,7 @@ class MaBaseDeDonnees(private val context: Context) : SQLiteOpenHelper(context, 
 
             db.rawQuery(query, null)
         } catch (e: Exception) {
-            Log.e(TAG, "Erreur dans recupererTousLesEnfantsAvecParents", e)
+            Log.e(TAG, "Erreur dans la fonction qui récupère les enfants avec les parents.", e)
             MatrixCursor(arrayOf("enfantPrenom", "dateNaissance", "parent1", "parent2"))
         }
     }
@@ -178,7 +178,7 @@ class MaBaseDeDonnees(private val context: Context) : SQLiteOpenHelper(context, 
                     putNull("idParent2")
                 }
             }
-            // Mise à jour : UPDATE Enfant SET idParent1=?, idParent2=? WHERE id=?
+            // Mise à jour : UPDATE Enfant SET idParent1 = ?, idParent2 = ? WHERE id = ?
             val rowsAffected = db.update(
                 "enfants",       // Nom de la table
                 values,         // Les nouvelles valeurs
@@ -283,7 +283,7 @@ class MaBaseDeDonnees(private val context: Context) : SQLiteOpenHelper(context, 
         }
     }
 
-    /* UTILE POUR EXPORTER UNE SELECTION SEULEMENT */
+    /* Utile pour exporter une sélection seulement*/
 
     fun chargerToutesLesPersonnes(): List<Person> {
         val db = this.readableDatabase
@@ -359,7 +359,7 @@ class MaBaseDeDonnees(private val context: Context) : SQLiteOpenHelper(context, 
                         val nouvelleListeEnfants = parent1.enfants + enfant
                         val nouvelleListeIds = parent1.enfantIds + idOriginal
 
-                        // On modifie directement l'objet existant (grâce au 'var')
+                        // On modifie directement l'objet existant (grâce au 'var').
                         parent1.enfants = nouvelleListeEnfants
                         parent1.enfantIds = nouvelleListeIds
                     }
