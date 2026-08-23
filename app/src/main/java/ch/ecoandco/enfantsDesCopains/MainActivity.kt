@@ -125,18 +125,18 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun afficherToastPersonnalise(
-        message: String,
-        duration: Int = Toast.LENGTH_SHORT // Paramètre optionnel avec valeur par défaut
-    ) {
-        // 1. Inflation de la vue personnalisée
+    private fun afficherToastPersonnalise(message: String) {
+        // Inflation de la vue sans l'attacher à un parent (null est correct ici)
+        // On utilise directement la vue inflatée dans le constructeur du Toast
         val layout = LayoutInflater.from(this).inflate(R.layout.custom_toast, null)
 
-        // 2. Configuration du texte
+        // Configuration du texte
         layout.findViewById<TextView>(R.id.toast_text).text = message
 
-        // 3. Création du Toast en passant la durée dynamique
-        Toast(this, layout, duration).apply {
+        // Construction du Toast avec la vue directement
+        Toast(this).apply {
+            view = layout // Utilisation de la propriété 'view' au lieu de la méthode dépréciée 'setView'
+            duration = Toast.LENGTH_SHORT
             setGravity(Gravity.BOTTOM or Gravity.CENTER_HORIZONTAL, 0, 100)
             show()
         }
