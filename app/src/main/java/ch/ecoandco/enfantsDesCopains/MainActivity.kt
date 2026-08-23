@@ -1,4 +1,4 @@
-package ch.ecoandco.enfantsDesCopains // <--- IMPORTANT : Vérifiez que ceci correspond à votre vrai package
+package ch.ecoandco.enfantsDesCopains // --- IMPORTANT : Vérifiez que ceci correspond à votre vrai package
 
 import android.annotation.SuppressLint
 import android.app.AlertDialog
@@ -8,7 +8,6 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import android.database.Cursor
 import android.text.InputType
 import android.util.Log
 import android.view.Gravity
@@ -64,16 +63,13 @@ class MainActivity : AppCompatActivity() {
         ActivityResultContracts.GetContent()
     ) { uri ->
         if (uri != null) {
-            // 1. Affichage de la boîte de dialogue de confirmation
             AlertDialog.Builder(this)
                 .setTitle("Attention : Remplacement des données")
                 .setMessage("L'importation de ce fichier va effacer intégralement votre base de données actuelle. Cette action est irréversible. Voulez-vous vraiment continuer ?")
-                .setIcon(android.R.drawable.ic_dialog_alert)
                 .setPositiveButton("Oui, importer (Effacer tout)") { _, _ ->
-                    // 2. Exécution seulement si l'utilisateur clique sur "Oui"
                     effectuerImport(uri)
                 }
-                .setNegativeButton("Annuler", null) // Le 'null' ferme simplement la boîte sans action
+                .setNegativeButton("Annuler", null)
                 .show()
         }
     }
@@ -101,10 +97,7 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    // Variable temporaire pour stocker le JSON généré avant l'écriture du fichier
     private var jsonEnAttenteEcriture: String? = null
-
-    // File saver launcher for export
     private val fileSaverLauncher = registerForActivityResult(
         ActivityResultContracts.CreateDocument("application/json")
     ) { uri ->
@@ -112,7 +105,7 @@ class MainActivity : AppCompatActivity() {
             // On récupère le JSON préparé précédemment
             val jsonContent = jsonEnAttenteEcriture
 
-            if (jsonContent != null && jsonContent.isNotEmpty()) {
+            if (!jsonContent.isNullOrEmpty()) {
                 try {
                     // Écriture du fichier
                     contentResolver.openOutputStream(uri)?.use { outputStream ->
@@ -132,17 +125,22 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-        private fun afficherToastPersonnalise(message: String) {
-            val layout = LayoutInflater.from(this).inflate(R.layout.custom_toast, null)
-            val textView = layout.findViewById<TextView>(R.id.toast_text)
-            textView.text = message
+    private fun afficherToastPersonnalise(message: String) {
+        // Inflation de la vue sans l'attacher à un parent (null est correct ici)
+        // On utilise directement la vue inflatée dans le constructeur du Toast
+        val layout = LayoutInflater.from(this).inflate(R.layout.custom_toast, null)
 
-            val toast = Toast(this)
-            toast.duration = Toast.LENGTH_SHORT
-            toast.setView(layout)
-            toast.setGravity(Gravity.BOTTOM or Gravity.CENTER_HORIZONTAL, 0, 100)
-            toast.show()
+        // Configuration du texte
+        layout.findViewById<TextView>(R.id.toast_text).text = message
+
+        // Construction du Toast avec la vue directement
+        Toast(this).apply {
+            view = layout // Utilisation de la propriété 'view' au lieu de la méthode dépréciée 'setView'
+            duration = Toast.LENGTH_SHORT
+            setGravity(Gravity.BOTTOM or Gravity.CENTER_HORIZONTAL, 0, 100)
+            show()
         }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         try {
@@ -203,7 +201,7 @@ class MainActivity : AppCompatActivity() {
             val boutonAjouter = findViewById<Button>(R.id.boutonAjouter)
 
             boutonAjouter.setOnClickListener {
-                // 1. Créer le contexte et l'inflateur pour la vue personnalisée
+                // 1. Créer le contexte pour la vue personnalisée
                 val context = this
 
                 // 2. Créer un Layout linéaire vertical dynamiquement (conteneur des champs)
@@ -250,7 +248,7 @@ class MainActivity : AppCompatActivity() {
                             // 2. LE STOCKER dans la variable membre de la classe
                             selectedTimestamp = tempCalendar.timeInMillis
 
-                            // 3. Afficher la date lisible pour l'utilisateur (optionnel mais recommandé)
+                            // 3. Afficher la date lisible pour l'utilisateur (optionnel, mais recommandé)
                             val formattedDate = "$selectedDay/${selectedMonth + 1}/$selectedYear"
                             etDate.setText(formattedDate)
                         },
@@ -266,11 +264,10 @@ class MainActivity : AppCompatActivity() {
                 AlertDialog.Builder(context)
                     .setTitle("Ajouter un enfant")
                     .setView(layout)
-                    .setPositiveButton("Enregistrer") { dialog, which ->
+                    .setPositiveButton("Enregistrer") { _, _ ->
                         // Récupération des valeurs
                         val prenom = etPrenom.text.toString().trim()
 
-                        // Validation simple
                         if (prenom.isNotEmpty() && selectedTimestamp != 0L) {
                             // Appel de votre fonction d'ajout (à adapter pour inclure la date)
                             val rowId = bdd.ajouterEnfant(prenom, selectedTimestamp)
@@ -290,8 +287,7 @@ class MainActivity : AppCompatActivity() {
                     .show()
             }
 
-            val fleche = getString(R.string.symbol_arrow_down) // Ou "▼" en dur si vous préférez
-            headerEnfant.text = getString(R.string.label_enfant) + "$fleche"
+            headerEnfant.text = getString(R.string.label_enfantArrow)
 
             headerEnfant.setOnClickListener {
                 chargerDonneesDepuisBDD("enfant")
@@ -333,7 +329,43 @@ class MainActivity : AppCompatActivity() {
         return true
     }
 
-    // 2. Gérer le clic sur les éléments
+    // Fonction appelée par ton bouton "Sélectionner" (à créer dans ton menu ou layout)
+    private fun lancerModeSelection() : Boolean {
+        adaptateur.activerModeSelection()
+        afficherBarreActionSelection(true)
+        return true
+    }
+
+    // Affiche ou cache la barre avec les boutons "Annuler" et "Exporter"
+    private fun afficherBarreActionSelection(afficher: Boolean) {
+        val layoutSelection = findViewById<View>(R.id.layoutSelection)
+        layoutSelection.visibility = if (afficher) View.VISIBLE else View.GONE
+
+        val layoutBouton = findViewById<View>(R.id.boutonAjouterContainer)
+        layoutBouton.visibility = if (afficher) View.GONE else View.VISIBLE
+
+        if (afficher) {
+            // Bouton Annuler
+            findViewById<Button>(R.id.btnAnnulerSelection).setOnClickListener {
+                adaptateur.desactiverModeSelection()
+                afficherBarreActionSelection(false)
+            }
+
+            // Bouton Exporter
+            findViewById<Button>(R.id.btnExporterSelection).setOnClickListener {
+                val ids = adaptateur.getSelectedIds()
+                if (ids.isEmpty()) {
+                    afficherToastPersonnalise("Aucune donnée sélectionnée")
+                } else {
+                    exporterSelection(ids)
+                    adaptateur.desactiverModeSelection()
+                    afficherBarreActionSelection(false)
+                }
+            }
+            mettreAJourTitreSelection(0)
+        }
+    }
+
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         return when (item.itemId) {
             R.id.action_export -> {
@@ -351,8 +383,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun lancerExportation(): Boolean {
         try {
-            // 1. Récupérer TOUTES les personnes depuis la BDD
-            // Assurez-vous d'avoir une fonction dans votre BDD qui renvoie List<Person>
+            // 1. Récupérer toutes les personnes depuis la BDD
             val toutesLesPersonnes = bdd.chargerToutesLesPersonnes()
 
             if (toutesLesPersonnes.isEmpty()) {
@@ -360,7 +391,7 @@ class MainActivity : AppCompatActivity() {
                 return false
             }
 
-            // 2. Pour un export complet, on prend une personne "racine" (ex: la première)
+            // 2. Pour un export complet, on prend une personne "racine" (ex : la première)
             // La fonction export() de DataParser se chargera de trouver tous les liens récursifs.
             val personneRacine = toutesLesPersonnes.first()
 
@@ -383,7 +414,6 @@ class MainActivity : AppCompatActivity() {
             fileSaverLauncher.launch(fileName)
 
             return true
-
         } catch (e: Exception) {
             Log.e(TAG, "Erreur lors de l'exportation", e)
             afficherToastPersonnalise("Erreur: ${e.message}")
@@ -391,15 +421,27 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+
+    private fun lancerImportation() : Boolean {
+        try {
+            filePickerLauncher.launch("application/json")
+        } catch (e: Exception) {
+            Log.e(TAG, "Erreur lors de l'import", e)
+            afficherToastPersonnalise("Erreur: ${e.message}")
+        }
+        return true
+    }
+
+
     /**
      * Lance l'exportation pour une liste spécifique d'IDs d'enfants.
      * Inclut automatiquement les parents trouvés dans la base.
      *
-     * @param idsEnfantsSelectionnes La liste des IDs des enfants à exporter (ex: listOf(1, 5, 8))
+     * @param idsEnfantsSelectionnes La liste des IDs des enfants à exporter (ex : listOf(1, 5, 8))
      */
     private fun lancerExportationSelection(idsEnfantsSelectionnes: List<Int>) {
         try {
-            // 1. Récupérer TOUTES les personnes (nécessaire pour retrouver les parents par correspondance)
+            // 1. Récupérer toutes les personnes (nécessaire pour retrouver les parents par correspondance)
             val toutesLesPersonnes = bdd.chargerToutesLesPersonnes()
 
             if (toutesLesPersonnes.isEmpty()) {
@@ -419,18 +461,18 @@ class MainActivity : AppCompatActivity() {
             val context = this // Adaptez si nécessaire (requireContext())
 
             // 1. Créer le conteneur pour les boutons personnalisés
-            val containerLayout = android.widget.LinearLayout(context).apply {
-                orientation = android.widget.LinearLayout.VERTICAL
+            val containerLayout = LinearLayout(context).apply {
+                orientation = LinearLayout.VERTICAL
                 setPadding(64, 48, 64, 24) // Padding gauche/droite plus large pour centrer visuellement
             }
 
             // 2. Fonction locale pour créer un bouton stylisé
             fun ajouterBoutonAction(texte: String, action: () -> Unit) {
-                val button = android.widget.Button(context).apply {
+                val button = Button(context).apply {
                     text = texte
-                    layoutParams = android.widget.LinearLayout.LayoutParams(
-                        android.widget.LinearLayout.LayoutParams.MATCH_PARENT,
-                        android.widget.LinearLayout.LayoutParams.WRAP_CONTENT
+                    layoutParams = LinearLayout.LayoutParams(
+                        LinearLayout.LayoutParams.MATCH_PARENT,
+                        LinearLayout.LayoutParams.WRAP_CONTENT
                     ).apply {
                         topMargin = 24 // Espace entre les boutons
                         bottomMargin = 0
@@ -441,26 +483,26 @@ class MainActivity : AppCompatActivity() {
 
                     setOnClickListener {
                         action()
-                        // Le dialog se fermera automatiquement car on ne définit pas de comportement de maintien
+                        // Le dialog se fermera automatiquement, car on ne définit pas de comportement de maintien
                     }
                 }
                 containerLayout.addView(button)
             }
 
             // 3. Ajouter les deux options principales
-            ajouterBoutonAction("Exporter en fichier JSON") {
+            ajouterBoutonAction("Partager la sélection (fichier JSON)") {
                 preparerEtLancerExportFichier(idsEnfantsSelectionnes, toutesLesPersonnes)
             }
 
-            ajouterBoutonAction("Changer de catégorie") {
+            ajouterBoutonAction("-> Changer de catégorie") {
                 lancerChangementCategorie(idsEnfantsSelectionnes)
             }
 
             // 4. Construire l'AlertDialog
-            android.app.AlertDialog.Builder(context)
+            AlertDialog.Builder(context)
                 .setTitle("Action pour la sélection")
                 .setMessage("Que souhaitez-vous faire des éléments sélectionnés ?")
-                .setView(containerLayout) // <--- C'est ici qu'on insère nos boutons personnalisés
+                .setView(containerLayout) // < C'est ici qu'on insère nos boutons personnalisés
                 .setNegativeButton("Annuler") { dialog, _ ->
                     dialog.dismiss()
                 }
@@ -471,7 +513,6 @@ class MainActivity : AppCompatActivity() {
             afficherToastPersonnalise("Erreur: ${e.message}")
         }
     }
-
 
 
     /**
@@ -511,66 +552,20 @@ class MainActivity : AppCompatActivity() {
         afficherToastPersonnalise("Fonctionnalité 'Changer catégorie' à implémenter pour : $idsEnfantsSelectionnes")
 
         // Exemple de structure future :
-        // afficherSelecteurCategorie { categorieCible ->
+        // afficherSelectionCategorie { categorieCible >
         //     bdd.mettreAJourCategorie(idsEnfantsSelectionnes, categorieCible)
         //     rafraichirListe()
         // }
     }
 
-    private fun lancerImportation() : Boolean {
-        try {
-            filePickerLauncher.launch("application/json")
-        } catch (e: Exception) {
-            Log.e(TAG, "Erreur lors de l'import", e)
-            afficherToastPersonnalise("Erreur: ${e.message}")
-        }
-        return true
-    }
-
-    // Fonction appelée par ton bouton "Sélectionner" (à créer dans ton menu ou layout)
-    private fun lancerModeSelection() : Boolean {
-        adaptateur.activerModeSelection()
-        afficherBarreActionSelection(true)
-        return true
-    }
-
-    // Affiche ou cache la barre avec les boutons "Annuler" et "Exporter"
-    private fun afficherBarreActionSelection(afficher: Boolean) {
-        val layoutSelection = findViewById<View>(R.id.layoutSelection)
-        layoutSelection.visibility = if (afficher) View.VISIBLE else View.GONE
-
-        val layoutBouton = findViewById<View>(R.id.boutonAjouterContainer)
-        layoutBouton.visibility = if (afficher) View.GONE else View.VISIBLE
-
-        if (afficher) {
-            // Bouton Annuler
-            findViewById<Button>(R.id.btnAnnulerSelection).setOnClickListener {
-                adaptateur.desactiverModeSelection()
-                afficherBarreActionSelection(false)
-            }
-
-            // Bouton Exporter
-            findViewById<Button>(R.id.btnExporterSelection).setOnClickListener {
-                val ids = adaptateur.getSelectedIds()
-                if (ids.isEmpty()) {
-                    afficherToastPersonnalise("Aucune donnée sélectionnée")
-                } else {
-                    exporterSelection(ids)
-                    adaptateur.desactiverModeSelection()
-                    afficherBarreActionSelection(false)
-                }
-            }
-            mettreAJourTitreSelection(0)
-        }
-    }
 
     // Met à jour le texte "X élément(s) sélectionné(s)"
     private fun mettreAJourTitreSelection(count: Int) {
         val textView = findViewById<TextView>(R.id.textTitreSelection)
-        textView.text = "$count élément(s) sélectionné(s)"
+        textView.text = getString(R.string.message_nombre_selection, count)
     }
 
-    // Fonction squelette pour l'export (à compléter ensuite)
+    // Fonction squelette pour l'export
     private fun exporterSelection(ids: Set<Int>) {
         afficherToastPersonnalise("Export des éléments : $ids")
 
@@ -610,13 +605,10 @@ class MainActivity : AppCompatActivity() {
                 textSize = 14f
                 setTypeface(null, android.graphics.Typeface.BOLD) // Mettre en gras
                 setPadding(0, 40, 0, 8) // Marge haut (40), Bas (8) pour coller un peu au spinner
-                // Si votre app supporte les thèmes sombres/clair, évitez de coder la couleur en dur,
-                // sinon vous pouvez ajouter: setTextColor(Color.BLACK) ou une ressource de couleur
-            }
+                }
 
 // --- 2. Création du Spinner (Votre code existant) ---
             val spinnerCategorie = Spinner(context).apply {
-                // 1. Définir les options disponibles
                 val categories = arrayOf("copains", "famille", "travail", "autre")
 
                 // 2. Créer l'adaptateur pour afficher la liste (layout simple natif Android)
@@ -649,16 +641,16 @@ class MainActivity : AppCompatActivity() {
             AlertDialog.Builder(context)
                 .setTitle("Informations des parents")
                 .setView(layout)
-                .setPositiveButton("Enregistrer") { dialog, which ->
+                .setPositiveButton("Enregistrer") { _, _ ->
                     try {
-                        val Parent1 = etParent1.text.toString().trim()
+                        val parent1 = etParent1.text.toString().trim()
 
-                        if (Parent1.isNotEmpty()) {
+                        if (parent1.isNotEmpty()) {
 
-                            val CategorieSelectionnee = spinnerCategorie.selectedItem.toString().trim()
+                            val categorieSelectionnee = spinnerCategorie.selectedItem.toString().trim()
 
                             // 1. Insertion Parent 1
-                            val idParent1 = bdd.ajouterParent(nomComplet = Parent1, groupe = CategorieSelectionnee)
+                            val idParent1 = bdd.ajouterParent(nomComplet = parent1, groupe = categorieSelectionnee)
 
                             if (idParent1 == -1L) {
                                 throw Exception("Échec insertion Parent 1 (Vérifiez la table 'Parents')")
@@ -666,11 +658,11 @@ class MainActivity : AppCompatActivity() {
 
 
                             // 2. Insertion Parent 2 (Optionnel)
-                            val Parent2 = etParent2.text.toString().trim()
+                            val parent2 = etParent2.text.toString().trim()
                             var idParent2: Long? = null
 
-                            if (Parent2.isNotEmpty()) {
-                                idParent2 = bdd.ajouterParent(nomComplet =Parent2, groupe = CategorieSelectionnee)
+                            if (parent2.isNotEmpty()) {
+                                idParent2 = bdd.ajouterParent(nomComplet =parent2, groupe = categorieSelectionnee)
                                 if (idParent2 == -1L) {
                                     throw Exception("Échec insertion Parent 2")
                                 }
@@ -681,7 +673,7 @@ class MainActivity : AppCompatActivity() {
                             val success = bdd.mettreAJourParentsEnfant(idEnfant, idParent1, idParent2)
 
                             if (success) {
-                                val message = "Parents enregistrés avec succès - ${CategorieSelectionnee}."
+                                val message = "Parents enregistrés avec succès - ${categorieSelectionnee}."
                                 afficherToastPersonnalise(message)
                                 chargerDonneesDepuisBDD()
                             } else {
@@ -693,7 +685,6 @@ class MainActivity : AppCompatActivity() {
                         }
 
                     } catch (e: Exception) {
-                        // C'EST ICI QUE VOUS VERREZ L'ERREUR SANS PLANTER
                         Log.e(TAG, "Erreur pendant l'enregistrement des parents", e)
                         afficherToastPersonnalise("Erreur : ${e.message}")
                     }
@@ -721,14 +712,13 @@ class MainActivity : AppCompatActivity() {
             }
 
             // Exécuter la requête SQL (avec les JOIN)
-            val curseur: Cursor = bdd.recupererTousLesEnfantsAvecParents(argumentTri, groupeAUtiliser)
-            try {
-                // Parcourir le curseur ligne par ligne (comme un while(fetch) en PHP)
+            bdd.recupererTousLesEnfantsAvecParents(argumentTri, groupeAUtiliser).use { curseur ->
+                // Parcourir le curseur ligne par ligne
                 while (curseur.moveToNext()) {
                     // Récupération des colonnes par leur nom (défini dans le SQL avec AS)
-                   val idEnfant = curseur.getInt(
-                       curseur.getColumnIndexOrThrow("enfantId")
-                   )
+                    val idEnfant = curseur.getInt(
+                        curseur.getColumnIndexOrThrow("enfantId")
+                    )
 
                     val prenomEnfant = curseur.getString(
                         curseur.getColumnIndexOrThrow("enfantPrenom")
@@ -745,7 +735,7 @@ class MainActivity : AppCompatActivity() {
 
                     // On récupère parent2, s'il est null dans la BDD, on met une chaîne vide
                     val indexParent2 = curseur.getColumnIndex("parent2")
-                    val parent2 = if (!curseur.isNull(indexParent2)) {
+                    val parent2 = if (indexParent2 != -1 && !curseur.isNull(indexParent2)) {
                         curseur.getString(indexParent2)
                     } else {
                         ""
@@ -768,15 +758,13 @@ class MainActivity : AppCompatActivity() {
                         )
                     )
                 }
+
                 if (argumentGroupe != null && argumentGroupe != "null") {
                     this.groupeActive = argumentGroupe
                 }
                 mettreAJourIndicateursTri(colonneAUtiliser)
             }
-            finally {
-                // IMPORTANT : Toujours fermer le curseur pour libérer la mémoire
-                curseur.close()
-            }
+            // Le curseur est automatiquement fermé ici par use()
 
 
             // Optionnel : Afficher un message si la liste est vide (débug)
@@ -791,13 +779,12 @@ class MainActivity : AppCompatActivity() {
         }
         catch(e : Exception)
         {
-            Log.e(TAG, "Erreur dans chargerDonneesDepuisBDD", e)
+            Log.e(TAG, "Erreur dans la fonction qui charge les données.", e)
             afficherToastPersonnalise(e.message ?: "Une erreur est survenue lors du chargement des données")
         }
     }
 
     private fun mettreAJourIndicateursTri(colonneActive: String) {
-        val fleche = getString(R.string.symbol_arrow_down) // Ou "▼" en dur si vous préférez
 
         colonneTri = colonneActive
 
@@ -807,15 +794,21 @@ class MainActivity : AppCompatActivity() {
             "autre" -> R.string.label_parents_autre
             else -> R.string.label_parents_copains // Cas null ou défaut
         }
+        val idStringTitreArrow = when (groupeActive) {
+            "famille" -> R.string.label_parents_familleArrow
+            "travail" -> R.string.label_parents_travailArrow
+            "autre" -> R.string.label_parents_autreArrow
+            else -> R.string.label_parents_copainsArrow // Cas null ou défaut
+        }
 
         headerEnfant.text = getString(R.string.label_enfant)
         headerParents.text = getString(idStringTitre)
         headerDate.text = getString(R.string.label_date)
         // 1. Réinitialiser tous les headers sans flèche
         val texteAvecFleche = when (colonneActive) {
-            "enfant" -> getString(R.string.label_enfant) + " $fleche"
-            "parents" -> getString(idStringTitre) + " $fleche"
-            "date"    -> getString(R.string.label_date) + " $fleche"
+            "enfant" -> getString(R.string.label_enfantArrow)
+            "parents" -> getString(idStringTitreArrow)
+            "date"    -> getString(R.string.label_dateArrow)
             else      -> ""
         }
         when (colonneActive) {

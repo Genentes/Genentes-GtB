@@ -47,18 +47,18 @@ class DataParser {
 
     /**
      * Parse une chaîne JSON pour extraire les données des personnes
-     * Utilise une approche en deux passes:
-     *   1. Première passe: Parse tous les IDs de référence (conjointId, enfantIds, amisIds)
-     *   2. Deuxième passe: Résout ces IDs en objets Person réels
+     * Utilise une approche en deux passes :
+     *   1. Première passe : Parse tous les IDs de référence (conjointId, enfantIds, amisIds)
+     *   2. Deuxième passe : Résout ces IDs en objets Person réels
      * 
-     * @param jsonString Contenu JSON à parser (format: tableau de personnes)
+     * @param jsonString Contenu JSON à parser (format : tableau de personnes)
      * @return L'objet Person avec id=0 (représentant "Moi") avec toutes ses relations résolues
      */
     fun import(jsonString: String): Person? {
         return try {
             val jsonArray = JSONArray(jsonString)
 
-            // Première passe: Parse tous les objets Person sans résoudre les références
+            // Première passe : Parse tous les objets Person sans résoudre les références
             // Chaque personne est stockée dans une map avec son ID comme clé
             val peopleMap = mutableMapOf<Int, Person>()
             for (i in 0 until jsonArray.length()) {
@@ -67,10 +67,10 @@ class DataParser {
                 peopleMap[person.id] = person
             }
 
-            // Deuxième passe: Résout les IDs de référence en objets Person réels
+            // Deuxième passe : Résout les IDs de référence en objets Person réels
             // Crée d'abord une map des personnes résolues, puis met à jour les références
             val resolvedMap = peopleMap.toMutableMap()
-            for ((id, person) in resolvedMap) {
+            for ((_, person) in resolvedMap) {
                 person.conjoint = person.conjointId?.let { resolvedMap[it] }
                 person.enfants = person.enfantIds.mapNotNull { resolvedMap[it] }
                 person.amis = person.amisIds.mapNotNull { resolvedMap[it] }
@@ -159,7 +159,7 @@ class DataParser {
      * Crée un tableau JSON avec toutes les personnes liées (amis, enfants, conjoint, etc.)
      * Les relations sont stockées comme des IDs, pas comme des objets imbriqués
      * 
-     * @param person La personne à exporter (généralement id=0 "Moi")
+     * @param person est la personne à exporter (généralement id=0 "Moi").
      * @return String contenant le JSON formaté avec indentation (2 espaces)
      */
     fun export(person: Person): String {
@@ -230,7 +230,7 @@ class DataParser {
             }
             
             // Retourne le JSON formaté
-            "[\n" + array.joinToString(",\n") { "  " +it.toString() } + "]"
+            "[\n" + array.joinToString(",\n") { "  $it" } + "]"
         } catch (e: Exception) {
             Log.e(TAG, "Erreur lors de l'export en JSON", e)
             ""
@@ -240,10 +240,10 @@ class DataParser {
     /**
      * Collecte récursivement toutes les personnes liées à une personne donnée
      * Évite les doublons en utilisant un Set des IDs déjà traités
-     * Traverse le graphe complet des relations: conjoint, enfants, amis
+     * Traverse le graphe complet des relations : conjoint, enfants, amis
      * 
      * @param person La personne de départ
-     * @param collected Set des IDs déjà collectés (pour éviter les boucles infinies)
+     * @param collected Set des IDs (pour éviter les boucles infinies)
      * @return Liste complète de toutes les personnes liées
      */
     private fun collectAllPeople(person: Person, collected: MutableSet<Int>): List<Person> {
@@ -302,10 +302,6 @@ class DataParser {
                     peopleToExport.add(it)
                 }
             }
-
-            // 2. Retrouver et ajouter les parents directs
-            // On crée une map pour accéder rapidement aux personnes par leur ID
-            val peopleMap = allPeople.associateBy { it.id }
 
             selectedChildren.forEach { child ->
                 // Vérifier idParent1 (via conjointId ou logique parent)
@@ -393,6 +389,6 @@ class DataParser {
             array.add(personJson)
         }
 
-        return "[\n" + array.joinToString(",\n") { "  " + it.toString() } + "]"
+        return "[\n" + array.joinToString(",\n") { "  $it" } + "]"
     }
 }

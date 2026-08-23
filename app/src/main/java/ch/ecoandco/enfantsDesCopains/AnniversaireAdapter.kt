@@ -19,7 +19,7 @@ import android.widget.CheckBox
 
 
 // 1. Une petite classe "modèle" pour transporter les données d'une ligne
-// C'est plus propre que de passer un Cursor directement à l'adapter
+// C'est plus propre que de passer un Cursor directement à l'adapter.
 data class LigneAnniversaire(
     val idEnfant: Int,
     val prenomEnfant: String,
@@ -44,10 +44,10 @@ class AnniversaireAdapter(
 
     private val selectedIds = HashSet<Int>()
 
-    // Callback pour prévenir l'Activity quand le nombre de sélectionnés change
+    // Callback pour prévenir l'Activity quand le nombre de personnes sélectionnées change.
     var onSelectionChanged: ((Int) -> Unit)? = null
 
-    // --- MÉTHODES PUBLIQUES DE CONTRÔLE ---
+    // --- MÉTHODES DE CONTRÔLE ---
 
     fun activerModeSelection() {
         isSelectionMode = true
@@ -100,7 +100,7 @@ class AnniversaireAdapter(
                 addView(TextView(parent.context).apply { id = R.id.textParents })
                 addView(TextView(parent.context).apply { id = R.id.textDate })
                 // Ajout manuel d'une checkbox pour le fallback si nécessaire,
-                // mais ici on suppose que le XML principal est corrigé.
+                // mais ici, on suppose que le XML principal est corrigé.
             }
             MonViewHolder(fallbackView)
         }
@@ -127,7 +127,7 @@ class AnniversaireAdapter(
                 holder.checkBox.isChecked = selectedIds.contains(elementActuel.idEnfant)
 
                 // On définit le listener de la checkbox
-                holder.checkBox.setOnCheckedChangeListener { _, isChecked ->
+                holder.checkBox.setOnCheckedChangeListener { _, _ ->
                     toggleSelection(elementActuel.idEnfant, position)
                 }
 
@@ -136,7 +136,7 @@ class AnniversaireAdapter(
                     holder.checkBox.isChecked = !holder.checkBox.isChecked
                 }
 
-                // On désactive le clic long en mode sélection
+                // On désactive le clic-long en mode sélection
                 holder.itemView.setOnLongClickListener(null)
 
             } else {
@@ -163,7 +163,7 @@ class AnniversaireAdapter(
                     true
                 }
 
-                // En mode normal, le clic court ne fait rien (ou peut lancer un détail si tu veux)
+                // En mode normal, le clic-court ne fait rien (ou peut lancer un détail si tu veux).
                 holder.itemView.setOnClickListener(null)
             }
 
