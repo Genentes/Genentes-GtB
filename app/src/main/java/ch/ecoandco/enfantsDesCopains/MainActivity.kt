@@ -64,16 +64,13 @@ class MainActivity : AppCompatActivity() {
         ActivityResultContracts.GetContent()
     ) { uri ->
         if (uri != null) {
-            // 1. Affichage de la boîte de dialogue de confirmation
             AlertDialog.Builder(this)
                 .setTitle("Attention : Remplacement des données")
                 .setMessage("L'importation de ce fichier va effacer intégralement votre base de données actuelle. Cette action est irréversible. Voulez-vous vraiment continuer ?")
-                .setIcon(android.R.drawable.ic_dialog_alert)
                 .setPositiveButton("Oui, importer (Effacer tout)") { _, _ ->
-                    // 2. Exécution seulement si l'utilisateur clique sur "Oui"
                     effectuerImport(uri)
                 }
-                .setNegativeButton("Annuler", null) // Le 'null' ferme simplement la boîte sans action
+                .setNegativeButton("Annuler", null)
                 .show()
         }
     }
@@ -101,10 +98,7 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    // Variable temporaire pour stocker le JSON généré avant l'écriture du fichier
     private var jsonEnAttenteEcriture: String? = null
-
-    // File saver launcher for export
     private val fileSaverLauncher = registerForActivityResult(
         ActivityResultContracts.CreateDocument("application/json")
     ) { uri ->
@@ -266,11 +260,10 @@ class MainActivity : AppCompatActivity() {
                 AlertDialog.Builder(context)
                     .setTitle("Ajouter un enfant")
                     .setView(layout)
-                    .setPositiveButton("Enregistrer") { dialog, which ->
+                    .setPositiveButton("Enregistrer") { _, _ ->
                         // Récupération des valeurs
                         val prenom = etPrenom.text.toString().trim()
 
-                        // Validation simple
                         if (prenom.isNotEmpty() && selectedTimestamp != 0L) {
                             // Appel de votre fonction d'ajout (à adapter pour inclure la date)
                             val rowId = bdd.ajouterEnfant(prenom, selectedTimestamp)
@@ -333,7 +326,6 @@ class MainActivity : AppCompatActivity() {
         return true
     }
 
-
     // Fonction appelée par ton bouton "Sélectionner" (à créer dans ton menu ou layout)
     private fun lancerModeSelection() : Boolean {
         adaptateur.activerModeSelection()
@@ -371,7 +363,6 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    // 2. Gérer le clic sur les éléments
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         return when (item.itemId) {
             R.id.action_export -> {
@@ -390,7 +381,6 @@ class MainActivity : AppCompatActivity() {
     private fun lancerExportation(): Boolean {
         try {
             // 1. Récupérer TOUTES les personnes depuis la BDD
-            // Assurez-vous d'avoir une fonction dans votre BDD qui renvoie List<Person>
             val toutesLesPersonnes = bdd.chargerToutesLesPersonnes()
 
             if (toutesLesPersonnes.isEmpty()) {
@@ -421,7 +411,6 @@ class MainActivity : AppCompatActivity() {
             fileSaverLauncher.launch(fileName)
 
             return true
-
         } catch (e: Exception) {
             Log.e(TAG, "Erreur lors de l'exportation", e)
             afficherToastPersonnalise("Erreur: ${e.message}")
@@ -439,7 +428,6 @@ class MainActivity : AppCompatActivity() {
         }
         return true
     }
-
 
 
     /**
@@ -470,18 +458,18 @@ class MainActivity : AppCompatActivity() {
             val context = this // Adaptez si nécessaire (requireContext())
 
             // 1. Créer le conteneur pour les boutons personnalisés
-            val containerLayout = android.widget.LinearLayout(context).apply {
-                orientation = android.widget.LinearLayout.VERTICAL
+            val containerLayout = LinearLayout(context).apply {
+                orientation = LinearLayout.VERTICAL
                 setPadding(64, 48, 64, 24) // Padding gauche/droite plus large pour centrer visuellement
             }
 
             // 2. Fonction locale pour créer un bouton stylisé
             fun ajouterBoutonAction(texte: String, action: () -> Unit) {
-                val button = android.widget.Button(context).apply {
+                val button = Button(context).apply {
                     text = texte
-                    layoutParams = android.widget.LinearLayout.LayoutParams(
-                        android.widget.LinearLayout.LayoutParams.MATCH_PARENT,
-                        android.widget.LinearLayout.LayoutParams.WRAP_CONTENT
+                    layoutParams = LinearLayout.LayoutParams(
+                        LinearLayout.LayoutParams.MATCH_PARENT,
+                        LinearLayout.LayoutParams.WRAP_CONTENT
                     ).apply {
                         topMargin = 24 // Espace entre les boutons
                         bottomMargin = 0
@@ -499,16 +487,16 @@ class MainActivity : AppCompatActivity() {
             }
 
             // 3. Ajouter les deux options principales
-            ajouterBoutonAction("Exporter en fichier JSON") {
+            ajouterBoutonAction("Partager la sélection (fichier JSON)") {
                 preparerEtLancerExportFichier(idsEnfantsSelectionnes, toutesLesPersonnes)
             }
 
-            ajouterBoutonAction("Changer de catégorie") {
+            ajouterBoutonAction("-> Changer de catégorie") {
                 lancerChangementCategorie(idsEnfantsSelectionnes)
             }
 
             // 4. Construire l'AlertDialog
-            android.app.AlertDialog.Builder(context)
+            AlertDialog.Builder(context)
                 .setTitle("Action pour la sélection")
                 .setMessage("Que souhaitez-vous faire des éléments sélectionnés ?")
                 .setView(containerLayout) // <--- C'est ici qu'on insère nos boutons personnalisés
@@ -574,7 +562,7 @@ class MainActivity : AppCompatActivity() {
         textView.text = "$count élément(s) sélectionné(s)"
     }
 
-    // Fonction squelette pour l'export (à compléter ensuite)
+    // Fonction squelette pour l'export
     private fun exporterSelection(ids: Set<Int>) {
         afficherToastPersonnalise("Export des éléments : $ids")
 
@@ -614,13 +602,10 @@ class MainActivity : AppCompatActivity() {
                 textSize = 14f
                 setTypeface(null, android.graphics.Typeface.BOLD) // Mettre en gras
                 setPadding(0, 40, 0, 8) // Marge haut (40), Bas (8) pour coller un peu au spinner
-                // Si votre app supporte les thèmes sombres/clair, évitez de coder la couleur en dur,
-                // sinon vous pouvez ajouter: setTextColor(Color.BLACK) ou une ressource de couleur
-            }
+                }
 
 // --- 2. Création du Spinner (Votre code existant) ---
             val spinnerCategorie = Spinner(context).apply {
-                // 1. Définir les options disponibles
                 val categories = arrayOf("copains", "famille", "travail", "autre")
 
                 // 2. Créer l'adaptateur pour afficher la liste (layout simple natif Android)
@@ -653,7 +638,7 @@ class MainActivity : AppCompatActivity() {
             AlertDialog.Builder(context)
                 .setTitle("Informations des parents")
                 .setView(layout)
-                .setPositiveButton("Enregistrer") { dialog, which ->
+                .setPositiveButton("Enregistrer") { _, _ ->
                     try {
                         val Parent1 = etParent1.text.toString().trim()
 
@@ -697,7 +682,6 @@ class MainActivity : AppCompatActivity() {
                         }
 
                     } catch (e: Exception) {
-                        // C'EST ICI QUE VOUS VERREZ L'ERREUR SANS PLANTER
                         Log.e(TAG, "Erreur pendant l'enregistrement des parents", e)
                         afficherToastPersonnalise("Erreur : ${e.message}")
                     }
