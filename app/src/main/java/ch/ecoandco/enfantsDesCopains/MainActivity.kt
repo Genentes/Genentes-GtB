@@ -8,7 +8,6 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import android.database.Cursor
 import android.text.InputType
 import android.util.Log
 import android.view.Gravity
@@ -106,7 +105,7 @@ class MainActivity : AppCompatActivity() {
             // On récupère le JSON préparé précédemment
             val jsonContent = jsonEnAttenteEcriture
 
-            if (jsonContent != null && jsonContent.isNotEmpty()) {
+            if (!jsonContent.isNullOrEmpty()) {
                 try {
                     // Écriture du fichier
                     contentResolver.openOutputStream(uri)?.use { outputStream ->
@@ -126,17 +125,22 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-        private fun afficherToastPersonnalise(message: String) {
-            val layout = LayoutInflater.from(this).inflate(R.layout.custom_toast, null)
-            val textView = layout.findViewById<TextView>(R.id.toast_text)
-            textView.text = message
+    private fun afficherToastPersonnalise(
+        message: String,
+        duration: Int = Toast.LENGTH_SHORT // Paramètre optionnel avec valeur par défaut
+    ) {
+        // 1. Inflation de la vue personnalisée
+        val layout = LayoutInflater.from(this).inflate(R.layout.custom_toast, null)
 
-            val toast = Toast(this)
-            toast.duration = Toast.LENGTH_SHORT
-            toast.setView(layout)
-            toast.setGravity(Gravity.BOTTOM or Gravity.CENTER_HORIZONTAL, 0, 100)
-            toast.show()
+        // 2. Configuration du texte
+        layout.findViewById<TextView>(R.id.toast_text).text = message
+
+        // 3. Création du Toast en passant la durée dynamique
+        Toast(this, layout, duration).apply {
+            setGravity(Gravity.BOTTOM or Gravity.CENTER_HORIZONTAL, 0, 100)
+            show()
         }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         try {
@@ -640,14 +644,14 @@ class MainActivity : AppCompatActivity() {
                 .setView(layout)
                 .setPositiveButton("Enregistrer") { _, _ ->
                     try {
-                        val Parent1 = etParent1.text.toString().trim()
+                        val parent1 = etParent1.text.toString().trim()
 
-                        if (Parent1.isNotEmpty()) {
+                        if (parent1.isNotEmpty()) {
 
-                            val CategorieSelectionnee = spinnerCategorie.selectedItem.toString().trim()
+                            val categorieSelectionnee = spinnerCategorie.selectedItem.toString().trim()
 
                             // 1. Insertion Parent 1
-                            val idParent1 = bdd.ajouterParent(nomComplet = Parent1, groupe = CategorieSelectionnee)
+                            val idParent1 = bdd.ajouterParent(nomComplet = parent1, groupe = categorieSelectionnee)
 
                             if (idParent1 == -1L) {
                                 throw Exception("Échec insertion Parent 1 (Vérifiez la table 'Parents')")
@@ -655,11 +659,11 @@ class MainActivity : AppCompatActivity() {
 
 
                             // 2. Insertion Parent 2 (Optionnel)
-                            val Parent2 = etParent2.text.toString().trim()
+                            val parent2 = etParent2.text.toString().trim()
                             var idParent2: Long? = null
 
-                            if (Parent2.isNotEmpty()) {
-                                idParent2 = bdd.ajouterParent(nomComplet =Parent2, groupe = CategorieSelectionnee)
+                            if (parent2.isNotEmpty()) {
+                                idParent2 = bdd.ajouterParent(nomComplet =parent2, groupe = categorieSelectionnee)
                                 if (idParent2 == -1L) {
                                     throw Exception("Échec insertion Parent 2")
                                 }
@@ -670,7 +674,7 @@ class MainActivity : AppCompatActivity() {
                             val success = bdd.mettreAJourParentsEnfant(idEnfant, idParent1, idParent2)
 
                             if (success) {
-                                val message = "Parents enregistrés avec succès - ${CategorieSelectionnee}."
+                                val message = "Parents enregistrés avec succès - ${categorieSelectionnee}."
                                 afficherToastPersonnalise(message)
                                 chargerDonneesDepuisBDD()
                             } else {
@@ -709,14 +713,13 @@ class MainActivity : AppCompatActivity() {
             }
 
             // Exécuter la requête SQL (avec les JOIN)
-            val curseur: Cursor = bdd.recupererTousLesEnfantsAvecParents(argumentTri, groupeAUtiliser)
-            try {
-                // Parcourir le curseur ligne par ligne (comme un while(fetch) en PHP)
+            bdd.recupererTousLesEnfantsAvecParents(argumentTri, groupeAUtiliser).use { curseur ->
+                // Parcourir le curseur ligne par ligne
                 while (curseur.moveToNext()) {
                     // Récupération des colonnes par leur nom (défini dans le SQL avec AS)
-                   val idEnfant = curseur.getInt(
-                       curseur.getColumnIndexOrThrow("enfantId")
-                   )
+                    val idEnfant = curseur.getInt(
+                        curseur.getColumnIndexOrThrow("enfantId")
+                    )
 
                     val prenomEnfant = curseur.getString(
                         curseur.getColumnIndexOrThrow("enfantPrenom")
@@ -733,7 +736,7 @@ class MainActivity : AppCompatActivity() {
 
                     // On récupère parent2, s'il est null dans la BDD, on met une chaîne vide
                     val indexParent2 = curseur.getColumnIndex("parent2")
-                    val parent2 = if (!curseur.isNull(indexParent2)) {
+                    val parent2 = if (indexParent2 != -1 && !curseur.isNull(indexParent2)) {
                         curseur.getString(indexParent2)
                     } else {
                         ""
@@ -756,15 +759,13 @@ class MainActivity : AppCompatActivity() {
                         )
                     )
                 }
+
                 if (argumentGroupe != null && argumentGroupe != "null") {
                     this.groupeActive = argumentGroupe
                 }
                 mettreAJourIndicateursTri(colonneAUtiliser)
             }
-            finally {
-                // IMPORTANT : Toujours fermer le curseur pour libérer la mémoire
-                curseur.close()
-            }
+            // Le curseur est automatiquement fermé ici par use()
 
 
             // Optionnel : Afficher un message si la liste est vide (débug)
