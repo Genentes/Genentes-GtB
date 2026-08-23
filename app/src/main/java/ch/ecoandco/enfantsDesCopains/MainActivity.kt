@@ -180,14 +180,29 @@ class MainActivity : AppCompatActivity() {
 
 // Création de l'adapter avec la référence dynamique à la liste
             adaptateur = AnniversaireAdapter(
-                getListeDonnees = { listeEnfants }, // C'est ici que la magie opère
+                getListeDonnees = { listeEnfants },
                 onSupprimer = { idEnfant ->
-                    bdd.deleteLine(idEnfant) // Ta fonction existante
-                    chargerDonneesDepuisBDD()
-                    adaptateur.notifyDataSetChanged()
+                    // 1. On cherche la position de l'ID dans la liste actuelle
+                    val position = listeEnfants.indexOfFirst { it.idEnfant == idEnfant }
+
+                    // 2. On agit UNIQUEMENT si l'ID a été trouvé (position != -1).
+                    if (position != -1) {
+                        // A. Suppression dans la base de données
+                        bdd.deleteLine(idEnfant)
+
+                        // B. Suppression dans la liste en mémoire (cohérence immédiate)
+                        listeEnfants.removeAt(position)
+
+                        // C. Notification précise à l'adaptateur (Animation fluide)
+                        adaptateur.notifyItemRemoved(position)
+
+                        // Optionnel : Pour animer le glissement des éléments restants vers le haut
+                        adaptateur.notifyItemRangeChanged(position, listeEnfants.size)
+                    } else {
+                        afficherToastPersonnalise("Déjà supprimé")
+                    }
                 }
             )
-
 // Lien entre l'adapter et le RecyclerView
             recyclerView.adapter = adaptateur
 
