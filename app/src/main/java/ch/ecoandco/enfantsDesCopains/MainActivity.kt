@@ -1,4 +1,4 @@
-package ch.ecoandco.enfantsDesCopains // <--- IMPORTANT : Vérifiez que ceci correspond à votre vrai package
+package ch.ecoandco.enfantsDesCopains // --- IMPORTANT : Vérifiez que ceci correspond à votre vrai package
 
 import android.annotation.SuppressLint
 import android.app.AlertDialog
@@ -201,7 +201,7 @@ class MainActivity : AppCompatActivity() {
             val boutonAjouter = findViewById<Button>(R.id.boutonAjouter)
 
             boutonAjouter.setOnClickListener {
-                // 1. Créer le contexte et l'inflateur pour la vue personnalisée
+                // 1. Créer le contexte pour la vue personnalisée
                 val context = this
 
                 // 2. Créer un Layout linéaire vertical dynamiquement (conteneur des champs)
@@ -248,7 +248,7 @@ class MainActivity : AppCompatActivity() {
                             // 2. LE STOCKER dans la variable membre de la classe
                             selectedTimestamp = tempCalendar.timeInMillis
 
-                            // 3. Afficher la date lisible pour l'utilisateur (optionnel mais recommandé)
+                            // 3. Afficher la date lisible pour l'utilisateur (optionnel, mais recommandé)
                             val formattedDate = "$selectedDay/${selectedMonth + 1}/$selectedYear"
                             etDate.setText(formattedDate)
                         },
@@ -287,8 +287,7 @@ class MainActivity : AppCompatActivity() {
                     .show()
             }
 
-            val fleche = getString(R.string.symbol_arrow_down) // Ou "▼" en dur si vous préférez
-            headerEnfant.text = getString(R.string.label_enfant) + "$fleche"
+            headerEnfant.text = getString(R.string.label_enfantArrow)
 
             headerEnfant.setOnClickListener {
                 chargerDonneesDepuisBDD("enfant")
@@ -384,7 +383,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun lancerExportation(): Boolean {
         try {
-            // 1. Récupérer TOUTES les personnes depuis la BDD
+            // 1. Récupérer toutes les personnes depuis la BDD
             val toutesLesPersonnes = bdd.chargerToutesLesPersonnes()
 
             if (toutesLesPersonnes.isEmpty()) {
@@ -392,7 +391,7 @@ class MainActivity : AppCompatActivity() {
                 return false
             }
 
-            // 2. Pour un export complet, on prend une personne "racine" (ex: la première)
+            // 2. Pour un export complet, on prend une personne "racine" (ex : la première)
             // La fonction export() de DataParser se chargera de trouver tous les liens récursifs.
             val personneRacine = toutesLesPersonnes.first()
 
@@ -438,11 +437,11 @@ class MainActivity : AppCompatActivity() {
      * Lance l'exportation pour une liste spécifique d'IDs d'enfants.
      * Inclut automatiquement les parents trouvés dans la base.
      *
-     * @param idsEnfantsSelectionnes La liste des IDs des enfants à exporter (ex: listOf(1, 5, 8))
+     * @param idsEnfantsSelectionnes La liste des IDs des enfants à exporter (ex : listOf(1, 5, 8))
      */
     private fun lancerExportationSelection(idsEnfantsSelectionnes: List<Int>) {
         try {
-            // 1. Récupérer TOUTES les personnes (nécessaire pour retrouver les parents par correspondance)
+            // 1. Récupérer toutes les personnes (nécessaire pour retrouver les parents par correspondance)
             val toutesLesPersonnes = bdd.chargerToutesLesPersonnes()
 
             if (toutesLesPersonnes.isEmpty()) {
@@ -484,7 +483,7 @@ class MainActivity : AppCompatActivity() {
 
                     setOnClickListener {
                         action()
-                        // Le dialog se fermera automatiquement car on ne définit pas de comportement de maintien
+                        // Le dialog se fermera automatiquement, car on ne définit pas de comportement de maintien
                     }
                 }
                 containerLayout.addView(button)
@@ -503,7 +502,7 @@ class MainActivity : AppCompatActivity() {
             AlertDialog.Builder(context)
                 .setTitle("Action pour la sélection")
                 .setMessage("Que souhaitez-vous faire des éléments sélectionnés ?")
-                .setView(containerLayout) // <--- C'est ici qu'on insère nos boutons personnalisés
+                .setView(containerLayout) // < C'est ici qu'on insère nos boutons personnalisés
                 .setNegativeButton("Annuler") { dialog, _ ->
                     dialog.dismiss()
                 }
@@ -553,7 +552,7 @@ class MainActivity : AppCompatActivity() {
         afficherToastPersonnalise("Fonctionnalité 'Changer catégorie' à implémenter pour : $idsEnfantsSelectionnes")
 
         // Exemple de structure future :
-        // afficherSelecteurCategorie { categorieCible ->
+        // afficherSelectionCategorie { categorieCible >
         //     bdd.mettreAJourCategorie(idsEnfantsSelectionnes, categorieCible)
         //     rafraichirListe()
         // }
@@ -563,7 +562,7 @@ class MainActivity : AppCompatActivity() {
     // Met à jour le texte "X élément(s) sélectionné(s)"
     private fun mettreAJourTitreSelection(count: Int) {
         val textView = findViewById<TextView>(R.id.textTitreSelection)
-        textView.text = "$count élément(s) sélectionné(s)"
+        textView.text = getString(R.string.message_nombre_selection, count)
     }
 
     // Fonction squelette pour l'export
@@ -780,13 +779,12 @@ class MainActivity : AppCompatActivity() {
         }
         catch(e : Exception)
         {
-            Log.e(TAG, "Erreur dans chargerDonneesDepuisBDD", e)
+            Log.e(TAG, "Erreur dans la fonction qui charge les données.", e)
             afficherToastPersonnalise(e.message ?: "Une erreur est survenue lors du chargement des données")
         }
     }
 
     private fun mettreAJourIndicateursTri(colonneActive: String) {
-        val fleche = getString(R.string.symbol_arrow_down) // Ou "▼" en dur si vous préférez
 
         colonneTri = colonneActive
 
@@ -796,15 +794,21 @@ class MainActivity : AppCompatActivity() {
             "autre" -> R.string.label_parents_autre
             else -> R.string.label_parents_copains // Cas null ou défaut
         }
+        val idStringTitreArrow = when (groupeActive) {
+            "famille" -> R.string.label_parents_familleArrow
+            "travail" -> R.string.label_parents_travailArrow
+            "autre" -> R.string.label_parents_autreArrow
+            else -> R.string.label_parents_copainsArrow // Cas null ou défaut
+        }
 
         headerEnfant.text = getString(R.string.label_enfant)
         headerParents.text = getString(idStringTitre)
         headerDate.text = getString(R.string.label_date)
         // 1. Réinitialiser tous les headers sans flèche
         val texteAvecFleche = when (colonneActive) {
-            "enfant" -> getString(R.string.label_enfant) + " $fleche"
-            "parents" -> getString(idStringTitre) + " $fleche"
-            "date"    -> getString(R.string.label_date) + " $fleche"
+            "enfant" -> getString(R.string.label_enfantArrow)
+            "parents" -> getString(idStringTitreArrow)
+            "date"    -> getString(R.string.label_dateArrow)
             else      -> ""
         }
         when (colonneActive) {

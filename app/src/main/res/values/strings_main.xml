@@ -7,7 +7,14 @@
     <string name="label_parents_travail">Travail</string>
     <string name="label_parents_autre">Autre</string>
     <string name="label_date">Né.e le</string>
+    <string name="label_enfantArrow">Qui déjà ? ▼</string>
+    <string name="label_parents_copainsArrow">Copains ▼</string>
+    <string name="label_parents_familleArrow">Famille ▼</string>
+    <string name="label_parents_travailArrow">Travail ▼</string>
+    <string name="label_parents_autreArrow">Autre ▼</string>
+    <string name="label_dateArrow">Né.e le ▼</string>
     <string name="label_choixCategorie">À ajouter à la catégorie :</string>
     <string name="symbol_arrow_down">▼</string>
     <string name="main_button_add">Ajouter un enfant</string>
+    <string name="message_nombre_selection">%d élément(s) sélectionné(s)</string>
 </resources>
