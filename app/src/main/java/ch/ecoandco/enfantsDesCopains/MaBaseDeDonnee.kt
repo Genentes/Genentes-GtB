@@ -129,7 +129,6 @@ class MaBaseDeDonnees(private val context: Context) : SQLiteOpenHelper(context, 
             WHERE $groupeTri
             ORDER BY $colonneTri 
         """.trimIndent()
-            android.util.Log.d("DEBUG_SQL", "Requête générée : $query")
 
             db.rawQuery(query, null)
         } catch (e: Exception) {
@@ -206,20 +205,6 @@ class MaBaseDeDonnees(private val context: Context) : SQLiteOpenHelper(context, 
         }
     }
 
-    /**
-     * Export database data to JSON file
-     */
-    fun exportToJson(): String {
-        return try {
-            val parser = DataParser()
-            // Create a simple user person representing the app user
-            val user = createPersonFromDatabase(this.readableDatabase)
-            parser.export(user)
-        } catch (e: Exception) {
-            Log.e(TAG, "Erreur lors de l'export", e)
-            "{}" // Return empty JSON object on error
-        }
-    }
 
     /**
      * Import from JSON file and populate database
@@ -296,123 +281,6 @@ class MaBaseDeDonnees(private val context: Context) : SQLiteOpenHelper(context, 
         } catch (e: Exception) {
             Log.e(TAG, "Erreur lors du remplissage de la BDD", e)
         }
-    }
-
-    /**
-     * Populate Person from database
-     */
-    private fun createPersonFromDatabase(db: SQLiteDatabase): Person {
-
-        // Create the root person (user/"Me")
-        val rootPerson = Person(
-            id = 0,
-            prenom = "Me",
-            nom = "",
-            groupe = ""
-        )
-
-        var nextId = 1;
-
-        try {            
-            // Query all parents from database
-            val parentCursor = db.rawQuery("SELECT id, nomComplet, groupe FROM parents", null)
-            val parentMap = mutableMapOf<Int, Person>()
-            
-            if (parentCursor.moveToFirst()) {
-                do {
-                    val parentId = parentCursor.getInt(0)
-                    val nomComplet = parentCursor.getString(1)
-                    val parts = nomComplet.split(" ", limit = 2)
-                    val prenom = parts[0]
-                    val nom = if (parts.size > 1) parts[1] else ""
-                    val groupe = parentCursor.getString(2)
-
-                    parentMap[parentId] = Person(
-                        id = nextId++,
-                        prenom = prenom,
-                        nom = nom,
-                        groupe = groupe
-                    )
-                } while (parentCursor.moveToNext())
-            }
-            parentCursor.close()
-            
-            // Query all children and build relationships
-            val enfantCursor = db.rawQuery(
-                "SELECT id, prenom, dateNaissance, idParent1, idParent2 FROM enfants",
-                null
-            )
-            
-            if (enfantCursor.moveToFirst()) {
-                do {
-                    val enfantId = enfantCursor.getInt(0)
-                    val prenom = enfantCursor.getString(1)
-                    val dateNaissance = enfantCursor.getLong(2)
-                    val idParent1 = enfantCursor.getInt(3)
-                    val idParent2 = if (enfantCursor.isNull(4)) null else enfantCursor.getInt(4)
-                    
-                    // Convert milliseconds back to date string "dd.MM.yyyy"
-                    val dateString = if (dateNaissance != 0L) {
-                        val calendar = Calendar.getInstance()
-                        calendar.timeInMillis = dateNaissance
-                        val day = calendar.get(Calendar.DAY_OF_MONTH).toString().padStart(2, '0')
-                        val month = (calendar.get(Calendar.MONTH) + 1).toString().padStart(2, '0')
-                        val year = calendar.get(Calendar.YEAR)
-                        "$day.$month.$year"
-                    } else {
-                        null
-                    }
-                    
-                    val enfant = Person(
-                        id = nextId++,
-                        prenom = prenom,
-                        nom = "",
-                        dateNaissance = dateString
-                    )
-                    
-                    // Add child to parent1
-                    if (parentMap.containsKey(idParent1)) {
-                        val parent1 = parentMap[idParent1]!!
-                        parent1.enfants = parent1.enfants + enfant
-                    }
-                    
-                    // Add child to parent2 if exists
-                    if (idParent2 != null && parentMap.containsKey(idParent2)) {
-                        val parent2 = parentMap[idParent2]!!
-                        parent2.enfants = parent2.enfants + enfant
-                    }
-                } while (enfantCursor.moveToNext())
-            }
-            enfantCursor.close()
-            
-            // Build conjoint relationships
-            val parentIds = parentMap.keys.toList()
-            for (i in parentIds.indices) {
-                for (j in i + 1 until parentIds.size) {
-                    val parent1 = parentMap[parentIds[i]]!!
-                    val parent2 = parentMap[parentIds[j]]!!
-                    
-                    // Check if they have common children, which indicates they are a couple
-                    val children1 = parent1.enfants.map { it.id }.toSet()
-                    val children2 = parent2.enfants.map { it.id }.toSet()
-                    val commonChildren = children1.intersect(children2)
-                    
-                    if (commonChildren.isNotEmpty()) {
-                        parent1.conjoint = parent2
-                        parent2.conjoint = parent1
-                    }
-                }
-            }
-            
-            // Set all parents as amis (friends) of the root person
-            rootPerson.amis = parentMap.values.toList()
-
-            
-        } catch (e: Exception) {
-            Log.e(TAG, "Erreur lors de la création d'un objet Person à partir de la BDD", e)
-        }
-
-        return rootPerson
     }
 
     /* UTILE POUR EXPORTER UNE SELECTION SEULEMENT */
