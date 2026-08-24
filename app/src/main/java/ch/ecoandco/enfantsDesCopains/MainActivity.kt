@@ -839,6 +839,7 @@ class MainActivity : AppCompatActivity() {
 
         // Mémoriser l'état actuel pour les prochains clics
         this.colonneTri = colonne
+        mettreAJourIndicateursTri(colonne)
         if (groupe != null) {
             this.groupeActive = groupe
         }
