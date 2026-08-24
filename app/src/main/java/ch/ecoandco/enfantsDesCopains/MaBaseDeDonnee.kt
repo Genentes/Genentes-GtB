@@ -122,7 +122,8 @@ class MaBaseDeDonnees(private val context: Context) : SQLiteOpenHelper(context, 
             val query = """
             SELECT e.id as enfantId, e.prenom as enfantPrenom, e.dateNaissance,
                    p1.nomComplet as parent1,
-                   p2.nomComplet as parent2
+                   p2.nomComplet as parent2, 
+                   p1.groupe as groupeCategorie
             FROM enfants e
             JOIN parents p1 ON e.idParent1 = p1.id
             LEFT JOIN parents p2 ON e.idParent2 = p2.id

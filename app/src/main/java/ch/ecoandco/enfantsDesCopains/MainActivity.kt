@@ -305,13 +305,13 @@ class MainActivity : AppCompatActivity() {
             headerEnfant.text = getString(R.string.label_enfantArrow)
 
             headerEnfant.setOnClickListener {
-                chargerDonneesDepuisBDD("enfant")
+                trierEtAfficher("enfant", groupeActive)
             }
             headerParents.setOnClickListener{
-                chargerDonneesDepuisBDD("parents")
+                trierEtAfficher("parents", groupeActive)
             }
             headerDate.setOnClickListener {
-                chargerDonneesDepuisBDD("date")
+                trierEtAfficher("date", groupeActive)
             }
 
             groupeCopains.setOnClickListener {
@@ -739,6 +739,10 @@ class MainActivity : AppCompatActivity() {
                         curseur.getColumnIndexOrThrow("enfantPrenom")
                     )
 
+                    val groupeCategorie = curseur.getString(
+                        curseur.getColumnIndexOrThrow("groupeCategorie")
+                    )
+
                     val dateNaissance = curseur.getLong(
                         curseur.getColumnIndexOrThrow("dateNaissance")
                     )
@@ -769,6 +773,7 @@ class MainActivity : AppCompatActivity() {
                             idEnfant = idEnfant,
                             prenomEnfant = prenomEnfant,
                             nomsParents = texteParents,
+                            groupe = groupeCategorie,
                             timestampNaissance = dateNaissance
                         )
                     )
@@ -789,7 +794,7 @@ class MainActivity : AppCompatActivity() {
 
             // Rafraîchir l'affichage si l'adapter est déjà attaché.
             if (::adaptateur.isInitialized) {
-                adaptateur.notifyDataSetChanged()
+                adaptateur.notifyItemRangeInserted(0, listeEnfants.size)
             }
         }
         catch(e : Exception)
@@ -797,6 +802,39 @@ class MainActivity : AppCompatActivity() {
             Log.e(TAG, "Erreur dans la fonction qui charge les données.", e)
             afficherToastPersonnalise(e.message ?: "Une erreur est survenue lors du chargement des données")
         }
+    }
+
+    private fun trierEtAfficher(colonne: String, groupe: String? = null) {
+        // 1. Filtrer par groupe si nécessaire (avant de trier)
+        val listeFiltree = if (groupe != null && groupe != "null") {
+            listeEnfants.filter { it.groupe == groupe } // Assurez-vous que votre data class ait un champ 'groupe'.
+        } else {
+            listeEnfants
+        }
+
+        // 2. Trier la liste (création d'une nouvelle liste triée)
+        val listeTriee = when (colonne) {
+            "enfant" -> listeFiltree.sortedWith(compareBy({ it.prenomEnfant }, { it.nomsParents }))
+            "parents" -> listeFiltree.sortedBy { it.nomsParents }
+            "date" -> listeFiltree.sortedBy { it.timestampNaissance }
+            else -> listeFiltree // Ordre par défaut
+        }
+
+        // 3. Mettre à jour la liste de référence de l'adaptateur
+        // Si votre adaptateur lit directement 'listeEnfants', vous devez remplacer son contenu
+        listeEnfants.clear()
+        listeEnfants.addAll(listeTriee)
+
+        // Mémoriser l'état actuel pour les prochains clics
+        this.colonneTri = colonne
+        if (groupe != null) {
+            this.groupeActive = groupe
+        }
+
+        // 4. Notification précise : Tout a changé de place, mais c'est plus optimisé que le reload BDD
+        // Pour un tri complet, notifyItemRangeChanged est souvent nécessaire, car les positions changent toutes
+        adaptateur.notifyItemRangeChanged(0, listeEnfants.size)
+
     }
 
     private fun mettreAJourIndicateursTri(colonneActive: String) {

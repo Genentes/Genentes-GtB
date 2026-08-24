@@ -24,6 +24,7 @@ data class LigneAnniversaire(
     val idEnfant: Int,
     val prenomEnfant: String,
     val nomsParents: String,
+    val groupe: String,
     val timestampNaissance: Long // On garde le Long brut pour le trier si besoin
 )
 
