@@ -13,6 +13,12 @@
     <string name="label_parents_travailArrow">Travail ▼</string>
     <string name="label_parents_autreArrow">Autre ▼</string>
     <string name="label_dateArrow">Né.e le ▼</string>
+    <string name="label_enfantArrowReverse">Qui déjà ? ▲</string>
+    <string name="label_parents_copainsArrowReverse">Copains ▲</string>
+    <string name="label_parents_familleArrowReverse">Famille ▲</string>
+    <string name="label_parents_travailArrowReverse">Travail ▲</string>
+    <string name="label_parents_autreArrowReverse">Autre ▲</string>
+    <string name="label_dateArrowReverse">Né.e le ▲</string>
     <string name="label_choixCategorie">À ajouter à la catégorie :</string>
     <string name="symbol_arrow_down">▼</string>
     <string name="main_button_add">Ajouter un enfant</string>

@@ -45,6 +45,7 @@ class MainActivity : AppCompatActivity() {
     private var selectedTimestamp: Long = 0L
 
     private var colonneTri: String = "date"
+    private var estTriAscendant: Boolean = true     // true = Ascendant, false = Descendant
 
     private var groupeActive: String = "copains"
 
@@ -306,12 +307,36 @@ class MainActivity : AppCompatActivity() {
             headerEnfant.text = getString(R.string.label_enfantArrow)
 
             headerEnfant.setOnClickListener {
+                val nouvelleColonne = "enfant"
+                if (nouvelleColonne == colonneTri) {
+                    estTriAscendant = !estTriAscendant
+                } else {
+                    colonneTri = nouvelleColonne
+                    estTriAscendant = true
+                }
+                mettreAJourIndicateursTri(colonneTri, estTriAscendant)
                 trierEtAfficher("enfant", groupeActive)
             }
             headerParents.setOnClickListener{
+                val nouvelleColonne = "parents"
+                if (nouvelleColonne == colonneTri) {
+                    estTriAscendant = !estTriAscendant
+                } else {
+                    colonneTri = nouvelleColonne
+                    estTriAscendant = true
+                }
+                mettreAJourIndicateursTri(colonneTri, estTriAscendant)
                 trierEtAfficher("parents", groupeActive)
             }
             headerDate.setOnClickListener {
+                val nouvelleColonne = "date"
+                if (nouvelleColonne == colonneTri) {
+                    estTriAscendant = !estTriAscendant
+                } else {
+                    colonneTri = nouvelleColonne
+                    estTriAscendant = true
+                }
+                mettreAJourIndicateursTri(colonneTri, estTriAscendant)
                 trierEtAfficher("date", groupeActive)
             }
 
@@ -794,7 +819,7 @@ class MainActivity : AppCompatActivity() {
                 if (argumentGroupe != null && argumentGroupe != "null") {
                     this.groupeActive = argumentGroupe
                 }
-                mettreAJourIndicateursTri(colonneAUtiliser)
+                mettreAJourIndicateursTri(colonneAUtiliser, estTriAscendant)
             }
             // Le curseur est automatiquement fermé ici par use()
 
@@ -828,18 +853,40 @@ class MainActivity : AppCompatActivity() {
 
         // 2. Tri intelligent
         val listeTriee = when (colonne) {
-            "enfant" -> listeFiltree.sortedWith(
-                compareBy({ it.prenomEnfant.lowercase() }, { it.nomsParents.lowercase() })
-            )
+            "enfant" -> {
+                if (estTriAscendant) {
+                    listeFiltree.sortedWith(
+                        compareBy(
+                            { it.prenomEnfant.lowercase() },
+                            { it.nomsParents.lowercase() }
+                        )
+                    )
+                } else {
+                    listeFiltree.sortedWith(
+                        compareByDescending<String> { it.prenomEnfant.lowercase() }
+                            .thenDescending { it.nomsParents.lowercase() }
+                    )
+                }
+            }
 
-            "parents" -> listeFiltree.sortedBy { it.nomsParents.lowercase() }
+            "parents" -> {
+                if (estTriAscendant) {
+                    listeFiltree.sortedBy { it.nomsParents.lowercase() }
+                } else {
+                    listeFiltree.sortedByDescending { it.nomsParents.lowercase() }
+                }
+            }
 
             "date" -> {
-                // Logique complexe : Trier par "prochain anniversaire"
                 listeFiltree.sortedWith { a, b ->
-                    val prochainAnnivA = calculerProchainAnniversaire(a.timestampNaissance)
-                    val prochainAnnivB = calculerProchainAnniversaire(b.timestampNaissance)
-                    prochainAnnivA.compareTo(prochainAnnivB)
+                    val dateA = calculerProchainAnniversaire(a.timestampNaissance)
+                    val dateB = calculerProchainAnniversaire(b.timestampNaissance)
+
+                    if (estTriAscendant) {
+                        dateA.compareTo(dateB)
+                    } else {
+                        dateB.compareTo(dateA)
+                    }
                 }
             }
 
@@ -858,7 +905,6 @@ class MainActivity : AppCompatActivity() {
         listeEnfants.addAll(listeTriee)
 
         this.colonneTri = colonne
-        mettreAJourIndicateursTri(colonne)
         if (groupe != null) this.groupeActive = groupe
 
         if (::adaptateur.isInitialized && listeEnfants.isNotEmpty()) {
@@ -891,7 +937,7 @@ class MainActivity : AppCompatActivity() {
     }
 
 
-    private fun mettreAJourIndicateursTri(colonneActive: String) {
+    private fun mettreAJourIndicateursTri(colonneActive: String, ascendant: Boolean) {
 
         colonneTri = colonneActive
 
@@ -906,6 +952,12 @@ class MainActivity : AppCompatActivity() {
             "travail" -> R.string.label_parents_travailArrow
             "autre" -> R.string.label_parents_autreArrow
             else -> R.string.label_parents_copainsArrow // Cas null ou défaut
+        }
+        val idStringTitreArrowReverse = when (groupeActive) {
+            "famille" -> R.string.label_parents_familleArrowReverse
+            "travail" -> R.string.label_parents_travailArrowReverse
+            "autre" -> R.string.label_parents_autreArrowReverse
+            else -> R.string.label_parents_copainsArrowReverse // Cas null ou défaut
         }
 
         headerEnfant.text = getString(R.string.label_enfant)
