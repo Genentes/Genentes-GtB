@@ -715,9 +715,20 @@ class MainActivity : AppCompatActivity() {
     private fun chargerDonneesDepuisBDD(quelTri: String? = null, argumentGroupe: String? = null) {
         try {
             // Vider la liste actuelle (au cas où on recharge)
-            listeEnfants.clear()
             val colonneAUtiliser = quelTri ?: colonneTri
             val groupeAUtiliser = argumentGroupe ?: groupeActive
+
+            // 1. Sauvegarder l'ancienne taille AVANT de vider
+            val ancienneTaille = listeEnfants.size
+
+            // 2. Notifier la suppression des anciens éléments (si la liste n'était pas vide)
+            // Cela dit au RecyclerView : "Enlève les X premières lignes de l'écran"
+            if (::adaptateur.isInitialized && ancienneTaille > 0) {
+                adaptateur.notifyItemRangeRemoved(0, ancienneTaille)
+            }
+
+            // 3. Vider la liste (maintenant que l'adaptateur est synchronisé)
+            listeEnfants.clear()
 
             val argumentTri = when (colonneAUtiliser) {
                 "parents" -> "parents"
@@ -792,9 +803,10 @@ class MainActivity : AppCompatActivity() {
                 afficherToastPersonnalise("Personne en vue \uD83D\uDD2D ")
             }
 
-            // Rafraîchir l'affichage si l'adapter est déjà attaché.
-            if (::adaptateur.isInitialized) {
+            if (::adaptateur.isInitialized && listeEnfants.isNotEmpty()) {
                 adaptateur.notifyItemRangeInserted(0, listeEnfants.size)
+                // Optionnel : Scroll to top après un rechargement
+                recyclerView.scrollToPosition(0)
             }
         }
         catch(e : Exception)
