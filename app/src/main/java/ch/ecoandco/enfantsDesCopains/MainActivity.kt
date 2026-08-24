@@ -25,6 +25,7 @@ import androidx.appcompat.app.ActionBar
 import androidx.activity.result.contract.ActivityResultContracts
 import java.text.SimpleDateFormat
 import java.util.Calendar
+import java.util.Date
 import java.util.TimeZone
 import java.util.Locale
 
@@ -816,39 +817,79 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+
     private fun trierEtAfficher(colonne: String, groupe: String? = null) {
-        // 1. Filtrer par groupe si nécessaire (avant de trier)
+        // 1. Filtrage par groupe (inchangé)
         val listeFiltree = if (groupe != null && groupe != "null") {
-            listeEnfants.filter { it.groupe == groupe } // Assurez-vous que votre data class ait un champ 'groupe'.
+            listeEnfants.filter { it.groupe == groupe }
         } else {
             listeEnfants
         }
 
-        // 2. Trier la liste (création d'une nouvelle liste triée)
+        // 2. Tri intelligent
         val listeTriee = when (colonne) {
-            "enfant" -> listeFiltree.sortedWith(compareBy({ it.prenomEnfant }, { it.nomsParents }))
-            "parents" -> listeFiltree.sortedBy { it.nomsParents }
-            "date" -> listeFiltree.sortedBy { it.timestampNaissance }
-            else -> listeFiltree // Ordre par défaut
+            "enfant" -> listeFiltree.sortedWith(
+                compareBy({ it.prenomEnfant.lowercase() }, { it.nomsParents.lowercase() })
+            )
+
+            "parents" -> listeFiltree.sortedBy { it.nomsParents.lowercase() }
+
+            "date" -> {
+                // Logique complexe : Trier par "prochain anniversaire"
+                listeFiltree.sortedWith { a, b ->
+                    val prochainAnnivA = calculerProchainAnniversaire(a.timestampNaissance)
+                    val prochainAnnivB = calculerProchainAnniversaire(b.timestampNaissance)
+                    prochainAnnivA.compareTo(prochainAnnivB)
+                }
+            }
+
+            else -> listeFiltree
         }
 
-        // 3. Mettre à jour la liste de référence de l'adaptateur
-        // Si votre adaptateur lit directement 'listeEnfants', vous devez remplacer son contenu
+        // 3. Mise à jour de la liste et notification (inchangé)
+        val ancienneTaille = listeEnfants.size
         listeEnfants.clear()
+
+        // Si on passe d'une liste pleine à une liste vide (ou inversement), il vaut mieux notifier proprement
+        if (::adaptateur.isInitialized) {
+            if (ancienneTaille > 0) adaptateur.notifyItemRangeRemoved(0, ancienneTaille)
+        }
+
         listeEnfants.addAll(listeTriee)
 
-        // Mémoriser l'état actuel pour les prochains clics
         this.colonneTri = colonne
         mettreAJourIndicateursTri(colonne)
-        if (groupe != null) {
-            this.groupeActive = groupe
+        if (groupe != null) this.groupeActive = groupe
+
+        if (::adaptateur.isInitialized && listeEnfants.isNotEmpty()) {
+            adaptateur.notifyItemRangeInserted(0, listeEnfants.size)
+        }
+    }
+
+    /**
+     * Calcule la date du prochain anniversaire à partir d'un timestamp de naissance.
+     * Si l'anniversaire est déjà passé cette année, retourne la date de l'année prochaine.
+     */
+    private fun calculerProchainAnniversaire(timestampNaissance: Long): Long {
+        val calendar = Calendar.getInstance()
+        val now = Calendar.getInstance()
+
+        // Charger la date de naissance dans le calendrier
+        calendar.time = Date(timestampNaissance)
+
+        // Définir l'année de l'anniversaire sur l'année actuelle
+        calendar.set(Calendar.YEAR, now.get(Calendar.YEAR))
+
+        // Si l'anniversaire de cette année est déjà passé (ou s'il est aujourd'hui mais on veut les futurs d'abord ?)
+        // Comparaison : si calendar (anniv cette année) < now (aujourd'hui)
+        if (calendar.before(now)) {
+            // On passe à l'année prochaine
+            calendar.add(Calendar.YEAR, 1)
         }
 
-        // 4. Notification précise : Tout a changé de place, mais c'est plus optimisé que le reload BDD
-        // Pour un tri complet, notifyItemRangeChanged est souvent nécessaire, car les positions changent toutes
-        adaptateur.notifyItemRangeChanged(0, listeEnfants.size)
-
+        return calendar.timeInMillis
     }
+
 
     private fun mettreAJourIndicateursTri(colonneActive: String) {
 
