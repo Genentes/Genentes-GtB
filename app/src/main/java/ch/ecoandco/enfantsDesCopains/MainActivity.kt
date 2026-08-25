@@ -855,19 +855,29 @@ class MainActivity : AppCompatActivity() {
         val listeTriee = when (colonne) {
             "enfant" -> {
                 if (estTriAscendant) {
-                    listeFiltree.sortedBy { it.prenomEnfant.lowercase() }
+                    listeFiltree.sortedWith ( compareBy(
+                        { it.prenomEnfant.lowercase() },
+                        {it.timestampNaissance}
+                    )
+                    )
                 } else {
-                    listeFiltree.sortedByDescending{ it.prenomEnfant.lowercase() }
+                    listeFiltree.sortedWith( compareByDescending(
+                        { it.prenomEnfant.lowercase() },
+                        {it.timestampNaissance}
                 }
             }
 
             "parents" -> {
+                val comparateur = compareBy(
+                { it.nomsParents.lowercase() },
+                { it.prenomEnfant.lowercase() }
+            )
                 if (estTriAscendant) {
-                    listeFiltree.sortedBy { it.nomsParents.lowercase() }
-                } else {
-                    listeFiltree.sortedByDescending { it.nomsParents.lowercase() }
+                    listeFiltree.sortedWith(comparateur)
+                    } else {
+                        listeFiltree.sortedWith(comparateur.reversed())
+                    }
                 }
-            }
 
             "date" -> {
                 listeFiltree.sortedWith { a, b ->
