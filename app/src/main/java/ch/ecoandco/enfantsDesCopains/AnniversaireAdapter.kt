@@ -24,6 +24,7 @@ data class LigneAnniversaire(
     val idEnfant: Int,
     val prenomEnfant: String,
     val nomsParents: String,
+    val groupe: String,
     val timestampNaissance: Long // On garde le Long brut pour le trier si besoin
 )
 
@@ -52,13 +53,13 @@ class AnniversaireAdapter(
     fun activerModeSelection() {
         isSelectionMode = true
         selectedIds.clear()
-        notifyDataSetChanged()
+        notifyItemRangeChanged(0, itemCount)
     }
 
     fun desactiverModeSelection() {
         isSelectionMode = false
         selectedIds.clear()
-        notifyDataSetChanged()
+        notifyItemRangeChanged(0, itemCount)
     }
 
     fun getSelectedIds(): Set<Int> {

@@ -25,6 +25,7 @@ import androidx.appcompat.app.ActionBar
 import androidx.activity.result.contract.ActivityResultContracts
 import java.text.SimpleDateFormat
 import java.util.Calendar
+import java.util.Date
 import java.util.TimeZone
 import java.util.Locale
 
@@ -44,6 +45,7 @@ class MainActivity : AppCompatActivity() {
     private var selectedTimestamp: Long = 0L
 
     private var colonneTri: String = "date"
+    private var estTriAscendant: Boolean = true     // true = Ascendant, false = Descendant
 
     private var groupeActive: String = "copains"
 
@@ -180,14 +182,29 @@ class MainActivity : AppCompatActivity() {
 
 // Création de l'adapter avec la référence dynamique à la liste
             adaptateur = AnniversaireAdapter(
-                getListeDonnees = { listeEnfants }, // C'est ici que la magie opère
+                getListeDonnees = { listeEnfants },
                 onSupprimer = { idEnfant ->
-                    bdd.deleteLine(idEnfant) // Ta fonction existante
-                    chargerDonneesDepuisBDD()
-                    adaptateur.notifyDataSetChanged()
+                    // 1. On cherche la position de l'ID dans la liste actuelle
+                    val position = listeEnfants.indexOfFirst { it.idEnfant == idEnfant }
+
+                    // 2. On agit UNIQUEMENT si l'ID a été trouvé (position != -1).
+                    if (position != -1) {
+                        // A. Suppression dans la base de données
+                        bdd.deleteLine(idEnfant)
+
+                        // B. Suppression dans la liste en mémoire (cohérence immédiate)
+                        listeEnfants.removeAt(position)
+
+                        // C. Notification précise à l'adaptateur (Animation fluide)
+                        adaptateur.notifyItemRemoved(position)
+
+                        // Optionnel : Pour animer le glissement des éléments restants vers le haut
+                        adaptateur.notifyItemRangeChanged(position, listeEnfants.size)
+                    } else {
+                        afficherToastPersonnalise("Déjà supprimé")
+                    }
                 }
             )
-
 // Lien entre l'adapter et le RecyclerView
             recyclerView.adapter = adaptateur
 
@@ -290,13 +307,37 @@ class MainActivity : AppCompatActivity() {
             headerEnfant.text = getString(R.string.label_enfantArrow)
 
             headerEnfant.setOnClickListener {
-                chargerDonneesDepuisBDD("enfant")
+                val nouvelleColonne = "enfant"
+                if (nouvelleColonne == colonneTri) {
+                    estTriAscendant = !estTriAscendant
+                } else {
+                    colonneTri = nouvelleColonne
+                    estTriAscendant = true
+                }
+                mettreAJourIndicateursTri(colonneTri, estTriAscendant)
+                trierEtAfficher("enfant", groupeActive)
             }
             headerParents.setOnClickListener{
-                chargerDonneesDepuisBDD("parents")
+                val nouvelleColonne = "parents"
+                if (nouvelleColonne == colonneTri) {
+                    estTriAscendant = !estTriAscendant
+                } else {
+                    colonneTri = nouvelleColonne
+                    estTriAscendant = true
+                }
+                mettreAJourIndicateursTri(colonneTri, estTriAscendant)
+                trierEtAfficher("parents", groupeActive)
             }
             headerDate.setOnClickListener {
-                chargerDonneesDepuisBDD("date")
+                val nouvelleColonne = "date"
+                if (nouvelleColonne == colonneTri) {
+                    estTriAscendant = !estTriAscendant
+                } else {
+                    colonneTri = nouvelleColonne
+                    estTriAscendant = true
+                }
+                mettreAJourIndicateursTri(colonneTri, estTriAscendant)
+                trierEtAfficher("date", groupeActive)
             }
 
             groupeCopains.setOnClickListener {
@@ -700,9 +741,20 @@ class MainActivity : AppCompatActivity() {
     private fun chargerDonneesDepuisBDD(quelTri: String? = null, argumentGroupe: String? = null) {
         try {
             // Vider la liste actuelle (au cas où on recharge)
-            listeEnfants.clear()
             val colonneAUtiliser = quelTri ?: colonneTri
             val groupeAUtiliser = argumentGroupe ?: groupeActive
+
+            // 1. Sauvegarder l'ancienne taille AVANT de vider
+            val ancienneTaille = listeEnfants.size
+
+            // 2. Notifier la suppression des anciens éléments (si la liste n'était pas vide)
+            // Cela dit au RecyclerView : "Enlève les X premières lignes de l'écran"
+            if (::adaptateur.isInitialized && ancienneTaille > 0) {
+                adaptateur.notifyItemRangeRemoved(0, ancienneTaille)
+            }
+
+            // 3. Vider la liste (maintenant que l'adaptateur est synchronisé)
+            listeEnfants.clear()
 
             val argumentTri = when (colonneAUtiliser) {
                 "parents" -> "parents"
@@ -722,6 +774,10 @@ class MainActivity : AppCompatActivity() {
 
                     val prenomEnfant = curseur.getString(
                         curseur.getColumnIndexOrThrow("enfantPrenom")
+                    )
+
+                    val groupeCategorie = curseur.getString(
+                        curseur.getColumnIndexOrThrow("groupeCategorie")
                     )
 
                     val dateNaissance = curseur.getLong(
@@ -754,6 +810,7 @@ class MainActivity : AppCompatActivity() {
                             idEnfant = idEnfant,
                             prenomEnfant = prenomEnfant,
                             nomsParents = texteParents,
+                            groupe = groupeCategorie,
                             timestampNaissance = dateNaissance
                         )
                     )
@@ -762,19 +819,14 @@ class MainActivity : AppCompatActivity() {
                 if (argumentGroupe != null && argumentGroupe != "null") {
                     this.groupeActive = argumentGroupe
                 }
-                mettreAJourIndicateursTri(colonneAUtiliser)
+                mettreAJourIndicateursTri(colonneAUtiliser, estTriAscendant)
             }
             // Le curseur est automatiquement fermé ici par use()
 
-
-            // Optionnel : Afficher un message si la liste est vide (débug)
-            if (listeEnfants.isEmpty()) {
-                afficherToastPersonnalise("Personne en vue \uD83D\uDD2D ")
-            }
-
-            // Rafraîchir l'affichage si l'adapter est déjà attaché.
-            if (::adaptateur.isInitialized) {
-                adaptateur.notifyDataSetChanged()
+            if (::adaptateur.isInitialized && listeEnfants.isNotEmpty()) {
+                adaptateur.notifyItemRangeInserted(0, listeEnfants.size)
+                // Optionnel : Scroll to top après un rechargement
+                recyclerView.scrollToPosition(0)
             }
         }
         catch(e : Exception)
@@ -784,7 +836,99 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun mettreAJourIndicateursTri(colonneActive: String) {
+
+    private fun trierEtAfficher(colonne: String, groupe: String? = null) {
+        // 1. On s'assure que listeFiltree est bien typée (comme vu avant)
+        val listeFiltree: List<LigneAnniversaire> = if (groupe != null && groupe != "null") {
+            listeEnfants.filter { it.groupe == groupe }
+        } else {
+            listeEnfants
+        }
+
+// 2. On explicite le type de retour du 'when' pour aider le compilateur
+        val listeTriee: List<LigneAnniversaire> = when (colonne) {
+            "enfant" -> {
+                // Le comparateur est local, c'est OK, mais on retourne directement le résultat
+                val comparateur = compareBy<LigneAnniversaire>(
+                    { it.prenomEnfant.lowercase() },
+                    { it.timestampNaissance }
+                )
+                if (estTriAscendant) {
+                    listeFiltree.sortedWith(comparateur)
+                } else {
+                    listeFiltree.sortedWith(comparateur.reversed())
+                }
+                // La dernière ligne du bloc est ce qui est retourné pour cette branche
+            }
+
+            "parents" -> {
+                val comparateur = compareBy<LigneAnniversaire>(
+                    { it.nomsParents.lowercase() },
+                    { it.prenomEnfant.lowercase() }
+                )
+                if (estTriAscendant) listeFiltree.sortedWith(comparateur)
+                else listeFiltree.sortedWith(comparateur.reversed())
+            }
+
+            "date" -> {
+                val comparateurDate = Comparator<LigneAnniversaire> { a, b ->
+                    val dateA = calculerProchainAnniversaire(a.timestampNaissance)
+                    val dateB = calculerProchainAnniversaire(b.timestampNaissance)
+                    dateA.compareTo(dateB)
+                }
+                if (estTriAscendant) listeFiltree.sortedWith(comparateurDate)
+                else listeFiltree.sortedBy { it.timestampNaissance }
+            }
+
+            else -> listeFiltree
+        }
+
+
+        // 3. Mise à jour de la liste et notification (inchangé)
+        val ancienneTaille = listeEnfants.size
+        listeEnfants.clear()
+
+        // Si on passe d'une liste pleine à une liste vide (ou inversement), il vaut mieux notifier proprement
+        if (::adaptateur.isInitialized) {
+            if (ancienneTaille > 0) adaptateur.notifyItemRangeRemoved(0, ancienneTaille)
+        }
+
+        listeEnfants.addAll(listeTriee)
+
+        this.colonneTri = colonne
+        if (groupe != null) this.groupeActive = groupe
+
+        if (::adaptateur.isInitialized && listeEnfants.isNotEmpty()) {
+            adaptateur.notifyItemRangeInserted(0, listeEnfants.size)
+        }
+    }
+
+    /**
+     * Calcule la date du prochain anniversaire à partir d'un timestamp de naissance.
+     * Si l'anniversaire est déjà passé cette année, retourne la date de l'année prochaine.
+     */
+    private fun calculerProchainAnniversaire(timestampNaissance: Long): Long {
+        val calendar = Calendar.getInstance()
+        val now = Calendar.getInstance()
+
+        // Charger la date de naissance dans le calendrier
+        calendar.time = Date(timestampNaissance)
+
+        // Définir l'année de l'anniversaire sur l'année actuelle
+        calendar.set(Calendar.YEAR, now.get(Calendar.YEAR))
+
+        // Si l'anniversaire de cette année est déjà passé (ou s'il est aujourd'hui mais on veut les futurs d'abord ?)
+        // Comparaison : si calendar (anniv cette année) < now (aujourd'hui)
+        if (calendar.before(now)) {
+            // On passe à l'année prochaine
+            calendar.add(Calendar.YEAR, 1)
+        }
+
+        return calendar.timeInMillis
+    }
+
+
+    private fun mettreAJourIndicateursTri(colonneActive: String, ascent: Boolean) {
 
         colonneTri = colonneActive
 
@@ -800,16 +944,22 @@ class MainActivity : AppCompatActivity() {
             "autre" -> R.string.label_parents_autreArrow
             else -> R.string.label_parents_copainsArrow // Cas null ou défaut
         }
+        val idStringTitreArrowReverse = when (groupeActive) {
+            "famille" -> R.string.label_parents_familleArrowReverse
+            "travail" -> R.string.label_parents_travailArrowReverse
+            "autre" -> R.string.label_parents_autreArrowReverse
+            else -> R.string.label_parents_copainsArrowReverse // Cas null ou défaut
+        }
 
         headerEnfant.text = getString(R.string.label_enfant)
         headerParents.text = getString(idStringTitre)
         headerDate.text = getString(R.string.label_date)
         // 1. Réinitialiser tous les headers sans flèche
         val texteAvecFleche = when (colonneActive) {
-            "enfant" -> getString(R.string.label_enfantArrow)
-            "parents" -> getString(idStringTitreArrow)
-            "date"    -> getString(R.string.label_dateArrow)
-            else      -> ""
+            "enfant" -> getString(if (ascent) R.string.label_enfantArrow else R.string.label_enfantArrowReverse)
+            "parents" -> getString(if (ascent) idStringTitreArrow else idStringTitreArrowReverse)
+            "date"   -> getString(if (ascent) R.string.label_dateArrow else R.string.label_dateArrowReverse)
+            else     -> ""
         }
         when (colonneActive) {
             "enfant" -> headerEnfant.text = texteAvecFleche
