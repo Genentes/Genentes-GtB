@@ -823,12 +823,6 @@ class MainActivity : AppCompatActivity() {
             }
             // Le curseur est automatiquement fermé ici par use()
 
-
-            // Optionnel : Afficher un message si la liste est vide (débug)
-            if (listeEnfants.isEmpty()) {
-                afficherToastPersonnalise("Personne en vue \uD83D\uDD2D ")
-            }
-
             if (::adaptateur.isInitialized && listeEnfants.isNotEmpty()) {
                 adaptateur.notifyItemRangeInserted(0, listeEnfants.size)
                 // Optionnel : Scroll to top après un rechargement
