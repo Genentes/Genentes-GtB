@@ -844,56 +844,51 @@ class MainActivity : AppCompatActivity() {
 
 
     private fun trierEtAfficher(colonne: String, groupe: String? = null) {
-        // 1. Filtrage par groupe (inchangé)
-        val listeFiltree = if (groupe != null && groupe != "null") {
+        // 1. On s'assure que listeFiltree est bien typée (comme vu avant)
+        val listeFiltree: List<LigneAnniversaire> = if (groupe != null && groupe != "null") {
             listeEnfants.filter { it.groupe == groupe }
         } else {
             listeEnfants
         }
 
-        // 2. Tri intelligent
-        val listeTriee = when (colonne) {
+// 2. On explicite le type de retour du 'when' pour aider le compilateur
+        val listeTriee: List<LigneAnniversaire> = when (colonne) {
             "enfant" -> {
+                // Le comparateur est local, c'est OK, mais on retourne directement le résultat
+                val comparateur = compareBy<LigneAnniversaire>(
+                    { it.prenomEnfant.lowercase() },
+                    { it.timestampNaissance }
+                )
                 if (estTriAscendant) {
-                    listeFiltree.sortedWith ( compareBy(
-                        { it.prenomEnfant.lowercase() },
-                        {it.timestampNaissance}
-                    )
-                    )
+                    listeFiltree.sortedWith(comparateur)
                 } else {
-                    listeFiltree.sortedWith( compareByDescending(
-                        { it.prenomEnfant.lowercase() },
-                        {it.timestampNaissance}
+                    listeFiltree.sortedWith(comparateur.reversed())
                 }
+                // La dernière ligne du bloc est ce qui est retourné pour cette branche
             }
 
             "parents" -> {
-                val comparateur = compareBy(
-                { it.nomsParents.lowercase() },
-                { it.prenomEnfant.lowercase() }
-            )
-                if (estTriAscendant) {
-                    listeFiltree.sortedWith(comparateur)
-                    } else {
-                        listeFiltree.sortedWith(comparateur.reversed())
-                    }
-                }
+                val comparateur = compareBy<LigneAnniversaire>(
+                    { it.nomsParents.lowercase() },
+                    { it.prenomEnfant.lowercase() }
+                )
+                if (estTriAscendant) listeFiltree.sortedWith(comparateur)
+                else listeFiltree.sortedWith(comparateur.reversed())
+            }
 
             "date" -> {
-                listeFiltree.sortedWith { a, b ->
+                val comparateurDate = Comparator<LigneAnniversaire> { a, b ->
                     val dateA = calculerProchainAnniversaire(a.timestampNaissance)
                     val dateB = calculerProchainAnniversaire(b.timestampNaissance)
-
-                    if (estTriAscendant) {
-                        dateA.compareTo(dateB)
-                    } else {
-                        dateB.compareTo(dateA)
-                    }
+                    dateA.compareTo(dateB)
                 }
+                if (estTriAscendant) listeFiltree.sortedWith(comparateurDate)
+                else listeFiltree.sortedBy { it.timestampNaissance }
             }
 
             else -> listeFiltree
         }
+
 
         // 3. Mise à jour de la liste et notification (inchangé)
         val ancienneTaille = listeEnfants.size
