@@ -855,17 +855,9 @@ class MainActivity : AppCompatActivity() {
         val listeTriee = when (colonne) {
             "enfant" -> {
                 if (estTriAscendant) {
-                    listeFiltree.sortedWith(
-                        compareBy(
-                            { it.prenomEnfant.lowercase() },
-                            { it.nomsParents.lowercase() }
-                        )
-                    )
+                    listeFiltree.sortedBy { it.prenomEnfant.lowercase() }
                 } else {
-                    listeFiltree.sortedWith(
-                        compareByDescending<String> { it.prenomEnfant.lowercase() }
-                            .thenDescending { it.nomsParents.lowercase() }
-                    )
+                    listeFiltree.sortedByDescending{ it.prenomEnfant.lowercase() }
                 }
             }
 
