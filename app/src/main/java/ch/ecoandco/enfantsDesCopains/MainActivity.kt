@@ -937,7 +937,7 @@ class MainActivity : AppCompatActivity() {
     }
 
 
-    private fun mettreAJourIndicateursTri(colonneActive: String, ascendant: Boolean) {
+    private fun mettreAJourIndicateursTri(colonneActive: String, ascent: Boolean) {
 
         colonneTri = colonneActive
 
@@ -965,10 +965,10 @@ class MainActivity : AppCompatActivity() {
         headerDate.text = getString(R.string.label_date)
         // 1. Réinitialiser tous les headers sans flèche
         val texteAvecFleche = when (colonneActive) {
-            "enfant" -> getString(R.string.label_enfantArrow)
-            "parents" -> getString(idStringTitreArrow)
-            "date"    -> getString(R.string.label_dateArrow)
-            else      -> ""
+            "enfant" -> getString(if (ascent) R.string.label_enfantArrow else R.string.label_enfantArrowReverse)
+            "parents" -> getString(if (ascent) idStringTitreArrow else idStringTitreArrowReverse)
+            "date"   -> getString(if (ascent) R.string.label_dateArrow else R.string.label_dateArrowReverse)
+            else     -> ""
         }
         when (colonneActive) {
             "enfant" -> headerEnfant.text = texteAvecFleche
