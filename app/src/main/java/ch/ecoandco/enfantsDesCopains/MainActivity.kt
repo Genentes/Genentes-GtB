@@ -3,6 +3,7 @@ package ch.ecoandco.enfantsDesCopains // --- IMPORTANT : Vérifiez que ceci corr
 import android.annotation.SuppressLint
 import android.app.AlertDialog
 import android.app.DatePickerDialog
+import android.content.Context
 import android.os.Bundle
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
@@ -530,24 +531,24 @@ class MainActivity : AppCompatActivity() {
                 containerLayout.addView(button)
             }
 
+            // 4. Construire l'AlertDialog
+            val dialog =  AlertDialog.Builder(context)
+                .setTitle("Action pour la sélection")
+                .setMessage("Que souhaitez-vous faire des éléments sélectionnés ?")
+                .setView(containerLayout) // < C'est ici qu'on insère nos boutons personnalisés
+                .setNegativeButton("Annuler") { d, _ ->
+                    d.dismiss()
+                }
+                .create()
+
             // 3. Ajouter les deux options principales
             ajouterBoutonAction("Partager la sélection (fichier JSON)") {
                 preparerEtLancerExportFichier(idsEnfantsSelectionnes, toutesLesPersonnes)
             }
 
             ajouterBoutonAction("-> Changer de catégorie") {
-                lancerChangementCategorie(idsEnfantsSelectionnes)
+                lancerChangementCategorie(idsEnfantsSelectionnes, this, dialog)
             }
-
-            // 4. Construire l'AlertDialog
-            AlertDialog.Builder(context)
-                .setTitle("Action pour la sélection")
-                .setMessage("Que souhaitez-vous faire des éléments sélectionnés ?")
-                .setView(containerLayout) // < C'est ici qu'on insère nos boutons personnalisés
-                .setNegativeButton("Annuler") { dialog, _ ->
-                    dialog.dismiss()
-                }
-                .show()
 
         } catch (e: Exception) {
             Log.e(TAG, "Erreur préparation sélection", e)
@@ -584,19 +585,49 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun lancerChangementCategorie(idsEnfantsSelectionnes: List<Int>) {
-        // TODO: Implémenter ici la logique pour :
-        // 1. Demander à l'utilisateur quelle catégorie cible choisir (autre AlertDialog ?)
-        // 2. Mettre à jour la BDD pour ces IDs
-        // 3. Rafraîchir l'affichage
+    private fun lancerChangementCategorie(idsEnfantsSelectionnes: List<Int>, context: Context, dialog: AlertDialog) {
+        dialog.dismiss()
 
-        afficherToastPersonnalise("Fonctionnalité 'Changer catégorie' à implémenter pour : $idsEnfantsSelectionnes")
+        val categories = listOf("-- Sélectionner --", "Copains", "Famille", "Travail", "Autre")
+        var categorieSelectionnee = categories[0] // Valeur par défaut
 
-        // Exemple de structure future :
-        // afficherSelectionCategorie { categorieCible >
-        //     bdd.mettreAJourCategorie(idsEnfantsSelectionnes, categorieCible)
-        //     rafraichirListe()
-        // }
+        // 3. Créer le layout du Spinner dynamiquement
+        val spinner = Spinner(context)
+        val adapter = ArrayAdapter(
+            context,
+            android.R.layout.simple_spinner_item,
+            categories
+        )
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+        spinner.adapter = adapter
+
+        // Écouter la sélection de l'utilisateur
+        spinner.onItemSelectedListener = object : android.widget.AdapterView.OnItemSelectedListener {
+            override fun onItemSelected(parent: android.widget.AdapterView<*>?, view: View?, position: Int, id: Long) {
+                categorieSelectionnee = categories[position]
+            }
+            override fun onNothingSelected(parent: android.widget.AdapterView<*>?) {}
+        }
+
+        val padding = 50
+        spinner.setPadding(padding, 20, padding, 20)
+
+        AlertDialog.Builder(context)
+            .setTitle("Choisir une nouvelle catégorie")
+            .setMessage("Sélectionnez la catégorie de destination :")
+            .setView(spinner)
+            .setPositiveButton("Valider") { _, _ ->
+                // L'utilisateur a cliqué sur Valider
+                executerLeChangementDeCategorie(idsEnfantsSelectionnes, categorieSelectionnee)
+            }
+            .setNegativeButton("Annuler") { d, _ ->
+                d.dismiss()
+            }
+            .show()
+    }
+
+    private fun executerLeChangementDeCategorie(ids: List<Int>, categorie: String) {
+        afficherToastPersonnalise("ok, vers catégorie $categorie")
     }
 
 
