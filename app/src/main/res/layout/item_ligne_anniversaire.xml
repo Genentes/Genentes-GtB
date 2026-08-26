@@ -24,7 +24,7 @@
         android:id="@+id/textParents"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_weight="0.36"
+        android:layout_weight="0.35"
         android:text="@string/label_parents_copains"
         android:textSize="@dimen/text_size_normal" />
 
@@ -32,7 +32,7 @@
         android:id="@+id/textEnfant"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_weight="0.39"
+        android:layout_weight="0.37"
         android:text="@string/label_enfant"
         android:textSize="@dimen/text_size_normal" />
 
@@ -40,7 +40,7 @@
         android:id="@+id/textDate"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_weight="0.25"
+        android:layout_weight="0.28"
         android:text="@string/label_date"
         android:textSize="@dimen/text_size_normal"
         android:gravity="end" />
