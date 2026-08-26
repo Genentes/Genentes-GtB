@@ -549,7 +549,7 @@ class MainActivity : AppCompatActivity() {
             ajouterBoutonAction("-> Changer de catégorie") {
                 lancerChangementCategorie(idsEnfantsSelectionnes, this, dialog)
             }
-
+            dialog.show()
         } catch (e: Exception) {
             Log.e(TAG, "Erreur préparation sélection", e)
             afficherToastPersonnalise("Erreur: ${e.message}")
@@ -639,8 +639,6 @@ class MainActivity : AppCompatActivity() {
 
     // Fonction squelette pour l'export
     private fun exporterSelection(ids: Set<Int>) {
-        afficherToastPersonnalise("Export des éléments : $ids")
-
         // Conversion simple de Set en List
         val listeIds: List<Int> = ids.toList()
 
