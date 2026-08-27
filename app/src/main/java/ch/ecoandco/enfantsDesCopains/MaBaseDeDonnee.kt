@@ -404,4 +404,54 @@ class MaBaseDeDonnees(private val context: Context) : SQLiteOpenHelper(context, 
             return emptyList()
         }
     }
+
+    // Pas de 'suspend', c'est une fonction normale
+    fun recupIDparentsEtChangeCategorie (ids: List<Int>, keyCategorie: String): Boolean {
+        return try {
+            if (ids.isEmpty()) return false
+
+            val db = this.writableDatabase
+            val parentsIdsToUpdate = mutableListOf<Int>()
+
+            // --- REQUÊTE DE LECTURE (Natif pur) ---
+            val placeholders = ids.joinToString(",") { "?" }
+            val sqlRecup = "SELECT idParent1, idParent2 FROM enfants WHERE id IN ($placeholders)"
+
+            // Conversion des Int en String pour les arguments de rawQuery
+            val selectionArgs = ids.map { it.toString() }.toTypedArray()
+
+            val cursor = db.rawQuery(sqlRecup, selectionArgs)
+
+            cursor.use { // Fermeture automatique
+                if (it.moveToFirst()) {
+                    do {
+                        val col1 = it.getColumnIndex("idParent1")
+                        val col2 = it.getColumnIndex("idParent2")
+
+                        if (!it.isNull(col1)) parentsIdsToUpdate.add(it.getInt(col1))
+                        if (!it.isNull(col2)) parentsIdsToUpdate.add(it.getInt(col2))
+                    } while (it.moveToNext())
+                }
+            }
+
+            if (parentsIdsToUpdate.isEmpty()) return false
+
+            // --- REQUÊTE D'ÉCRITURE (Natif pur) ---
+            val uniqueParentsIds = parentsIdsToUpdate.distinct()
+            val placeholdersParents = uniqueParentsIds.joinToString(",") { "?" }
+            val sqlUpdate = "UPDATE parents SET groupe = ? WHERE id IN ($placeholdersParents)"
+
+            val updateArgs = mutableListOf<String>()
+            updateArgs.add(keyCategorie)
+            updateArgs.addAll(uniqueParentsIds.map { it.toString() })
+
+            db.execSQL(sqlUpdate, updateArgs.toTypedArray())
+
+            true
+
+        } catch (e: Exception) {
+            Log.e(TAG, "Erreur SQL native : ${e.message}", e)
+            false
+        }
+    }
 }

@@ -627,9 +627,35 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun executerLeChangementDeCategorie(ids: List<Int>, categorie: String) {
-        afficherToastPersonnalise("ok, vers catégorie $categorie")
-    }
+        val exportTo = when (categorie) {
+            "Copains" -> "copains"
+            "Famille" -> "famille"
+            "Travail" -> "travail"
+            "Autre" -> "autre"
+            else -> {
+                afficherToastPersonnalise("Catégorie invalide")
+                return
+            }
+        }
 
+        afficherToastPersonnalise("Traitement en cours...")
+
+        // On crée un nouveau thread pour ne pas bloquer l'interface
+        Thread {
+            // Ce code s'exécute en arrière-plan
+            val succes = bdd.recupIDparentsEtChangeCategorie(ids, exportTo)
+
+            // IMPORTANT : Pour afficher un Toast ou modifier l'UI, on doit revenir sur le thread principal
+            runOnUiThread {
+                if (succes) {
+                    afficherToastPersonnalise("Ok, déplacé vers $categorie")
+                    chargerDonneesDepuisBDD()
+                } else {
+                    afficherToastPersonnalise("Échec de la mise à jour")
+                }
+            }
+        }.start()
+    }
 
     // Met à jour le texte "X élément(s) sélectionné(s)"
     private fun mettreAJourTitreSelection(count: Int) {
