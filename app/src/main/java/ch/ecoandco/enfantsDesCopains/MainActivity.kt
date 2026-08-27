@@ -181,38 +181,6 @@ class MainActivity : AppCompatActivity() {
             recyclerView = findViewById(R.id.recyclerViewAnniversaires) // Vérifie que l'ID correspond à ton XML
             recyclerView.layoutManager = LinearLayoutManager(this)
 
-// Création de l'adapter avec la référence dynamique à la liste
-            adaptateur = AnniversaireAdapter(
-                getListeDonnees = { listeEnfants },
-                onSupprimer = { idEnfant ->
-                    // 1. On cherche la position de l'ID dans la liste actuelle
-                    val position = listeEnfants.indexOfFirst { it.idEnfant == idEnfant }
-
-                    // 2. On agit UNIQUEMENT si l'ID a été trouvé (position != -1).
-                    if (position != -1) {
-                        // A. Suppression dans la base de données
-                        bdd.deleteLine(idEnfant)
-
-                        // B. Suppression dans la liste en mémoire (cohérence immédiate)
-                        listeEnfants.removeAt(position)
-
-                        // C. Notification précise à l'adaptateur (Animation fluide)
-                        adaptateur.notifyItemRemoved(position)
-
-                        // Optionnel : Pour animer le glissement des éléments restants vers le haut
-                        adaptateur.notifyItemRangeChanged(position, listeEnfants.size)
-                    } else {
-                        afficherToastPersonnalise("Déjà supprimé")
-                    }
-                }
-            )
-// Lien entre l'adapter et le RecyclerView
-            recyclerView.adapter = adaptateur
-
-// Optionnel : Écouter les changements de sélection pour mettre à jour un compteur
-            adaptateur.onSelectionChanged = { nombre ->
-                mettreAJourTitreSelection(nombre)
-            }
 // Lancement du premier chargement
             chargerDonneesDepuisBDD()
 
@@ -371,43 +339,6 @@ class MainActivity : AppCompatActivity() {
         return true
     }
 
-    // Fonction appelée par ton bouton "Sélectionner" (à créer dans ton menu ou layout)
-    private fun lancerModeSelection() : Boolean {
-        adaptateur.activerModeSelection()
-        afficherBarreActionSelection(true)
-        return true
-    }
-
-    // Affiche ou cache la barre avec les boutons "Annuler" et "Exporter"
-    private fun afficherBarreActionSelection(afficher: Boolean) {
-        val layoutSelection = findViewById<View>(R.id.layoutSelection)
-        layoutSelection.visibility = if (afficher) View.VISIBLE else View.GONE
-
-        val layoutBouton = findViewById<View>(R.id.boutonAjouterContainer)
-        layoutBouton.visibility = if (afficher) View.GONE else View.VISIBLE
-
-        if (afficher) {
-            // Bouton Annuler
-            findViewById<Button>(R.id.btnAnnulerSelection).setOnClickListener {
-                adaptateur.desactiverModeSelection()
-                afficherBarreActionSelection(false)
-            }
-
-            // Bouton Exporter
-            findViewById<Button>(R.id.btnExporterSelection).setOnClickListener {
-                val ids = adaptateur.getSelectedIds()
-                if (ids.isEmpty()) {
-                    afficherToastPersonnalise("Aucune donnée sélectionnée")
-                } else {
-                    exporterSelection(ids)
-                    adaptateur.desactiverModeSelection()
-                    afficherBarreActionSelection(false)
-                }
-            }
-            mettreAJourTitreSelection(0)
-        }
-    }
-
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         return when (item.itemId) {
             R.id.action_export -> {
@@ -415,9 +346,6 @@ class MainActivity : AppCompatActivity() {
             }
             R.id.action_import -> {
                 lancerImportation()
-            }
-            R.id.action_change_category -> {
-                lancerModeSelection()
             }
             else -> super.onOptionsItemSelected(item)
         }

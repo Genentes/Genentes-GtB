@@ -31,50 +31,13 @@ data class LigneAnniversaire(
 // 2. La classe Adapter principale
 class AnniversaireAdapter(
     // On passe une fonction qui renvoie la liste à jour à chaque fois
-    private val getListeDonnees: () -> List<LigneAnniversaire>,
-    private val onSupprimer: (Int) -> Unit
+    private val getListeDonnees: () -> List<LigneAnniversaire>
 ) : RecyclerView.Adapter<AnniversaireAdapter.MonViewHolder>() {
 
     companion object {
         private const val TAG = "AnniversaireAdapter"
     }
 
-    // --- GESTION DU MODE SÉLECTION ---
-    var isSelectionMode = false
-        private set // Modifiable uniquement via les méthodes publiques
-
-    private val selectedIds = HashSet<Int>()
-
-    // Callback pour prévenir l'Activity quand le nombre de personnes sélectionnées change.
-    var onSelectionChanged: ((Int) -> Unit)? = null
-
-    // --- MÉTHODES DE CONTRÔLE ---
-
-    fun activerModeSelection() {
-        isSelectionMode = true
-        selectedIds.clear()
-        notifyItemRangeChanged(0, itemCount)
-    }
-
-    fun desactiverModeSelection() {
-        isSelectionMode = false
-        selectedIds.clear()
-        notifyItemRangeChanged(0, itemCount)
-    }
-
-    fun getSelectedIds(): Set<Int> {
-        return HashSet(selectedIds)
-    }
-
-    fun toggleSelection(id: Int, position: Int) {
-        if (selectedIds.contains(id)) {
-            selectedIds.remove(id)
-        } else {
-            selectedIds.add(id)
-        }
-        notifyItemChanged(position)
-        onSelectionChanged?.invoke(selectedIds.size)
-    }
 
     // --- ÉTAPE A : Le ViewHolder ---
     // C'est lui qui "tient" les vues d'une seule ligne (les 3 TextView)
@@ -82,7 +45,6 @@ class AnniversaireAdapter(
         val textEnfant: TextView = itemView.findViewById(R.id.textEnfant)
         val textParents: TextView = itemView.findViewById(R.id.textParents)
         val textDate: TextView = itemView.findViewById(R.id.textDate)
-        val checkBox: CheckBox = itemView.findViewById(R.id.checkBoxSelection)
     }
 
     // --- ÉTAPE B : Création de la vue (Quand on a besoin d'une nouvelle ligne) ---
@@ -118,55 +80,6 @@ class AnniversaireAdapter(
             if (position >= listeActuelle.size) return
 
             val elementActuel = listeActuelle[position]
-
-            // 1. Gestion de la visibilité de la CheckBox
-            holder.checkBox.visibility = if (isSelectionMode) View.VISIBLE else View.GONE
-
-            // 2. Gestion de l'état et des écouteurs selon le mode
-            if (isSelectionMode) {
-                // Mode SÉLECTION activé
-                holder.checkBox.isChecked = selectedIds.contains(elementActuel.idEnfant)
-
-                // On définit le listener de la checkbox
-                holder.checkBox.setOnCheckedChangeListener { _, _ ->
-                    toggleSelection(elementActuel.idEnfant, position)
-                }
-
-                // Clic sur la ligne = cocher/décocher
-                holder.itemView.setOnClickListener {
-                    holder.checkBox.isChecked = !holder.checkBox.isChecked
-                }
-
-                // On désactive le clic-long en mode sélection
-                holder.itemView.setOnLongClickListener(null)
-
-            } else {
-                // Mode NORMAL
-                holder.checkBox.setOnCheckedChangeListener(null)
-                holder.checkBox.isChecked = false
-
-                // Réactivation du Clic Long pour la suppression
-                holder.itemView.setOnLongClickListener {
-                    val pos = holder.bindingAdapterPosition
-                    if (pos == RecyclerView.NO_POSITION) return@setOnLongClickListener true
-
-                    holder.itemView.isHapticFeedbackEnabled = true
-                    holder.itemView.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
-
-                    AlertDialog.Builder(holder.itemView.context)
-                        .setTitle("Supprimer ?")
-                        .setMessage("Voulez-vous vraiment supprimer la ligne de ${elementActuel.prenomEnfant} ?")
-                        .setPositiveButton("Oui") { _, _ ->
-                            onSupprimer(elementActuel.idEnfant)
-                        }
-                        .setNegativeButton("Annuler", null)
-                        .show()
-                    true
-                }
-
-                // En mode normal, le clic-court ne fait rien (ou peut lancer un détail si tu veux).
-                holder.itemView.setOnClickListener(null)
-            }
 
            val prenom = elementActuel.prenomEnfant
             val ageInfo = DateUtils.formatAgeWithQuarters(elementActuel.timestampNaissance)
