@@ -184,6 +184,20 @@ class MainActivity : AppCompatActivity() {
 // Lancement du premier chargement
             chargerDonneesDepuisBDD()
 
+
+            // --- C'EST ICI QUE VOUS METTEZ LE NOUVEAU CODE ---
+            adaptateur = AnniversaireAdapter(
+                getListeDonnees = { listeEnfants },
+                onItemClick = { id, pos ->
+                    Toast.makeText(this, "Clic: $id", Toast.LENGTH_SHORT).show()
+                },
+                onItemLongClick = { id, pos ->
+                    Toast.makeText(this, "Long: $id", Toast.LENGTH_SHORT).show()
+                }
+            )
+
+            recyclerView.adapter = adaptateur
+
             val boutonAjouter = findViewById<Button>(R.id.boutonAjouter)
 
             boutonAjouter.setOnClickListener {
