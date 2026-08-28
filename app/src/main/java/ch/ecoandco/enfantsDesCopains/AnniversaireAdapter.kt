@@ -138,11 +138,6 @@ class AnniversaireAdapter(
                 // 3. Cocher/Décocher (sans boucle infinie car on ne change pas l'état ici, on l'applique)
                 checkBoxSelection.isChecked = isSelected
 
-                // 4. Changer la couleur de fond pour indiquer la sélection
-                val colorSelected = android.graphics.Color.parseColor("#E3F2FD")
-                val colorTransparent = android.graphics.Color.TRANSPARENT
-
-                itemView.setBackgroundColor(if (isSelected) colorSelected else colorTransparent)
 
             } catch (e: Exception) {
                 Log.e(TAG, "Erreur dans bind", e)
