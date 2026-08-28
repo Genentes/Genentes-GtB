@@ -12,6 +12,7 @@ import androidx.recyclerview.widget.RecyclerView
 import android.text.InputType
 import android.util.Log
 import android.view.Gravity
+import android.view.HapticFeedbackConstants
 import android.view.LayoutInflater
 import android.view.Menu
 import android.view.MenuItem
@@ -44,6 +45,12 @@ class MainActivity : AppCompatActivity() {
     // La liste qui va contenir nos objets formatés pour l'affichage
     private val listeEnfants = mutableListOf<LigneAnniversaire>()
     private var selectedTimestamp: Long = 0L
+
+    private var estEnModeSelection = false
+    // NOUVEAU : Référence à votre barre d'action (à initialiser dans onCreate)
+    private lateinit var layoutSelection: View
+    private lateinit var layoutBoutonAjouter: View
+    private lateinit var textTitreSelection: TextView
 
     private var colonneTri: String = "date"
     private var estTriAscendant: Boolean = true     // true = Ascendant, false = Descendant
@@ -173,6 +180,11 @@ class MainActivity : AppCompatActivity() {
             groupeTravail = findViewById(R.id.boutonGroupeTravail)
             groupeAutre = findViewById(R.id.boutonGroupeAutre)
 
+            layoutSelection = findViewById(R.id.layoutSelection)
+            layoutBoutonAjouter = findViewById(R.id.boutonAjouterContainer) // Ou l'ID de votre bouton "+"
+            textTitreSelection = findViewById(R.id.textTitreSelection)
+            layoutSelection.visibility = View.GONE
+
             // 2. Initialiser la Base de Données
             // Cela va déclencher onCreate() dans MaBaseDeDonnees et insérer les données de test
             bdd = MaBaseDeDonnees(this)
@@ -185,17 +197,44 @@ class MainActivity : AppCompatActivity() {
             chargerDonneesDepuisBDD()
 
 
-            // --- C'EST ICI QUE VOUS METTEZ LE NOUVEAU CODE ---
             adaptateur = AnniversaireAdapter(
                 getListeDonnees = { listeEnfants },
-                onItemClick = { id, pos ->
-                    Toast.makeText(this, "Clic: $id", Toast.LENGTH_SHORT).show()
+
+                // --- CLIC COURT ---
+                onItemClick = { id, position ->
+                    if (estEnModeSelection) {
+                        // Si on est EN mode sélection : le clic court bascule la sélection
+                        adaptateur.toggleSelection(id, position)
+                        mettreAJourTitreSelection(adaptateur.getSelectedCount())
+
+                        // Optionnel : Si plus aucun élément n'est sélectionné, on quitte le mode ?
+                        // if (adaptateur.getSelectedCount() == 0) quitterModeSelection()
+                    } else {
+                        // Si on est en mode NORMAL : le clic court fait ce qu'il veut (rien, ou ouvrir le détail)
+                        // Pour l'instant, on ne fait rien ou on ouvre le détail
+                        // Toast.makeText(this, "Détail de $id", Toast.LENGTH_SHORT).show()
+                    }
                 },
-                onItemLongClick = { id, pos ->
-                    Toast.makeText(this, "Long: $id", Toast.LENGTH_SHORT).show()
+
+                // --- CLIC LONG (C'EST ICI QUE ÇA SE PASSE) ---
+                onItemLongClick = { id, position ->
+                    if (!estEnModeSelection) {
+                        // 1. VIBRATION (Haptic Feedback)
+                        val itemView = recyclerView.findViewHolderForAdapterPosition(position)?.itemView
+                        itemView?.let { view ->
+                            view.isHapticFeedbackEnabled = true
+                            view.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
+                        }
+
+                        // 2. LANCER LE MODE SÉLECTION
+                        activerModeSelection(id, position)
+                    } else {
+                        // Si on est déjà en mode sélection, un clic long agit comme un toggle normal
+                        adaptateur.toggleSelection(id, position)
+                        mettreAJourTitreSelection(adaptateur.getSelectedCount())
+                    }
                 }
             )
-
             recyclerView.adapter = adaptateur
 
             val boutonAjouter = findViewById<Button>(R.id.boutonAjouter)
@@ -416,6 +455,57 @@ class MainActivity : AppCompatActivity() {
         return true
     }
 
+    // --- NOUVELLES FONCTIONS POUR L'ÉTAPE B ---
+
+    /**
+     * Fonction appelée par le listener de l'adapter quand on fait un clic long
+     */
+    private fun activerModeSelection(idPremierItem: Int, position: Int) {
+        if (estEnModeSelection) return // Déjà activé
+
+        estEnModeSelection = true
+
+        // 1. On dit à l'adapter de passer en mode sélection
+        adaptateur.isSelectionMode = true
+
+        // 2. On sélectionne automatiquement l'item sur lequel on a appuyé
+        adaptateur.toggleSelection(idPremierItem, position)
+
+        // 3. On affiche la barre d'actions et on cache le bouton "+"
+        afficherBarreActionSelection(true)
+
+        // 4. On met à jour le titre (1 élément sélectionné)
+        mettreAJourTitreSelection(adaptateur.getSelectedCount())
+    }
+
+    /**
+     * Fonction pour afficher/cacher la barre d'actions
+     */
+    private fun afficherBarreActionSelection(afficher: Boolean) {
+        layoutSelection.visibility = if (afficher) View.VISIBLE else View.GONE
+        layoutBoutonAjouter.visibility = if (afficher) View.GONE else View.VISIBLE
+
+        if (!afficher) {
+            // Si on cache, on reset le titre à 0 (optionnel)
+            textTitreSelection.text = ""
+        }
+    }
+
+    /**
+     * Fonction pour mettre à jour le texte "X élément(s) sélectionné(s)"
+     */
+    private fun mettreAJourTitreSelection(count: Int) {
+        textTitreSelection.text = getString(R.string.message_nombre_selection, count)
+    }
+
+    /**
+     * Fonction pour quitter le mode sélection (Bouton Annuler)
+     */
+    private fun quitterModeSelection() {
+        estEnModeSelection = false
+        adaptateur.clearSelection() // Vide la liste et notifie l'adapter
+        afficherBarreActionSelection(false)
+    }
 
     /**
      * Lance l'exportation pour une liste spécifique d'IDs d'enfants.
@@ -599,11 +689,6 @@ class MainActivity : AppCompatActivity() {
         }.start()
     }
 
-    // Met à jour le texte "X élément(s) sélectionné(s)"
-    private fun mettreAJourTitreSelection(count: Int) {
-        val textView = findViewById<TextView>(R.id.textTitreSelection)
-        textView.text = getString(R.string.message_nombre_selection, count)
-    }
 
     // Fonction squelette pour l'export
     private fun exporterSelection(ids: Set<Int>) {
