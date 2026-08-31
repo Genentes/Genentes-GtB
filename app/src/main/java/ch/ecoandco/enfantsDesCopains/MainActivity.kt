@@ -199,17 +199,11 @@ class MainActivity : AppCompatActivity() {
 
 // 3. Listener du bouton EXPORTER
             btnExporter.setOnClickListener {
-                val ids = adaptateur.getSelectedIds()
-
+                val ids = adaptateur.getSelectedIds() // C'est déjà une List
                 if (ids.isEmpty()) {
-                    Toast.makeText(this, "Aucun élément sélectionné", Toast.LENGTH_SHORT).show()
+                    afficherToastPersonnalise("Aucun élément sélectionné")
                 } else {
-                    // --- VOTRE LOGIQUE D'EXPORT ICI ---
-                    // Pour l'instant, on simule avec un Toast
-                    val message = "Export de ${ids.size} élément(s) :\nIDs: ${ids.joinToString()}"
-                    Toast.makeText(this, message, Toast.LENGTH_LONG).show()
-
-                    // Optionnel : Quitter le mode après l'export
+                    exporterSelection(ids) // Ça matche parfaitement
                     quitterModeSelection()
                 }
             }
@@ -528,18 +522,6 @@ class MainActivity : AppCompatActivity() {
         mettreAJourTitreSelection(adaptateur.getSelectedCount())
     }
 
-    /**
-     * Fonction pour afficher/cacher la barre d'actions
-     */
-    private fun afficherBarreActionSelection(afficher: Boolean) {
-        layoutSelection.visibility = if (afficher) View.VISIBLE else View.GONE
-        layoutBoutonAjouter.visibility = if (afficher) View.GONE else View.VISIBLE
-
-        if (!afficher) {
-            // Si on cache, on reset le titre à 0 (optionnel)
-            textTitreSelection.text = ""
-        }
-    }
 
     /**
      * Fonction pour mettre à jour le texte "X élément(s) sélectionné(s)"
@@ -561,12 +543,11 @@ class MainActivity : AppCompatActivity() {
                 iterateur.remove()
             }
         }
-
         // 3. Rafraîchir l'affichage
         adaptateur.notifyDataSetChanged()
-
-        Toast.makeText(this, "${ids.size} élément(s) supprimé(s) définitivement", Toast.LENGTH_SHORT).show()
+        afficherToastPersonnalise("${ids.size} élément(s) supprimé(s) définitivement")
     }
+
     /**
      * Fonction pour quitter le mode sélection (Bouton Annuler)
      */
@@ -762,12 +743,8 @@ class MainActivity : AppCompatActivity() {
 
 
     // Fonction squelette pour l'export
-    private fun exporterSelection(ids: Set<Int>) {
-        // Conversion simple de Set en List
-        val listeIds: List<Int> = ids.toList()
-
-        // On passe directement la liste
-        lancerExportationSelection(listeIds)
+    private fun exporterSelection(ids: List<Int>) {
+        lancerExportationSelection(ids)
     }
 
     @SuppressLint("SetTextI18n")
