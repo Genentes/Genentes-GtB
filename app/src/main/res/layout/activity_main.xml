@@ -129,25 +129,7 @@
                 android:layout_height="wrap_content"
                 android:text="0 élément sélectionné"
                 android:textStyle="bold"
-                android:textColor="#1565C0"
-                android:layout_marginBottom="8dp"/>
-
-                <Button
-                    android:id="@+id/btnAnnulerSelection"
-                    style="@style/Widget.MaterialComponents.Button.TextButton"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Annuler"
-                    android:layout_marginEnd="6dp"/>
-
-            </LinearLayout>
-            <!-- Les boutons alignés  -->
-            <LinearLayout
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="0.5"
-                android:orientation="vertical"
-                android:gravity="end">
+                android:textColor="#1565C0" />
 
                 <Button
                     android:id="@+id/btnSupprimerSelection"
@@ -163,6 +145,23 @@
                     android:layout_height="wrap_content"
                     android:text="Exporter vers..."
                     android:layout_marginStart="8dp"/>
+            </LinearLayout>
+            <!-- Les boutons alignés  -->
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="0.5"
+                android:orientation="vertical"
+                android:gravity="end">
+
+                <Button
+                    android:id="@+id/btnAnnulerSelection"
+                    style="@style/Widget.MaterialComponents.Button.TextButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Annuler"
+                    android:layout_marginEnd="4dp"/>
+
             </LinearLayout>
         </LinearLayout>
 
