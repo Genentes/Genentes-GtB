@@ -530,22 +530,44 @@ class MainActivity : AppCompatActivity() {
         val text = if (count == 1) "$count élément sélectionné" else "$count éléments sélectionnés"
         textTitreSelection.text = text
     }
-
     private fun supprimerElements(ids: List<Int>) {
-        // 1. Supprimer dans la BDD (Persistant)
-        bdd.supprimerParIds(ids) // Appelez votre nouvelle méthode ici
+        // 1. Identifier les positions à supprimer ET les supprimer de la liste locale
+        // On crée une liste des positions à supprimer
+        val positionsASupprimer = mutableListOf<Int>()
 
-        // 2. Supprimer de la liste locale (Visuel)
-        val iterateur = listeEnfants.iterator()
-        while (iterateur.hasNext()) {
-            val item = iterateur.next()
+        // On parcourt la liste à l'envers pour ne pas fausser les index lors de la suppression
+        for (i in listeEnfants.size - 1 downTo 0) {
+            val item = listeEnfants[i]
             if (ids.contains(item.idEnfant)) {
-                iterateur.remove()
+                positionsASupprimer.add(i) // On note la position
+                listeEnfants.removeAt(i)   // On retire de la liste locale immédiatement
             }
         }
-        // 3. Rafraîchir l'affichage
-        adaptateur.notifyDataSetChanged()
-        afficherToastPersonnalise("${ids.size} élément(s) supprimé(s) définitivement")
+
+        // 2. Supprimer dans la BDD (toujours en premier ou en parallèle)
+        bdd.supprimerParIds(ids)
+
+        // 3. Notifier l'Adapter avec précision
+        // Comme on a supprimé à l'envers dans la liste, 'positionsASupprimer' contient
+        // les index tels qu'ils étaient AVANT suppression.
+        // Mais pour l'animation, on doit notifier dans l'ordre croissant ou faire des appels individuels.
+
+        // Méthode simple et efficace : Notifier chaque suppression individuellement
+        // L'adapter gérera l'animation pour chaque ligne.
+        // Il faut trier les positions par ordre CROISSANT pour que l'animation soit logique visuellement
+        positionsASupprimer.sorted().forEach { position ->
+            adaptateur.notifyItemRemoved(position)
+        }
+
+        // Optionnel : Si vous avez supprimé beaucoup d'items, on peut notifier que la plage a changé
+        // mais notifyItemRemoved suffit pour l'animation.
+
+       afficherToastPersonnalise("${ids.size} élément(s) supprimé(s)")
+
+        // Si la liste est vide ou pour être sûr, on peut vérifier l'état
+        if (listeEnfants.isEmpty()) {
+           afficherToastPersonnalise("Aucun élément à supprimer")
+        }
     }
 
     /**

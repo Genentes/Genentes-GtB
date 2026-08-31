@@ -108,11 +108,18 @@
             android:id="@+id/layoutSelection"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical"
+            android:orientation="horizontal"
             android:padding="8dp"
             android:background="#E3F2FD"
             android:visibility="gone"
             android:layout_marginTop="8dp">
+
+            <LinearLayout
+                android:id="@+id/layoutManageSelection"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="0.5"
+                android:orientation="vertical">
 
             <!-- Le compteur -->
             <TextView
@@ -124,20 +131,22 @@
                 android:textColor="#1565C0"
                 android:layout_marginBottom="8dp"/>
 
+            <Button
+                android:id="@+id/btnAnnulerSelection"
+                style="@style/Widget.MaterialComponents.Button.TextButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Annuler"
+                android:layout_marginEnd="6dp"/>
+
+            </LinearLayout>
             <!-- Les boutons alignés  -->
             <LinearLayout
-                android:layout_width="match_parent"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:orientation="horizontal"
+                android:layout_weight="0.5"
+                android:orientation="vertical"
                 android:gravity="end">
-
-                <Button
-                    android:id="@+id/btnAnnulerSelection"
-                    style="@style/Widget.MaterialComponents.Button.TextButton"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Annuler"
-                    android:layout_marginEnd="6dp"/>
 
                 <Button
                     android:id="@+id/btnExporterSelection"
