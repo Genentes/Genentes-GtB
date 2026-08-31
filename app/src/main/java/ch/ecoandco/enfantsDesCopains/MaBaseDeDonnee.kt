@@ -7,6 +7,7 @@ import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
 import android.util.Log
 import java.util.Calendar
+import kotlin.compareTo
 
 
 class MaBaseDeDonnees(private val context: Context) : SQLiteOpenHelper(context, "anniversaires.db", null, 2) {
@@ -193,19 +194,34 @@ class MaBaseDeDonnees(private val context: Context) : SQLiteOpenHelper(context, 
         }
     }
 
-    fun deleteLine(idEnfant: Int): Boolean {
+    fun supprimerParIds(ids: List<Int>): Boolean {
         return try {
+            if (ids.isEmpty()) return false // Sécurité : rien à supprimer
+
             val db = this.writableDatabase
+
+            // 1. Créer la clause "IN (?, ?, ?)" avec autant de points d'interrogation que d'IDs
+            val placeholders = ids.joinToString(",") { "?" }
+            val whereClause = "id IN ($placeholders)"
+
+            // 2. Convertir la liste d'Int en tableau de String (exigé par la fonction delete)
+            val whereArgs = ids.map { it.toString() }.toTypedArray()
+
+            // 3. Exécuter la suppression
             val rowsAffected = db.delete(
-                "enfants","id = ?", arrayOf(idEnfant.toString())
+                "enfants",      // Nom de la table
+                whereClause,    // "id IN (?, ?, ?)"
+                whereArgs       // ["1", "2", "3"]
             )
+
+            Log.d(TAG, "Suppression réussie : $rowsAffected ligne(s) affectée(s)")
             rowsAffected > 0
+
         } catch (e: Exception) {
-            Log.e(TAG, "Erreur dans la suppression", e)
+            Log.e(TAG, "Erreur dans la suppression par IDs", e)
             false
         }
     }
-
 
     /**
      * Import from JSON file and populate database

@@ -548,8 +548,12 @@ class MainActivity : AppCompatActivity() {
         val text = if (count == 1) "$count élément sélectionné" else "$count éléments sélectionnés"
         textTitreSelection.text = text
     }
+
     private fun supprimerElements(ids: List<Int>) {
-        // 1. Supprimer de la liste locale
+        // 1. Supprimer dans la BDD (Persistant)
+        bdd.supprimerParIds(ids) // Appelez votre nouvelle méthode ici
+
+        // 2. Supprimer de la liste locale (Visuel)
         val iterateur = listeEnfants.iterator()
         while (iterateur.hasNext()) {
             val item = iterateur.next()
@@ -558,13 +562,10 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        // 2. Notifier l'adapter que tout a changé (ou faites une suppression précise si vous avez les positions)
+        // 3. Rafraîchir l'affichage
         adaptateur.notifyDataSetChanged()
 
-        // 3. (Optionnel) Supprimer dans la base de données ici
-        // bdd.supprimerParIds(ids)
-
-        Toast.makeText(this, "${ids.size} élément(s) supprimé(s)", Toast.LENGTH_SHORT).show()
+        Toast.makeText(this, "${ids.size} élément(s) supprimé(s) définitivement", Toast.LENGTH_SHORT).show()
     }
     /**
      * Fonction pour quitter le mode sélection (Bouton Annuler)
