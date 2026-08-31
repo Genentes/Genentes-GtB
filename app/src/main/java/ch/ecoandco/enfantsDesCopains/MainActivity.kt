@@ -3,6 +3,7 @@ package ch.ecoandco.enfantsDesCopains // --- IMPORTANT : Vérifiez que ceci corr
 import android.annotation.SuppressLint
 import android.app.AlertDialog
 import android.app.DatePickerDialog
+import android.content.Context
 import android.os.Bundle
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
@@ -11,6 +12,7 @@ import androidx.recyclerview.widget.RecyclerView
 import android.text.InputType
 import android.util.Log
 import android.view.Gravity
+import android.view.HapticFeedbackConstants
 import android.view.LayoutInflater
 import android.view.Menu
 import android.view.MenuItem
@@ -43,6 +45,15 @@ class MainActivity : AppCompatActivity() {
     // La liste qui va contenir nos objets formatés pour l'affichage
     private val listeEnfants = mutableListOf<LigneAnniversaire>()
     private var selectedTimestamp: Long = 0L
+
+    private var estEnModeSelection = false
+    // NOUVEAU : Référence à votre barre d'action (à initialiser dans onCreate)
+    private lateinit var layoutSelection: View
+    private lateinit var layoutBoutonAjouter: View
+    private lateinit var textTitreSelection: TextView
+    private lateinit var btnAnnuler: Button
+    private lateinit var btnExporter: Button
+    private lateinit var btnSupprimer: Button
 
     private var colonneTri: String = "date"
     private var estTriAscendant: Boolean = true     // true = Ascendant, false = Descendant
@@ -172,6 +183,58 @@ class MainActivity : AppCompatActivity() {
             groupeTravail = findViewById(R.id.boutonGroupeTravail)
             groupeAutre = findViewById(R.id.boutonGroupeAutre)
 
+            layoutSelection = findViewById(R.id.layoutSelection)
+            layoutBoutonAjouter = findViewById(R.id.boutonAjouterContainer) // Ou l'ID de votre bouton "+"
+            textTitreSelection = findViewById(R.id.textTitreSelection)
+            btnAnnuler = findViewById(R.id.btnAnnulerSelection)
+            btnExporter = findViewById(R.id.btnExporterSelection)
+            btnSupprimer = findViewById(R.id.btnSupprimerSelection)
+
+            layoutSelection.visibility = View.GONE
+
+// 2. Listener du bouton ANNULER
+            btnAnnuler.setOnClickListener {
+                quitterModeSelection()
+            }
+
+// 3. Listener du bouton EXPORTER
+            btnExporter.setOnClickListener {
+                val ids = adaptateur.getSelectedIds() // C'est déjà une List
+                if (ids.isEmpty()) {
+                    afficherToastPersonnalise("Aucun élément sélectionné")
+                } else {
+                    exporterSelection(ids) // Ça matche parfaitement
+                    quitterModeSelection()
+                }
+            }
+
+// 4. Listener du bouton SUPPRIMER
+            btnSupprimer.setOnClickListener {
+                val ids = adaptateur.getSelectedIds()
+
+                if (ids.isEmpty()) {
+                    Toast.makeText(this, "Rien à supprimer", Toast.LENGTH_SHORT).show()
+                    return@setOnClickListener
+                }
+
+                // Message dynamique selon le nombre
+                val message = if (ids.size == 1)
+                    "Voulez-vous vraiment supprimer cet élément ?"
+                else
+                    "Voulez-vous vraiment supprimer ces ${ids.size} éléments ?"
+
+                // Dialog de confirmation
+                AlertDialog.Builder(this)
+                    .setTitle("Confirmation")
+                    .setMessage(message)
+                    .setPositiveButton("Supprimer") { _, _ ->
+                        supprimerElements(ids)
+                        quitterModeSelection()
+                    }
+                    .setNegativeButton("Annuler", null)
+                    .show()
+            }
+
             // 2. Initialiser la Base de Données
             // Cela va déclencher onCreate() dans MaBaseDeDonnees et insérer les données de test
             bdd = MaBaseDeDonnees(this)
@@ -180,40 +243,49 @@ class MainActivity : AppCompatActivity() {
             recyclerView = findViewById(R.id.recyclerViewAnniversaires) // Vérifie que l'ID correspond à ton XML
             recyclerView.layoutManager = LinearLayoutManager(this)
 
-// Création de l'adapter avec la référence dynamique à la liste
+// Lancement du premier chargement
+            chargerDonneesDepuisBDD()
+
+
             adaptateur = AnniversaireAdapter(
                 getListeDonnees = { listeEnfants },
-                onSupprimer = { idEnfant ->
-                    // 1. On cherche la position de l'ID dans la liste actuelle
-                    val position = listeEnfants.indexOfFirst { it.idEnfant == idEnfant }
 
-                    // 2. On agit UNIQUEMENT si l'ID a été trouvé (position != -1).
-                    if (position != -1) {
-                        // A. Suppression dans la base de données
-                        bdd.deleteLine(idEnfant)
+                // --- CLIC COURT ---
+                onItemClick = { id, position ->
+                    if (estEnModeSelection) {
+                        // Si on est EN mode sélection : le clic court bascule la sélection
+                        adaptateur.toggleSelection(id, position)
+                        mettreAJourTitreSelection(adaptateur.getSelectedCount())
 
-                        // B. Suppression dans la liste en mémoire (cohérence immédiate)
-                        listeEnfants.removeAt(position)
-
-                        // C. Notification précise à l'adaptateur (Animation fluide)
-                        adaptateur.notifyItemRemoved(position)
-
-                        // Optionnel : Pour animer le glissement des éléments restants vers le haut
-                        adaptateur.notifyItemRangeChanged(position, listeEnfants.size)
+                        // Optionnel : Si plus aucun élément n'est sélectionné, on quitte le mode ?
+                        // if (adaptateur.getSelectedCount() == 0) quitterModeSelection()
                     } else {
-                        afficherToastPersonnalise("Déjà supprimé")
+                        // Si on est en mode NORMAL : le clic court fait ce qu'il veut (rien, ou ouvrir le détail)
+                        // Pour l'instant, on ne fait rien ou on ouvre le détail
+                        // Toast.makeText(this, "Détail de $id", Toast.LENGTH_SHORT).show()
+                    }
+                },
+
+                // --- CLIC LONG (C'EST ICI QUE ÇA SE PASSE) ---
+                onItemLongClick = { id, position ->
+                    if (!estEnModeSelection) {
+                        // 1. VIBRATION (Haptic Feedback)
+                        val itemView = recyclerView.findViewHolderForAdapterPosition(position)?.itemView
+                        itemView?.let { view ->
+                            view.isHapticFeedbackEnabled = true
+                            view.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
+                        }
+
+                        // 2. LANCER LE MODE SÉLECTION
+                        activerModeSelection(id, position)
+                    } else {
+                        // Si on est déjà en mode sélection, un clic long agit comme un toggle normal
+                        adaptateur.toggleSelection(id, position)
+                        mettreAJourTitreSelection(adaptateur.getSelectedCount())
                     }
                 }
             )
-// Lien entre l'adapter et le RecyclerView
             recyclerView.adapter = adaptateur
-
-// Optionnel : Écouter les changements de sélection pour mettre à jour un compteur
-            adaptateur.onSelectionChanged = { nombre ->
-                mettreAJourTitreSelection(nombre)
-            }
-// Lancement du premier chargement
-            chargerDonneesDepuisBDD()
 
             val boutonAjouter = findViewById<Button>(R.id.boutonAjouter)
 
@@ -370,43 +442,6 @@ class MainActivity : AppCompatActivity() {
         return true
     }
 
-    // Fonction appelée par ton bouton "Sélectionner" (à créer dans ton menu ou layout)
-    private fun lancerModeSelection() : Boolean {
-        adaptateur.activerModeSelection()
-        afficherBarreActionSelection(true)
-        return true
-    }
-
-    // Affiche ou cache la barre avec les boutons "Annuler" et "Exporter"
-    private fun afficherBarreActionSelection(afficher: Boolean) {
-        val layoutSelection = findViewById<View>(R.id.layoutSelection)
-        layoutSelection.visibility = if (afficher) View.VISIBLE else View.GONE
-
-        val layoutBouton = findViewById<View>(R.id.boutonAjouterContainer)
-        layoutBouton.visibility = if (afficher) View.GONE else View.VISIBLE
-
-        if (afficher) {
-            // Bouton Annuler
-            findViewById<Button>(R.id.btnAnnulerSelection).setOnClickListener {
-                adaptateur.desactiverModeSelection()
-                afficherBarreActionSelection(false)
-            }
-
-            // Bouton Exporter
-            findViewById<Button>(R.id.btnExporterSelection).setOnClickListener {
-                val ids = adaptateur.getSelectedIds()
-                if (ids.isEmpty()) {
-                    afficherToastPersonnalise("Aucune donnée sélectionnée")
-                } else {
-                    exporterSelection(ids)
-                    adaptateur.desactiverModeSelection()
-                    afficherBarreActionSelection(false)
-                }
-            }
-            mettreAJourTitreSelection(0)
-        }
-    }
-
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         return when (item.itemId) {
             R.id.action_export -> {
@@ -414,9 +449,6 @@ class MainActivity : AppCompatActivity() {
             }
             R.id.action_import -> {
                 lancerImportation()
-            }
-            R.id.action_change_category -> {
-                lancerModeSelection()
             }
             else -> super.onOptionsItemSelected(item)
         }
@@ -473,6 +505,81 @@ class MainActivity : AppCompatActivity() {
         return true
     }
 
+    // --- NOUVELLES FONCTIONS POUR L'ÉTAPE B ---
+
+    /**
+     * Fonction appelée par le listener de l'adapter quand on fait un clic long
+     */
+    private fun activerModeSelection(idPremierItem: Int, position: Int) {
+        if (estEnModeSelection) return // Déjà activé
+
+        estEnModeSelection = true
+        adaptateur.isSelectionMode = true
+        adaptateur.toggleSelection(idPremierItem, position)
+        layoutSelection.visibility = View.VISIBLE
+        layoutBoutonAjouter.visibility = View.GONE
+        // 4. On met à jour le titre (1 élément sélectionné)
+        mettreAJourTitreSelection(adaptateur.getSelectedCount())
+    }
+
+
+    /**
+     * Fonction pour mettre à jour le texte "X élément(s) sélectionné(s)"
+     */
+    private fun mettreAJourTitreSelection(count: Int) {
+        val text = if (count == 1) "$count élément sélectionné" else "$count éléments sélectionnés"
+        textTitreSelection.text = text
+    }
+    private fun supprimerElements(ids: List<Int>) {
+        // 1. Identifier les positions à supprimer ET les supprimer de la liste locale
+        // On crée une liste des positions à supprimer
+        val positionsASupprimer = mutableListOf<Int>()
+
+        // On parcourt la liste à l'envers pour ne pas fausser les index lors de la suppression
+        for (i in listeEnfants.size - 1 downTo 0) {
+            val item = listeEnfants[i]
+            if (ids.contains(item.idEnfant)) {
+                positionsASupprimer.add(i) // On note la position
+                listeEnfants.removeAt(i)   // On retire de la liste locale immédiatement
+            }
+        }
+
+        // 2. Supprimer dans la BDD (toujours en premier ou en parallèle)
+        bdd.supprimerParIds(ids)
+
+        // 3. Notifier l'Adapter avec précision
+        // Comme on a supprimé à l'envers dans la liste, 'positionsASupprimer' contient
+        // les index tels qu'ils étaient AVANT suppression.
+        // Mais pour l'animation, on doit notifier dans l'ordre croissant ou faire des appels individuels.
+
+        // Méthode simple et efficace : Notifier chaque suppression individuellement
+        // L'adapter gérera l'animation pour chaque ligne.
+        // Il faut trier les positions par ordre CROISSANT pour que l'animation soit logique visuellement
+        positionsASupprimer.sorted().forEach { position ->
+            adaptateur.notifyItemRemoved(position)
+        }
+
+        // Optionnel : Si vous avez supprimé beaucoup d'items, on peut notifier que la plage a changé
+        // mais notifyItemRemoved suffit pour l'animation.
+
+       afficherToastPersonnalise("${ids.size} élément(s) supprimé(s)")
+
+        // Si la liste est vide ou pour être sûr, on peut vérifier l'état
+        if (listeEnfants.isEmpty()) {
+           afficherToastPersonnalise("Aucun élément à supprimer")
+        }
+    }
+
+    /**
+     * Fonction pour quitter le mode sélection (Bouton Annuler)
+     */
+    private fun quitterModeSelection() {
+        estEnModeSelection = false
+        adaptateur.clearSelection() // Vide la liste et notifie l'adapter
+        layoutSelection.visibility = View.GONE
+        layoutBoutonAjouter.visibility = View.VISIBLE
+        textTitreSelection.text = ""
+    }
 
     /**
      * Lance l'exportation pour une liste spécifique d'IDs d'enfants.
@@ -530,25 +637,25 @@ class MainActivity : AppCompatActivity() {
                 containerLayout.addView(button)
             }
 
+            // 4. Construire l'AlertDialog
+            val dialog =  AlertDialog.Builder(context)
+                .setTitle("Action pour la sélection")
+                .setMessage("Que souhaitez-vous faire des éléments sélectionnés ?")
+                .setView(containerLayout) // < C'est ici qu'on insère nos boutons personnalisés
+                .setNegativeButton("Annuler") { d, _ ->
+                    d.dismiss()
+                }
+                .create()
+
             // 3. Ajouter les deux options principales
             ajouterBoutonAction("Partager la sélection (fichier JSON)") {
                 preparerEtLancerExportFichier(idsEnfantsSelectionnes, toutesLesPersonnes)
             }
 
             ajouterBoutonAction("-> Changer de catégorie") {
-                lancerChangementCategorie(idsEnfantsSelectionnes)
+                lancerChangementCategorie(idsEnfantsSelectionnes, this, dialog)
             }
-
-            // 4. Construire l'AlertDialog
-            AlertDialog.Builder(context)
-                .setTitle("Action pour la sélection")
-                .setMessage("Que souhaitez-vous faire des éléments sélectionnés ?")
-                .setView(containerLayout) // < C'est ici qu'on insère nos boutons personnalisés
-                .setNegativeButton("Annuler") { dialog, _ ->
-                    dialog.dismiss()
-                }
-                .show()
-
+            dialog.show()
         } catch (e: Exception) {
             Log.e(TAG, "Erreur préparation sélection", e)
             afficherToastPersonnalise("Erreur: ${e.message}")
@@ -584,37 +691,82 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun lancerChangementCategorie(idsEnfantsSelectionnes: List<Int>) {
-        // TODO: Implémenter ici la logique pour :
-        // 1. Demander à l'utilisateur quelle catégorie cible choisir (autre AlertDialog ?)
-        // 2. Mettre à jour la BDD pour ces IDs
-        // 3. Rafraîchir l'affichage
+    private fun lancerChangementCategorie(idsEnfantsSelectionnes: List<Int>, context: Context, dialog: AlertDialog) {
+        dialog.dismiss()
 
-        afficherToastPersonnalise("Fonctionnalité 'Changer catégorie' à implémenter pour : $idsEnfantsSelectionnes")
+        val categories = listOf("-- Sélectionner --", "Copains", "Famille", "Travail", "Autre")
+        var categorieSelectionnee = categories[0] // Valeur par défaut
 
-        // Exemple de structure future :
-        // afficherSelectionCategorie { categorieCible >
-        //     bdd.mettreAJourCategorie(idsEnfantsSelectionnes, categorieCible)
-        //     rafraichirListe()
-        // }
+        // 3. Créer le layout du Spinner dynamiquement
+        val spinner = Spinner(context)
+        val adapter = ArrayAdapter(
+            context,
+            android.R.layout.simple_spinner_item,
+            categories
+        )
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+        spinner.adapter = adapter
+
+        // Écouter la sélection de l'utilisateur
+        spinner.onItemSelectedListener = object : android.widget.AdapterView.OnItemSelectedListener {
+            override fun onItemSelected(parent: android.widget.AdapterView<*>?, view: View?, position: Int, id: Long) {
+                categorieSelectionnee = categories[position]
+            }
+            override fun onNothingSelected(parent: android.widget.AdapterView<*>?) {}
+        }
+
+        val padding = 50
+        spinner.setPadding(padding, 20, padding, 20)
+
+        AlertDialog.Builder(context)
+            .setTitle("Choisir une nouvelle catégorie")
+            .setMessage("Sélectionnez la catégorie de destination :")
+            .setView(spinner)
+            .setPositiveButton("Valider") { _, _ ->
+                // L'utilisateur a cliqué sur Valider
+                executerLeChangementDeCategorie(idsEnfantsSelectionnes, categorieSelectionnee)
+            }
+            .setNegativeButton("Annuler") { d, _ ->
+                d.dismiss()
+            }
+            .show()
     }
 
+    private fun executerLeChangementDeCategorie(ids: List<Int>, categorie: String) {
+        val exportTo = when (categorie) {
+            "Copains" -> "copains"
+            "Famille" -> "famille"
+            "Travail" -> "travail"
+            "Autre" -> "autre"
+            else -> {
+                afficherToastPersonnalise("Catégorie invalide")
+                return
+            }
+        }
 
-    // Met à jour le texte "X élément(s) sélectionné(s)"
-    private fun mettreAJourTitreSelection(count: Int) {
-        val textView = findViewById<TextView>(R.id.textTitreSelection)
-        textView.text = getString(R.string.message_nombre_selection, count)
+        afficherToastPersonnalise("Traitement en cours...")
+
+        // On crée un nouveau thread pour ne pas bloquer l'interface
+        Thread {
+            // Ce code s'exécute en arrière-plan
+            val succes = bdd.recupIDparentsEtChangeCategorie(ids, exportTo)
+
+            // IMPORTANT : Pour afficher un Toast ou modifier l'UI, on doit revenir sur le thread principal
+            runOnUiThread {
+                if (succes) {
+                    afficherToastPersonnalise("Ok, déplacé vers $categorie")
+                    chargerDonneesDepuisBDD()
+                } else {
+                    afficherToastPersonnalise("Échec de la mise à jour")
+                }
+            }
+        }.start()
     }
+
 
     // Fonction squelette pour l'export
-    private fun exporterSelection(ids: Set<Int>) {
-        afficherToastPersonnalise("Export des éléments : $ids")
-
-        // Conversion simple de Set en List
-        val listeIds: List<Int> = ids.toList()
-
-        // On passe directement la liste
-        lancerExportationSelection(listeIds)
+    private fun exporterSelection(ids: List<Int>) {
+        lancerExportationSelection(ids)
     }
 
     @SuppressLint("SetTextI18n")

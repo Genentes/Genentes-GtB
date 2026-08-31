@@ -7,6 +7,7 @@ import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
 import android.util.Log
 import java.util.Calendar
+import kotlin.compareTo
 
 
 class MaBaseDeDonnees(private val context: Context) : SQLiteOpenHelper(context, "anniversaires.db", null, 2) {
@@ -193,19 +194,34 @@ class MaBaseDeDonnees(private val context: Context) : SQLiteOpenHelper(context, 
         }
     }
 
-    fun deleteLine(idEnfant: Int): Boolean {
+    fun supprimerParIds(ids: List<Int>): Boolean {
         return try {
+            if (ids.isEmpty()) return false // Sécurité : rien à supprimer
+
             val db = this.writableDatabase
+
+            // 1. Créer la clause "IN (?, ?, ?)" avec autant de points d'interrogation que d'IDs
+            val placeholders = ids.joinToString(",") { "?" }
+            val whereClause = "id IN ($placeholders)"
+
+            // 2. Convertir la liste d'Int en tableau de String (exigé par la fonction delete)
+            val whereArgs = ids.map { it.toString() }.toTypedArray()
+
+            // 3. Exécuter la suppression
             val rowsAffected = db.delete(
-                "enfants","id = ?", arrayOf(idEnfant.toString())
+                "enfants",      // Nom de la table
+                whereClause,    // "id IN (?, ?, ?)"
+                whereArgs       // ["1", "2", "3"]
             )
+
+            Log.d(TAG, "Suppression réussie : $rowsAffected ligne(s) affectée(s)")
             rowsAffected > 0
+
         } catch (e: Exception) {
-            Log.e(TAG, "Erreur dans la suppression", e)
+            Log.e(TAG, "Erreur dans la suppression par IDs", e)
             false
         }
     }
-
 
     /**
      * Import from JSON file and populate database
@@ -402,6 +418,56 @@ class MaBaseDeDonnees(private val context: Context) : SQLiteOpenHelper(context, 
         } catch (e: Exception) {
             Log.e("DB_LOAD", "Erreur chargement", e)
             return emptyList()
+        }
+    }
+
+    // Pas de 'suspend', c'est une fonction normale
+    fun recupIDparentsEtChangeCategorie (ids: List<Int>, keyCategorie: String): Boolean {
+        return try {
+            if (ids.isEmpty()) return false
+
+            val db = this.writableDatabase
+            val parentsIdsToUpdate = mutableListOf<Int>()
+
+            // --- REQUÊTE DE LECTURE (Natif pur) ---
+            val placeholders = ids.joinToString(",") { "?" }
+            val sqlRecup = "SELECT idParent1, idParent2 FROM enfants WHERE id IN ($placeholders)"
+
+            // Conversion des Int en String pour les arguments de rawQuery
+            val selectionArgs = ids.map { it.toString() }.toTypedArray()
+
+            val cursor = db.rawQuery(sqlRecup, selectionArgs)
+
+            cursor.use { // Fermeture automatique
+                if (it.moveToFirst()) {
+                    do {
+                        val col1 = it.getColumnIndex("idParent1")
+                        val col2 = it.getColumnIndex("idParent2")
+
+                        if (!it.isNull(col1)) parentsIdsToUpdate.add(it.getInt(col1))
+                        if (!it.isNull(col2)) parentsIdsToUpdate.add(it.getInt(col2))
+                    } while (it.moveToNext())
+                }
+            }
+
+            if (parentsIdsToUpdate.isEmpty()) return false
+
+            // --- REQUÊTE D'ÉCRITURE (Natif pur) ---
+            val uniqueParentsIds = parentsIdsToUpdate.distinct()
+            val placeholdersParents = uniqueParentsIds.joinToString(",") { "?" }
+            val sqlUpdate = "UPDATE parents SET groupe = ? WHERE id IN ($placeholdersParents)"
+
+            val updateArgs = mutableListOf<String>()
+            updateArgs.add(keyCategorie)
+            updateArgs.addAll(uniqueParentsIds.map { it.toString() })
+
+            db.execSQL(sqlUpdate, updateArgs.toTypedArray())
+
+            true
+
+        } catch (e: Exception) {
+            Log.e(TAG, "Erreur SQL native : ${e.message}", e)
+            false
         }
     }
 }

@@ -17,7 +17,6 @@ import android.text.style.StyleSpan
 import android.graphics.Typeface
 import android.widget.CheckBox
 
-
 // 1. Une petite classe "modèle" pour transporter les données d'une ligne
 // C'est plus propre que de passer un Cursor directement à l'adapter.
 data class LigneAnniversaire(
@@ -32,39 +31,21 @@ data class LigneAnniversaire(
 class AnniversaireAdapter(
     // On passe une fonction qui renvoie la liste à jour à chaque fois
     private val getListeDonnees: () -> List<LigneAnniversaire>,
-    private val onSupprimer: (Int) -> Unit
+    private val onItemClick: (Int, Int) -> Unit,
+    private val onItemLongClick: (Int, Int) -> Unit
 ) : RecyclerView.Adapter<AnniversaireAdapter.MonViewHolder>() {
 
     companion object {
         private const val TAG = "AnniversaireAdapter"
     }
-
-    // --- GESTION DU MODE SÉLECTION ---
+    // --- ÉTAT INTERNE DE SÉLECTION ---
+    private val selectedIds = mutableSetOf<Int>()
     var isSelectionMode = false
-        private set // Modifiable uniquement via les méthodes publiques
 
-    private val selectedIds = HashSet<Int>()
+    // --- MÉTHODES PUBLIQUES POUR L'ACTIVITY (Étapes B et C) ---
 
-    // Callback pour prévenir l'Activity quand le nombre de personnes sélectionnées change.
-    var onSelectionChanged: ((Int) -> Unit)? = null
-
-    // --- MÉTHODES DE CONTRÔLE ---
-
-    fun activerModeSelection() {
-        isSelectionMode = true
-        selectedIds.clear()
-        notifyItemRangeChanged(0, itemCount)
-    }
-
-    fun desactiverModeSelection() {
-        isSelectionMode = false
-        selectedIds.clear()
-        notifyItemRangeChanged(0, itemCount)
-    }
-
-    fun getSelectedIds(): Set<Int> {
-        return HashSet(selectedIds)
-    }
+    fun getSelectedIds(): List<Int> = selectedIds.toList()
+    fun getSelectedCount(): Int = selectedIds.size
 
     fun toggleSelection(id: Int, position: Int) {
         if (selectedIds.contains(id)) {
@@ -73,126 +54,120 @@ class AnniversaireAdapter(
             selectedIds.add(id)
         }
         notifyItemChanged(position)
-        onSelectionChanged?.invoke(selectedIds.size)
+    }
+
+    fun clearSelection() {
+        selectedIds.clear()
+        isSelectionMode = false
+        notifyDataSetChanged()
     }
 
     // --- ÉTAPE A : Le ViewHolder ---
     // C'est lui qui "tient" les vues d'une seule ligne (les 3 TextView)
-    class MonViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
+    inner class MonViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         val textEnfant: TextView = itemView.findViewById(R.id.textEnfant)
         val textParents: TextView = itemView.findViewById(R.id.textParents)
         val textDate: TextView = itemView.findViewById(R.id.textDate)
-        val checkBox: CheckBox = itemView.findViewById(R.id.checkBoxSelection)
-    }
+        val checkBoxSelection: CheckBox = itemView.findViewById(R.id.checkBoxSelection)
 
-    // --- ÉTAPE B : Création de la vue (Quand on a besoin d'une nouvelle ligne) ---
-    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): MonViewHolder {
-        return try {
-            // On transforme le XML "item_ligne_anniversaire.xml" en un objet View Java
-            val vueLigne = LayoutInflater.from(parent.context)
-                .inflate(item_ligne_anniversaire, parent, false)
+        // Variables tampons
+        var currentId: Int = -1
+        var currentPosition: Int = -1
 
-            MonViewHolder(vueLigne)
-        } catch (e: Exception) {
-            Log.e(TAG, "Erreur dans onCreateViewHolder", e)
-            val fallbackView = LinearLayout(parent.context).apply {
-                orientation = LinearLayout.VERTICAL
-                addView(TextView(parent.context).apply { id = R.id.textEnfant })
-                addView(TextView(parent.context).apply { id = R.id.textParents })
-                addView(TextView(parent.context).apply { id = R.id.textDate })
-                // Ajout manuel d'une checkbox pour le fallback si nécessaire,
-                // mais ici, on suppose que le XML principal est corrigé.
+        init {
+            // Clic Court sur toute la ligne
+            itemView.setOnClickListener {
+                if (currentId != -1 && currentPosition != -1) {
+                    onItemClick(currentId, currentPosition)
+                }
             }
-            MonViewHolder(fallbackView)
-        }
-    }
 
-    // --- ÉTAPE C : Remplissage des données (Le cœur du réacteur) ---
-    override fun onBindViewHolder(holder: MonViewHolder, position: Int) {
-        try {
-
-            // On récupère la liste FRAÎCHE à chaque bind
-            val listeActuelle = getListeDonnees()
-
-            // Sécurité : si la position est hors limite (cas rare de concurrence)
-            if (position >= listeActuelle.size) return
-
-            val elementActuel = listeActuelle[position]
-
-            // 1. Gestion de la visibilité de la CheckBox
-            holder.checkBox.visibility = if (isSelectionMode) View.VISIBLE else View.GONE
-
-            // 2. Gestion de l'état et des écouteurs selon le mode
-            if (isSelectionMode) {
-                // Mode SÉLECTION activé
-                holder.checkBox.isChecked = selectedIds.contains(elementActuel.idEnfant)
-
-                // On définit le listener de la checkbox
-                holder.checkBox.setOnCheckedChangeListener { _, _ ->
-                    toggleSelection(elementActuel.idEnfant, position)
-                }
-
-                // Clic sur la ligne = cocher/décocher
-                holder.itemView.setOnClickListener {
-                    holder.checkBox.isChecked = !holder.checkBox.isChecked
-                }
-
-                // On désactive le clic-long en mode sélection
-                holder.itemView.setOnLongClickListener(null)
-
-            } else {
-                // Mode NORMAL
-                holder.checkBox.setOnCheckedChangeListener(null)
-                holder.checkBox.isChecked = false
-
-                // Réactivation du Clic Long pour la suppression
-                holder.itemView.setOnLongClickListener {
-                    val pos = holder.bindingAdapterPosition
-                    if (pos == RecyclerView.NO_POSITION) return@setOnLongClickListener true
-
-                    holder.itemView.isHapticFeedbackEnabled = true
-                    holder.itemView.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
-
-                    AlertDialog.Builder(holder.itemView.context)
-                        .setTitle("Supprimer ?")
-                        .setMessage("Voulez-vous vraiment supprimer la ligne de ${elementActuel.prenomEnfant} ?")
-                        .setPositiveButton("Oui") { _, _ ->
-                            onSupprimer(elementActuel.idEnfant)
-                        }
-                        .setNegativeButton("Annuler", null)
-                        .show()
+            // Clic Long sur toute la ligne
+            itemView.setOnLongClickListener {
+                if (currentId != -1 && currentPosition != -1) {
+                    onItemLongClick(currentId, currentPosition)
                     true
+                } else {
+                    false
                 }
-
-                // En mode normal, le clic-court ne fait rien (ou peut lancer un détail si tu veux).
-                holder.itemView.setOnClickListener(null)
             }
 
-           val prenom = elementActuel.prenomEnfant
-            val ageInfo = DateUtils.formatAgeWithQuarters(elementActuel.timestampNaissance)
-            val spannableText = SpannableString("$prenom\n$ageInfo")
-
-// Application du style GRAS uniquement sur la longueur du prénom
-            spannableText.setSpan(
-                StyleSpan(Typeface.BOLD),
-                0, // Début : index 0
-                prenom.length, // Fin : longueur du prénom
-                Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
-            )
-
-            // 1. On injecte le texte simple
-            holder.textEnfant.text = spannableText
-            holder.textParents.text = elementActuel.nomsParents
-            val texteFormate = DateUtils.formatAge(elementActuel.timestampNaissance)
-
-            holder.textDate.text = texteFormate
+            // Clic spécifique sur la CheckBox (déclenche la même action que la ligne)
+            checkBoxSelection.setOnClickListener {
+                if (currentId != -1 && currentPosition != -1) {
+                    onItemClick(currentId, currentPosition)
+                }
             }
-        catch (e: Exception) {
-            Log.e(TAG, "Erreur dans onBindViewHolder", e)
+        }
+
+        fun bind(position: Int) {
+            try {
+                val listeActuelle = getListeDonnees()
+                if (position >= listeActuelle.size) return
+
+                val element = listeActuelle[position]
+
+                // Mise à jour des références pour les écouteurs
+                currentId = element.idEnfant // Assurez-vous que idEnfant est l'ID unique
+                currentPosition = position
+
+                // --- VOTRE LOGIQUE DE FORMATAGE EXISTANTE ---
+                val prenom = element.prenomEnfant
+                val ageInfo = DateUtils.formatAgeWithQuarters(element.timestampNaissance)
+                val spannableText = SpannableString("$prenom\n$ageInfo")
+
+                spannableText.setSpan(
+                    StyleSpan(Typeface.BOLD),
+                    0,
+                    prenom.length,
+                    android.text.Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
+                )
+
+                textEnfant.text = spannableText
+                textParents.text = element.nomsParents
+                textDate.text = DateUtils.formatAge(element.timestampNaissance)
+
+                // --- NOUVELLE LOGIQUE DE SÉLECTION VISUELLE ---
+
+                // 1. Afficher/Masquer la CheckBox selon le mode
+                checkBoxSelection.visibility = if (isSelectionMode) View.VISIBLE else View.GONE
+
+                // 2. Vérifier si l'item est sélectionné
+                val isSelected = selectedIds.contains(element.idEnfant)
+
+                // 3. Cocher/Décocher (sans boucle infinie car on ne change pas l'état ici, on l'applique)
+                checkBoxSelection.isChecked = isSelected
+
+
+            } catch (e: Exception) {
+                Log.e(TAG, "Erreur dans bind", e)
+            }
         }
     }
 
-    // --- ÉTAPE D : Combien de lignes ? ---
+// --- MÉTHODES OBLIGATOIRES ---
+
+override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): MonViewHolder {
+    return try {
+        val vueLigne = LayoutInflater.from(parent.context)
+            .inflate(R.layout.item_ligne_anniversaire, parent, false) // Vérifiez le nom du fichier XML
+        MonViewHolder(vueLigne)
+    } catch (e: Exception) {
+        Log.e(TAG, "Erreur dans onCreateViewHolder", e)
+        // Fallback simplifié (sans checkbox dans le fallback pour éviter crash)
+        val fallbackView = LinearLayout(parent.context).apply {
+            orientation = LinearLayout.VERTICAL
+            addView(TextView(parent.context).apply { id = R.id.textEnfant })
+            addView(TextView(parent.context).apply { id = R.id.textParents })
+            addView(TextView(parent.context).apply { id = R.id.textDate })
+        }
+        MonViewHolder(fallbackView)
+    }
+}
+    override fun onBindViewHolder(holder: MonViewHolder, position: Int) {
+        holder.bind(position)
+    }
+
     override fun getItemCount(): Int {
         return try {
             getListeDonnees().size
