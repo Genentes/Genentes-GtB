@@ -109,7 +109,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:padding="12dp"
+            android:padding="8dp"
             android:background="#E3F2FD"
             android:visibility="gone"
             android:layout_marginTop="8dp">
@@ -119,12 +119,12 @@
                 android:id="@+id/textTitreSelection"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="0 élément(s) sélectionné(s)"
+                android:text="0 élément sélectionné"
                 android:textStyle="bold"
                 android:textColor="#1565C0"
                 android:layout_marginBottom="8dp"/>
 
-            <!-- Les boutons alignés horizontalement -->
+            <!-- Les boutons alignés  -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -137,13 +137,21 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Annuler"
-                    android:layout_marginEnd="8dp"/>
+                    android:layout_marginEnd="6dp"/>
 
                 <Button
                     android:id="@+id/btnExporterSelection"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Exporter vers..." />
+
+                <Button
+                    android:id="@+id/btnSupprimerSelection"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Supprimer"
+                    android:layout_marginStart="8dp"
+                    android:backgroundTint="@android:color/holo_red_light"/>
             </LinearLayout>
         </LinearLayout>
 

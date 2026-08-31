@@ -51,6 +51,9 @@ class MainActivity : AppCompatActivity() {
     private lateinit var layoutSelection: View
     private lateinit var layoutBoutonAjouter: View
     private lateinit var textTitreSelection: TextView
+    private lateinit var btnAnnuler: Button
+    private lateinit var btnExporter: Button
+    private lateinit var btnSupprimer: Button
 
     private var colonneTri: String = "date"
     private var estTriAscendant: Boolean = true     // true = Ascendant, false = Descendant
@@ -183,7 +186,60 @@ class MainActivity : AppCompatActivity() {
             layoutSelection = findViewById(R.id.layoutSelection)
             layoutBoutonAjouter = findViewById(R.id.boutonAjouterContainer) // Ou l'ID de votre bouton "+"
             textTitreSelection = findViewById(R.id.textTitreSelection)
+            btnAnnuler = findViewById(R.id.btnAnnulerSelection)
+            btnExporter = findViewById(R.id.btnExporterSelection)
+            btnSupprimer = findViewById(R.id.btnSupprimerSelection)
+
             layoutSelection.visibility = View.GONE
+
+// 2. Listener du bouton ANNULER
+            btnAnnuler.setOnClickListener {
+                quitterModeSelection()
+            }
+
+// 3. Listener du bouton EXPORTER
+            btnExporter.setOnClickListener {
+                val ids = adaptateur.getSelectedIds()
+
+                if (ids.isEmpty()) {
+                    Toast.makeText(this, "Aucun élément sélectionné", Toast.LENGTH_SHORT).show()
+                } else {
+                    // --- VOTRE LOGIQUE D'EXPORT ICI ---
+                    // Pour l'instant, on simule avec un Toast
+                    val message = "Export de ${ids.size} élément(s) :\nIDs: ${ids.joinToString()}"
+                    Toast.makeText(this, message, Toast.LENGTH_LONG).show()
+
+                    // Optionnel : Quitter le mode après l'export
+                    quitterModeSelection()
+                }
+            }
+
+// 4. Listener du bouton SUPPRIMER
+            btnSupprimer.setOnClickListener {
+                val ids = adaptateur.getSelectedIds()
+
+                if (ids.isEmpty()) {
+                    Toast.makeText(this, "Rien à supprimer", Toast.LENGTH_SHORT).show()
+                    return@setOnClickListener
+                }
+
+                // Message dynamique selon le nombre
+                val message = if (ids.size == 1)
+                    "Voulez-vous vraiment supprimer cet élément ?"
+                else
+                    "Voulez-vous vraiment supprimer ces ${ids.size} éléments ?"
+
+                // Dialog de confirmation
+                AlertDialog.Builder(this)
+                    .setTitle("Confirmation")
+                    .setMessage(message)
+                    .setPositiveButton("Supprimer") { _, _ ->
+                        supprimerElements(ids)
+                        quitterModeSelection()
+                    }
+                    .setNegativeButton("Annuler", null)
+                    .show()
+            }
 
             // 2. Initialiser la Base de Données
             // Cela va déclencher onCreate() dans MaBaseDeDonnees et insérer les données de test
@@ -464,16 +520,10 @@ class MainActivity : AppCompatActivity() {
         if (estEnModeSelection) return // Déjà activé
 
         estEnModeSelection = true
-
-        // 1. On dit à l'adapter de passer en mode sélection
         adaptateur.isSelectionMode = true
-
-        // 2. On sélectionne automatiquement l'item sur lequel on a appuyé
         adaptateur.toggleSelection(idPremierItem, position)
-
-        // 3. On affiche la barre d'actions et on cache le bouton "+"
-        afficherBarreActionSelection(true)
-
+        layoutSelection.visibility = View.VISIBLE
+        layoutBoutonAjouter.visibility = View.GONE
         // 4. On met à jour le titre (1 élément sélectionné)
         mettreAJourTitreSelection(adaptateur.getSelectedCount())
     }
@@ -495,16 +545,36 @@ class MainActivity : AppCompatActivity() {
      * Fonction pour mettre à jour le texte "X élément(s) sélectionné(s)"
      */
     private fun mettreAJourTitreSelection(count: Int) {
-        textTitreSelection.text = getString(R.string.message_nombre_selection, count)
+        val text = if (count == 1) "$count élément sélectionné" else "$count éléments sélectionnés"
+        textTitreSelection.text = text
     }
+    private fun supprimerElements(ids: List<Int>) {
+        // 1. Supprimer de la liste locale
+        val iterateur = listeEnfants.iterator()
+        while (iterateur.hasNext()) {
+            val item = iterateur.next()
+            if (ids.contains(item.idEnfant)) {
+                iterateur.remove()
+            }
+        }
 
+        // 2. Notifier l'adapter que tout a changé (ou faites une suppression précise si vous avez les positions)
+        adaptateur.notifyDataSetChanged()
+
+        // 3. (Optionnel) Supprimer dans la base de données ici
+        // bdd.supprimerParIds(ids)
+
+        Toast.makeText(this, "${ids.size} élément(s) supprimé(s)", Toast.LENGTH_SHORT).show()
+    }
     /**
      * Fonction pour quitter le mode sélection (Bouton Annuler)
      */
     private fun quitterModeSelection() {
         estEnModeSelection = false
         adaptateur.clearSelection() // Vide la liste et notifie l'adapter
-        afficherBarreActionSelection(false)
+        layoutSelection.visibility = View.GONE
+        layoutBoutonAjouter.visibility = View.VISIBLE
+        textTitreSelection.text = ""
     }
 
     /**
