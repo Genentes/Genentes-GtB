@@ -531,7 +531,6 @@ class MainActivity : AppCompatActivity() {
         textTitreSelection.text = text
     }
     private fun supprimerElements(ids: List<Int>) {
-        // 1. Identifier les positions à supprimer ET les supprimer de la liste locale
         // On crée une liste des positions à supprimer
         val positionsASupprimer = mutableListOf<Int>()
 
@@ -547,22 +546,11 @@ class MainActivity : AppCompatActivity() {
         // 2. Supprimer dans la BDD (toujours en premier ou en parallèle)
         bdd.supprimerParIds(ids)
 
-        // 3. Notifier l'Adapter avec précision
-        // Comme on a supprimé à l'envers dans la liste, 'positionsASupprimer' contient
-        // les index tels qu'ils étaient AVANT suppression.
-        // Mais pour l'animation, on doit notifier dans l'ordre croissant ou faire des appels individuels.
-
-        // Méthode simple et efficace : Notifier chaque suppression individuellement
-        // L'adapter gérera l'animation pour chaque ligne.
-        // Il faut trier les positions par ordre CROISSANT pour que l'animation soit logique visuellement
-        positionsASupprimer.sorted().forEach { position ->
+         positionsASupprimer.sorted().forEach { position ->
             adaptateur.notifyItemRemoved(position)
         }
 
-        // Optionnel : Si vous avez supprimé beaucoup d'items, on peut notifier que la plage a changé
-        // mais notifyItemRemoved suffit pour l'animation.
-
-       afficherToastPersonnalise("${ids.size} élément(s) supprimé(s)")
+         afficherToastPersonnalise("${ids.size} élément(s) supprimé(s)")
 
         // Si la liste est vide ou pour être sûr, on peut vérifier l'état
         if (listeEnfants.isEmpty()) {
