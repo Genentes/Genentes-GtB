@@ -111,29 +111,28 @@ class MainActivity : AppCompatActivity() {
     }
 
     private var jsonEnAttenteEcriture: String? = null
+
+
+    // File saver launcher for export
     private val fileSaverLauncher = registerForActivityResult(
         ActivityResultContracts.CreateDocument("application/json")
     ) { uri ->
         if (uri != null) {
-            // On récupère le JSON préparé précédemment
-            val jsonContent = jsonEnAttenteEcriture
+            try {
+                val timeStamp = SimpleDateFormat("yyyy_MM_dd_HHmmss", Locale.getDefault()).format(Calendar.getInstance().time)
+                val fileName = "anniversaires_export_$timeStamp.json"
 
-            if (!jsonContent.isNullOrEmpty()) {
-                try {
-                    // Écriture du fichier
-                    contentResolver.openOutputStream(uri)?.use { outputStream ->
-                        outputStream.write(jsonContent.toByteArray())
-                    }
-                    afficherToastPersonnalise("Fichier sauvegardé avec succès")
-                } catch (e: Exception) {
-                    Log.e(TAG, "Erreur lors de la sauvegarde", e)
-                    afficherToastPersonnalise("Erreur: ${e.message}")
-                } finally {
-                    // Nettoyage : on efface la variable après usage
-                    jsonEnAttenteEcriture = null
+                // Get data as JSON string
+                val jsonContent = bdd.exportToJson() // This should return the JSON string directly
+
+                // Write to the chosen URI
+                contentResolver.openOutputStream(uri)?.use { outputStream ->
+                    outputStream.write(jsonContent.toByteArray())
                 }
-            } else {
-                afficherToastPersonnalise("Erreur: Aucune donnée à exporter.")
+                Toast.makeText(this, "Fichier sauvegardé avec succès", Toast.LENGTH_SHORT).show()
+            } catch (e: Exception) {
+                Log.e(TAG, "Erreur lors de la sauvegarde", e)
+                Toast.makeText(this, "Erreur: ${e.message}", Toast.LENGTH_SHORT).show()
             }
         }
     }
@@ -454,53 +453,27 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun lancerExportation(): Boolean {
+
+    private fun lancerExportation() : Boolean {
         try {
-            // 1. Récupérer toutes les personnes depuis la BDD
-            val toutesLesPersonnes = bdd.chargerToutesLesPersonnes()
+            val timeStamp = SimpleDateFormat("yyyy_MM_dd_HHmmss", Locale.getDefault()).format(Calendar.getInstance().time)
+            val fileName = "anniversaires_export_$timeStamp.json"
 
-            if (toutesLesPersonnes.isEmpty()) {
-                afficherToastPersonnalise("La base de données est vide.")
-                return false
-            }
-
-            // 2. Pour un export complet, on prend une personne "racine" (ex : la première)
-            // La fonction export() de DataParser se chargera de trouver tous les liens récursifs.
-            val personneRacine = toutesLesPersonnes.first()
-
-            // 3. Générer le JSON complet
-            val jsonContent = DataParser().export(personneRacine)
-
-            if (jsonContent.isEmpty()) {
-                afficherToastPersonnalise("Erreur lors de la génération du JSON.")
-                return false
-            }
-
-            // 4. Stocker dans la variable tampon
-            jsonEnAttenteEcriture = jsonContent
-
-            // 5. Préparer le nom de fichier et lancer la boîte de dialogue
-            val timeStamp = SimpleDateFormat("yyyy_MM_dd_HHmmss", Locale.getDefault())
-                .format(Calendar.getInstance().time)
-            val fileName = "anniversaires_export_complet_$timeStamp.json"
-
+            // Launch file saver to let user choose location
             fileSaverLauncher.launch(fileName)
-
-            return true
         } catch (e: Exception) {
             Log.e(TAG, "Erreur lors de l'exportation", e)
-            afficherToastPersonnalise("Erreur: ${e.message}")
-            return false
+            Toast.makeText(this, "Erreur: ${e.message}", Toast.LENGTH_SHORT).show()
         }
+        return true
     }
-
 
     private fun lancerImportation() : Boolean {
         try {
             filePickerLauncher.launch("application/json")
         } catch (e: Exception) {
             Log.e(TAG, "Erreur lors de l'import", e)
-            afficherToastPersonnalise("Erreur: ${e.message}")
+            Toast.makeText(this, "Erreur: ${e.message}", Toast.LENGTH_SHORT).show()
         }
         return true
     }
@@ -531,7 +504,6 @@ class MainActivity : AppCompatActivity() {
         textTitreSelection.text = text
     }
     private fun supprimerElements(ids: List<Int>) {
-        // 1. Identifier les positions à supprimer ET les supprimer de la liste locale
         // On crée une liste des positions à supprimer
         val positionsASupprimer = mutableListOf<Int>()
 
@@ -547,22 +519,11 @@ class MainActivity : AppCompatActivity() {
         // 2. Supprimer dans la BDD (toujours en premier ou en parallèle)
         bdd.supprimerParIds(ids)
 
-        // 3. Notifier l'Adapter avec précision
-        // Comme on a supprimé à l'envers dans la liste, 'positionsASupprimer' contient
-        // les index tels qu'ils étaient AVANT suppression.
-        // Mais pour l'animation, on doit notifier dans l'ordre croissant ou faire des appels individuels.
-
-        // Méthode simple et efficace : Notifier chaque suppression individuellement
-        // L'adapter gérera l'animation pour chaque ligne.
-        // Il faut trier les positions par ordre CROISSANT pour que l'animation soit logique visuellement
-        positionsASupprimer.sorted().forEach { position ->
+         positionsASupprimer.sorted().forEach { position ->
             adaptateur.notifyItemRemoved(position)
         }
 
-        // Optionnel : Si vous avez supprimé beaucoup d'items, on peut notifier que la plage a changé
-        // mais notifyItemRemoved suffit pour l'animation.
-
-       afficherToastPersonnalise("${ids.size} élément(s) supprimé(s)")
+         afficherToastPersonnalise("${ids.size} élément(s) supprimé(s)")
 
         // Si la liste est vide ou pour être sûr, on peut vérifier l'état
         if (listeEnfants.isEmpty()) {
