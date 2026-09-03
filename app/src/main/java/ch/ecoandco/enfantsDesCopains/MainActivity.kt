@@ -129,7 +129,7 @@ class MainActivity : AppCompatActivity() {
                 contentResolver.openOutputStream(uri)?.use { outputStream ->
                     outputStream.write(jsonContent.toByteArray())
                 }
-                Toast.makeText(this, "Fichier sauvegardé avec succès", Toast.LENGTH_SHORT).show()
+               afficherToastPersonnalise("Fichier sauvegardé avec succès")
             } catch (e: Exception) {
                 Log.e(TAG, "Erreur lors de la sauvegarde", e)
                 Toast.makeText(this, "Erreur: ${e.message}", Toast.LENGTH_SHORT).show()
