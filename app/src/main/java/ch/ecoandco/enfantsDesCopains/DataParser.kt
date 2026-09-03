@@ -163,66 +163,63 @@ class DataParser {
      * @param person La personne à exporter (généralement id=0 "Moi")
      * @return String contenant le JSON formaté avec indentation (2 espaces)
      */
-    fun export(person: Person): String {
+    // --- NOUVELLE SIGNATURE PRINCIPALE ---
+    // Cette version gère l'enveloppe JSON (mode + data)
+    // Elle accepte une liste de personnes déjà prêtes à être exportées
+    fun export(personsToExport: List<Person>, mode: String): String {
         return try {
             val array = mutableListOf<JSONObject>()
-            val exportedIds = mutableSetOf<Int>()
 
-            // Collecte récursivement toutes les personnes liées à la personne principale
-            // Cela inclut le conjoint, les enfants, les amis, etc.
-            val allPeople = collectAllPeople(person, exportedIds)
-
-            // Crée un objet JSON pour chaque personne
-            for (p in allPeople.sortedBy { it.id }) {
+            // On sérialise chaque personne de la liste fournie
+            // On trie par ID pour avoir un JSON propre et prévisible
+            for (p in personsToExport.sortedBy { it.id }) {
                 val personJson = JSONObject()
                 personJson.put("id", p.id)
                 personJson.put("prenom", p.prenom)
-                // Ajoute le nom s'il existe
+
                 if (p.nom.isNotEmpty()) {
                     personJson.put("nom", p.nom)
                 }
                 if (p.groupe != null) {
                     personJson.put("groupe", p.groupe)
                 }
-                // Ajoute la date de naissance s'elle existe
                 if (p.dateNaissance != null) {
                     personJson.put("naissance", p.dateNaissance)
                 }
 
-                // Ajoute le champ "relations" avec les IDs de référence
+                // Gestion des relations
                 val relationsJson = JSONObject()
                 var hasRelations = false
 
-                // Ajoute l'ID du conjoint s'il existe
+                // Conjoint
                 if (p.conjointId != null) {
                     relationsJson.put("conjoint", p.conjointId)
                     hasRelations = true
-                }
-                else if (p.conjoint != null) {
+                } else if (p.conjoint != null) {
                     relationsJson.put("conjoint", p.conjoint!!.id)
                     hasRelations = true
                 }
-                // Ajoute les IDs des enfants s'il en existe
+
+                // Enfants
                 if (p.enfantIds.isNotEmpty()) {
                     relationsJson.put("enfants", JSONArray(p.enfantIds))
                     hasRelations = true
-                }
-                else if (p.enfants.isNotEmpty()) {
+                } else if (p.enfants.isNotEmpty()) {
                     val enfantIds = p.enfants.map { it.id }
                     relationsJson.put("enfants", JSONArray(enfantIds))
                     hasRelations = true
                 }
-                // Ajoute les IDs des amis s'il en existe
+
+                // Amis
                 if (p.amisIds.isNotEmpty()) {
                     relationsJson.put("amis", JSONArray(p.amisIds))
                     hasRelations = true
-                }
-                else if (p.amis.isNotEmpty()) {
+                } else if (p.amis.isNotEmpty()) {
                     val amisIds = p.amis.map { it.id }
                     relationsJson.put("amis", JSONArray(amisIds))
                     hasRelations = true
                 }
-                // Ajoute le champ relations seulement s'il y a quelque chose à ajouter
+
                 if (hasRelations) {
                     personJson.put("relations", relationsJson)
                 }
@@ -230,12 +227,42 @@ class DataParser {
                 array.add(personJson)
             }
 
-            // Retourne le JSON formaté
-            "[\n" + array.joinToString(",\n") { "  " +it.toString() } + "]"
+            // --- CRÉATION DE L'ENVELOPPE ---
+            val rootJson = JSONObject()
+            rootJson.put("mode", mode) // "replace" ou "merge"
+            rootJson.put("data", JSONArray(array))
+
+            // Retourne le JSON formaté avec l'enveloppe
+            rootJson.toString(2) // Le paramètre 2 ajoute une indentation jolie pour la lecture
+
         } catch (e: Exception) {
             Log.e(TAG, "Erreur lors de l'export en JSON", e)
             ""
         }
+    }
+
+    // --- FONCTION DE COMMODITÉ POUR L'EXPORT COMPLET (RÉCURSIF) ---
+    // Celle-ci garde exactement votre logique actuelle :
+    // Elle part de la personne racine (ID 0), collecte tout le monde récursivement,
+    // puis appelle la fonction principale ci-dessus en mode "replace".
+    fun export(person: Person): String {
+        val exportedIds = mutableSetOf<Int>()
+        // Collecte récursive de tout le graphe connecté à 'person'
+        val allPeople = collectAllPeople(person, exportedIds)
+
+        // On délègue le travail de sérialisation à la nouvelle fonction en mode "replace"
+        return export(allPeople, "replace")
+    }
+
+    // --- FONCTION DE COMMODITÉ POUR L'EXPORT SÉLECTIF ---
+    // Celle-ci vous servira pour votre nouvelle fonctionnalité.
+    // Vous lui passez la liste spécifique (ex: enfants sélectionnés + leurs parents),
+    // et elle exporte en mode "merge".
+    fun exportSelection(persons: List<Person>): String {
+        // On suppose ici que 'persons' contient déjà tous les maillons nécessaires
+        // (enfants + parents liés) pour que les relations soient valides.
+        // Si vous avez besoin de récursivité partielle, on pourra l'ajouter ici aussi.
+        return export(persons, "merge")
     }
 
     /**

@@ -377,6 +377,157 @@ class MaBaseDeDonnees(private val context: Context) : SQLiteOpenHelper(context, 
 
         return rootPerson
     }
+
+
+    // Cette fonction retourne une LISTE de Personnes (Parents + Enfants sélectionnés)
+// Elle conserve les VRAIS IDs de la base de données.
+     fun createPersonsFromSelection(selectedChildIds: List<Int>): List<Person> {
+        val peopleMap = mutableMapOf<Int, Person>()
+
+        if (selectedChildIds.isEmpty()) return emptyList()
+        val db = this.writableDatabase
+
+        try {
+            // ÉTAPE 1 : Identifier les IDs de parents à charger
+            // On construit une clause SQL "IN (id1, id2, ...)" pour les enfants
+            val placeholders = selectedChildIds.joinToString(",") { "?" }
+
+            // On récupère les IDs des parents concernés par ces enfants
+            val parentIdsSet = mutableSetOf<Int>()
+            val parentQuery = db.rawQuery(
+                "SELECT idParent1, idParent2 FROM enfants WHERE id IN ($placeholders)",
+                selectedChildIds.map { it.toString() }.toTypedArray()
+            )
+
+            if (parentQuery.moveToFirst()) {
+                do {
+                    if (!parentQuery.isNull(0)) parentIdsSet.add(parentQuery.getInt(0))
+                    if (!parentQuery.isNull(1)) parentIdsSet.add(parentQuery.getInt(1))
+                } while (parentQuery.moveToNext())
+            }
+            parentQuery.close()
+
+            // L'ensemble des IDs à charger = Enfants sélectionnés + Leurs Parents
+            val allIdsToLoad = selectedChildIds.toSet() + parentIdsSet
+
+            // ÉTAPE 2 : Charger les Parents
+            // On utilise une requête avec "IN" pour charger uniquement les parents nécessaires
+            val parentPlaceholders = parentIdsSet.joinToString(",") { "?" }
+            val parentCursor = db.rawQuery(
+                "SELECT id, nomComplet, groupe FROM parents WHERE id IN ($parentPlaceholders)",
+                parentIdsSet.map { it.toString() }.toTypedArray()
+            )
+
+            if (parentCursor.moveToFirst()) {
+                do {
+                    val realId = parentCursor.getInt(0) // VRAI ID BDD
+                    val nomComplet = parentCursor.getString(1)
+                    val groupe = parentCursor.getString(2)
+                    val parts = nomComplet.split(" ", limit = 2)
+                    val prenom = parts[0]
+                    val nom = if (parts.size > 1) parts[1] else ""
+
+                    peopleMap[realId] = Person(
+                        id = realId, // On garde le vrai ID !
+                        prenom = prenom,
+                        nom = nom,
+                        groupe = groupe
+                    )
+                } while (parentCursor.moveToNext())
+            }
+            parentCursor.close()
+
+            // ÉTAPE 3 : Charger les Enfants sélectionnés
+            val enfantCursor = db.rawQuery(
+                "SELECT id, prenom, dateNaissance, idParent1, idParent2 FROM enfants WHERE id IN ($placeholders)",
+                selectedChildIds.map { it.toString() }.toTypedArray()
+            )
+
+            if (enfantCursor.moveToFirst()) {
+                do {
+                    val realId = enfantCursor.getInt(0) // VRAI ID BDD
+                    val prenom = enfantCursor.getString(1)
+                    val dateNaissance = enfantCursor.getLong(2)
+                    val idParent1 = enfantCursor.getInt(3)
+                    val idParent2 = if (enfantCursor.isNull(4)) null else enfantCursor.getInt(4)
+
+                    val dateString = if (dateNaissance != 0L) {
+                        val calendar = Calendar.getInstance()
+                        calendar.timeInMillis = dateNaissance
+                        val day = calendar.get(Calendar.DAY_OF_MONTH).toString().padStart(2, '0')
+                        val month = (calendar.get(Calendar.MONTH) + 1).toString().padStart(2, '0')
+                        val year = calendar.get(Calendar.YEAR)
+                        "$day.$month.$year"
+                    } else null
+
+                    val enfant = Person(
+                        id = realId, // On garde le vrai ID !
+                        prenom = prenom,
+                        nom = "",
+                        dateNaissance = dateString
+                    )
+
+                    // On l'ajoute à la map globale
+                    peopleMap[realId] = enfant
+
+                    // On met à jour les liens "enfants" dans les parents (si chargés)
+                    // Note: On modifie la liste via une propriété mutable si possible,
+                    // ou on recrée la liste comme dans votre code original.
+                    // Ici, comme Person a 'var enfants: List<Person>', on doit réassigner.
+
+                    if (peopleMap.containsKey(idParent1)) {
+                        val parent1 = peopleMap[idParent1]!!
+                        parent1.enfants = parent1.enfants + enfant
+                    }
+                    if (idParent2 != null && peopleMap.containsKey(idParent2)) {
+                        val parent2 = peopleMap[idParent2]!!
+                        parent2.enfants = parent2.enfants + enfant
+                    }
+
+                } while (enfantCursor.moveToNext())
+            }
+            enfantCursor.close()
+
+            // ÉTAPE 4 : Reconstruire les conjoints (simplifié pour la sélection)
+            // On ne vérifie les conjoints que parmi les parents chargés dans cette sélection
+            val loadedParents = peopleMap.values.filter { p -> p.id !in selectedChildIds } // Approximation: les parents ne sont pas dans la liste des IDs enfants
+
+            // On utilise la même logique que votre code original pour trouver les conjoints par enfants communs
+            // Mais limitée aux parents chargés dans 'peopleMap'
+            val parentIdsList = loadedParents.map { it.id }
+
+            for (i in parentIdsList.indices) {
+                for (j in i + 1 until parentIdsList.size) {
+                    val p1 = peopleMap[parentIdsList[i]]!!
+                    val p2 = peopleMap[parentIdsList[j]]!!
+
+                    // 1. On transforme les listes d'enfants en Set d'IDs pour pouvoir utiliser intersect
+                    val childrenIds1 = p1.enfants.map { it.id }.toSet()
+                    val childrenIds2 = p2.enfants.map { it.id }.toSet()
+
+                    // 2. On trouve l'intersection des deux ensembles d'IDs
+                    val commonChildrenIds = childrenIds1.intersect(childrenIds2)
+
+                    // 3. Si l'intersection n'est pas vide, ce sont des conjoints
+                    if (commonChildrenIds.isNotEmpty()) {
+                        p1.conjoint = p2
+                        p2.conjoint = p1
+                        // On met aussi à jour les IDs pour l'export
+                        p1.conjointId = p2.id
+                        p2.conjointId = p1.id
+                    }
+                }
+            }
+
+        } catch (e: Exception) {
+            Log.e(TAG, "Erreur lors de la création de la sélection", e)
+            return emptyList()
+        }
+
+        // Retourne la liste des objets Person (Parents + Enfants) avec leurs vrais IDs
+        return peopleMap.values.toList()
+    }
+
     /**
      * Clear database tables
      */
