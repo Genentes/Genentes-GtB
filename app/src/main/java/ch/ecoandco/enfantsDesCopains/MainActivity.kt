@@ -71,6 +71,27 @@ class MainActivity : AppCompatActivity() {
     private lateinit var groupeTravail: TextView
     private lateinit var groupeAutre: TextView
 
+    // Variable temporaire pour stocker le contenu JSON avant l'écriture
+    private var jsonContentToSave: String = ""
+
+    // UN SEUL launcher pour tous les exports
+    private val fileSaverLauncher = registerForActivityResult(
+        ActivityResultContracts.CreateDocument("application/json")
+    ) { uri ->
+        if (uri != null) {
+            try {
+                // Écriture du contenu stocké dans la variable
+                contentResolver.openOutputStream(uri)?.use { outputStream ->
+                    outputStream.write(jsonContentToSave.toByteArray())
+                }
+                afficherToastPersonnalise("Fichier sauvegardé avec succès")
+            } catch (e: Exception) {
+                Log.e(TAG, "Erreur lors de la sauvegarde", e)
+                afficherToastPersonnalise("Erreur: ${e.message}")
+            }
+        }
+    }
+
     // File picker launcher for import
     private val filePickerLauncher = registerForActivityResult(
         ActivityResultContracts.GetContent()
@@ -110,32 +131,7 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private var jsonEnAttenteEcriture: String? = null
 
-
-    // File saver launcher for export
-    private val fileSaverLauncher = registerForActivityResult(
-        ActivityResultContracts.CreateDocument("application/json")
-    ) { uri ->
-        if (uri != null) {
-            try {
-                val timeStamp = SimpleDateFormat("yyyy_MM_dd_HHmmss", Locale.getDefault()).format(Calendar.getInstance().time)
-                val fileName = "anniversaires_export_$timeStamp.json"
-
-                // Get data as JSON string
-                val jsonContent = bdd.exportToJson() // This should return the JSON string directly
-
-                // Write to the chosen URI
-                contentResolver.openOutputStream(uri)?.use { outputStream ->
-                    outputStream.write(jsonContent.toByteArray())
-                }
-                Toast.makeText(this, "Fichier sauvegardé avec succès", Toast.LENGTH_SHORT).show()
-            } catch (e: Exception) {
-                Log.e(TAG, "Erreur lors de la sauvegarde", e)
-                Toast.makeText(this, "Erreur: ${e.message}", Toast.LENGTH_SHORT).show()
-            }
-        }
-    }
 
     private fun afficherToastPersonnalise(message: String) {
         // Inflation de la vue sans l'attacher à un parent (null est correct ici)
@@ -457,9 +453,15 @@ class MainActivity : AppCompatActivity() {
     private fun lancerExportation() : Boolean {
         try {
             val timeStamp = SimpleDateFormat("yyyy_MM_dd_HHmmss", Locale.getDefault()).format(Calendar.getInstance().time)
-            val fileName = "anniversaires_export_$timeStamp.json"
+            val fileName = "anniversaires_export_complet_$timeStamp.json"
 
-            // Launch file saver to let user choose location
+            // 1. Générez le JSON complet
+            val jsonContent = bdd.exportToJson()
+
+            // 2. Stockez le contenu
+            jsonContentToSave = jsonContent
+
+            // 3. Lancez le launcher avec le nom spécifique
             fileSaverLauncher.launch(fileName)
         } catch (e: Exception) {
             Log.e(TAG, "Erreur lors de l'exportation", e)
@@ -542,115 +544,6 @@ class MainActivity : AppCompatActivity() {
         textTitreSelection.text = ""
     }
 
-    /**
-     * Lance l'exportation pour une liste spécifique d'IDs d'enfants.
-     * Inclut automatiquement les parents trouvés dans la base.
-     *
-     * @param idsEnfantsSelectionnes La liste des IDs des enfants à exporter (ex : listOf(1, 5, 8))
-     */
-    private fun lancerExportationSelection(idsEnfantsSelectionnes: List<Int>) {
-        try {
-            // 1. Récupérer toutes les personnes (nécessaire pour retrouver les parents par correspondance)
-            val toutesLesPersonnes = bdd.chargerToutesLesPersonnes()
-
-            if (toutesLesPersonnes.isEmpty()) {
-                afficherToastPersonnalise("La base de données est vide.")
-                return
-            }
-
-            // 2. Appeler la NOUVELLE fonction de DataParser créée précédemment
-            val dataParser = DataParser()
-            val jsonTest = dataParser.exportChildrenWithParents(toutesLesPersonnes, idsEnfantsSelectionnes)
-
-            if (jsonTest.isEmpty() || jsonTest == "[]") {
-                afficherToastPersonnalise("Aucune donnée trouvée pour cette sélection.")
-                return
-            }
-
-            val context = this // Adaptez si nécessaire (requireContext())
-
-            // 1. Créer le conteneur pour les boutons personnalisés
-            val containerLayout = LinearLayout(context).apply {
-                orientation = LinearLayout.VERTICAL
-                setPadding(64, 48, 64, 24) // Padding gauche/droite plus large pour centrer visuellement
-            }
-
-            // 2. Fonction locale pour créer un bouton stylisé
-            fun ajouterBoutonAction(texte: String, action: () -> Unit) {
-                val button = Button(context).apply {
-                    text = texte
-                    layoutParams = LinearLayout.LayoutParams(
-                        LinearLayout.LayoutParams.MATCH_PARENT,
-                        LinearLayout.LayoutParams.WRAP_CONTENT
-                    ).apply {
-                        topMargin = 24 // Espace entre les boutons
-                        bottomMargin = 0
-                    }
-                    textSize = 16f
-                    // Optionnel : Mettre en gras
-                    setTypeface(null, android.graphics.Typeface.BOLD)
-
-                    setOnClickListener {
-                        action()
-                        // Le dialog se fermera automatiquement, car on ne définit pas de comportement de maintien
-                    }
-                }
-                containerLayout.addView(button)
-            }
-
-            // 4. Construire l'AlertDialog
-            val dialog =  AlertDialog.Builder(context)
-                .setTitle("Action pour la sélection")
-                .setMessage("Que souhaitez-vous faire des éléments sélectionnés ?")
-                .setView(containerLayout) // < C'est ici qu'on insère nos boutons personnalisés
-                .setNegativeButton("Annuler") { d, _ ->
-                    d.dismiss()
-                }
-                .create()
-
-            // 3. Ajouter les deux options principales
-            ajouterBoutonAction("Partager la sélection (fichier JSON)") {
-                preparerEtLancerExportFichier(idsEnfantsSelectionnes, toutesLesPersonnes)
-            }
-
-            ajouterBoutonAction("-> Changer de catégorie") {
-                lancerChangementCategorie(idsEnfantsSelectionnes, this, dialog)
-            }
-            dialog.show()
-        } catch (e: Exception) {
-            Log.e(TAG, "Erreur préparation sélection", e)
-            afficherToastPersonnalise("Erreur: ${e.message}")
-        }
-    }
-
-
-    /**
-     * Contient l'ancienne logique d'exportation vers fichier.
-     * Elle reçoit les données déjà validées pour éviter de les recharger.
-     */
-    private fun preparerEtLancerExportFichier(
-        idsEnfantsSelectionnes: List<Int>,
-        toutesLesPersonnes: List<Person> // Adaptez le type 'Personne' selon votre modèle réel
-    ) {
-        try {
-            val dataParser = DataParser()
-            val jsonContent = dataParser.exportChildrenWithParents(toutesLesPersonnes, idsEnfantsSelectionnes)
-
-            // Stocker dans la variable tampon
-            jsonEnAttenteEcriture = jsonContent
-
-            // Préparer le nom de fichier et lancer la boîte de dialogue
-            val timeStamp = SimpleDateFormat("yyyy_MM_dd_HHmmss", Locale.getDefault())
-                .format(Calendar.getInstance().time)
-            val fileName = "anniversaires_selection_$timeStamp.json"
-
-            fileSaverLauncher.launch(fileName)
-
-        } catch (e: Exception) {
-            Log.e(TAG, "Erreur écriture fichier", e)
-            afficherToastPersonnalise("Erreur lors de l'export: ${e.message}")
-        }
-    }
 
     private fun lancerChangementCategorie(idsEnfantsSelectionnes: List<Int>, context: Context, dialog: AlertDialog) {
         dialog.dismiss()
@@ -704,9 +597,7 @@ class MainActivity : AppCompatActivity() {
                 return
             }
         }
-
         afficherToastPersonnalise("Traitement en cours...")
-
         // On crée un nouveau thread pour ne pas bloquer l'interface
         Thread {
             // Ce code s'exécute en arrière-plan
@@ -724,10 +615,86 @@ class MainActivity : AppCompatActivity() {
         }.start()
     }
 
-
-    // Fonction squelette pour l'export
     private fun exporterSelection(ids: List<Int>) {
-        lancerExportationSelection(ids)
+        try {
+            val context = this
+
+            val containerLayout = LinearLayout(context).apply {
+                orientation = LinearLayout.VERTICAL
+                setPadding(64, 48, 64, 24)
+            }
+
+            fun ajouterBoutonAction(texte: String, action: () -> Unit) {
+                val button = Button(context).apply {
+                    text = texte
+                    layoutParams = LinearLayout.LayoutParams(
+                        LinearLayout.LayoutParams.MATCH_PARENT,
+                        LinearLayout.LayoutParams.WRAP_CONTENT
+                    ).apply {
+                        topMargin = 24
+                        bottomMargin = 0
+                    }
+                    textSize = 16f
+                    setTypeface(null, android.graphics.Typeface.BOLD)
+                    setOnClickListener {
+                        action()
+                        // Fermer le dialog si nécessaire via une référence, ou laisser le clic fermer le bouton
+                        // Si le dialog est créé localement, il faut le garder en référence pour le fermer
+                    }
+                }
+                containerLayout.addView(button)
+            }
+
+            // On crée le dialog mais on le garde en référence pour pouvoir le fermer depuis les actions
+            val dialog = AlertDialog.Builder(context)
+                .setTitle("Action pour la sélection")
+                .setMessage("Que souhaitez-vous faire des éléments sélectionnés ?")
+                .setView(containerLayout)
+                .setNegativeButton("Annuler") { d, _ -> d.dismiss() }
+                .create()
+
+            ajouterBoutonAction("Partager la sélection (fichier JSON)") {
+                try {
+                    val selectedPersons = bdd.createPersonsFromSelection(ids)
+
+                    if (selectedPersons.isEmpty()) {
+                        afficherToastPersonnalise("Aucune donnée à exporter")
+                        dialog.dismiss()
+                        return@ajouterBoutonAction
+                    }
+                    val parser = DataParser()
+                    val jsonContent = parser.exportSelection(selectedPersons)
+
+                    // 2. Préparez le nom de fichier spécifique
+                    val timeStamp = SimpleDateFormat(
+                        "yyyy_MM_dd_HHmmss",
+                        Locale.getDefault()
+                    ).format(Calendar.getInstance().time)
+                    val fileName = "anniversaires_selection_$timeStamp.json"
+
+                    // 3. Stockez le contenu dans la variable commune
+                    jsonContentToSave = jsonContent
+
+                    // 4. Lancez le MÊME launcher mais avec le nom de fichier différent
+                    fileSaverLauncher.launch(fileName)
+                    dialog.dismiss()
+
+                } catch (e: Exception) {
+                    Log.e(TAG, "Erreur préparation export", e)
+                    afficherToastPersonnalise("Erreur lors de l'export: ${e.message}")
+                    dialog.dismiss()
+                }
+            }
+
+            ajouterBoutonAction("-> Changer de catégorie") {
+                lancerChangementCategorie(ids, this, dialog)
+            }
+            dialog.show()
+
+        } catch (e: Exception) {
+            Log.e(TAG, "Erreur préparation sélection", e)
+            afficherToastPersonnalise("Erreur: ${e.message}")
+        }
     }
 
     @SuppressLint("SetTextI18n")
