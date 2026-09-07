@@ -244,10 +244,45 @@ class MaBaseDeDonnees(private val context: Context) : SQLiteOpenHelper(context, 
     /**
      * Import from JSON file and populate database
      */
-    fun importFromJson(json: String, db: SQLiteDatabase = this.writableDatabase): Boolean {
+    fun importFromJson(jsonString: String, mode: String, db: SQLiteDatabase = this.writableDatabase): Boolean {
+        return try {
+            val rootJson = JSONObject(jsonString)
+            val dataArray: JSONArray
+
+            // 1. Extraire le tableau de données selon le format
+            if (rootJson.has("data")) {
+                // Nouveau format : {"mode": "...", "data": [...]}
+                dataArray = rootJson.getJSONArray("data")
+            } else {
+                // Ancien format : [...] directement à la racine
+                dataArray = JSONArray(jsonString)
+            }
+
+            if (mode == "replace") {
+                // --- LOGIQUE ACTUELLE (REPLACE) ---
+                // 1. Vider la base (DELETE FROM parents; DELETE FROM enfants;)
+                // 2. Parser le JSON et réinsérer tout avec les nouveaux IDs (ou ceux du fichier si vous gardez la logique nextId)
+                // C'est votre code actuel qui fonctionne déjà.
+                return executeReplaceImport(dataArray)
+
+            } else if (mode == "merge") {
+                // --- NOUVELLE LOGIQUE (MERGE) ---
+                return executeMergeImport(dataArray)
+            } else {
+                Log.e(TAG, "Mode inconnu: $mode")
+                false
+            }
+
+        } catch (e: Exception) {
+            Log.e(TAG, "Erreur globale d'import", e)
+            false
+        }
+    }
+
+    fun executeReplaceImport(dataArray: JSONArray, db: SQLiteDatabase = this.writableDatabase): Boolean {
         return try {
             val parser = DataParser()
-            val person = parser.import(json)
+            val person = parser.import(JSONArray)
             if (person != null) {
                 clearDatabase(db)
                 populateDatabaseFromPerson(db, person)
@@ -260,6 +295,149 @@ class MaBaseDeDonnees(private val context: Context) : SQLiteOpenHelper(context, 
         } catch (e: Exception) {
             Log.e(TAG, "Erreur lors de l'import", e)
             false
+        }
+    }
+    private fun executeMergeImport(dataArray: JSONArray, db: SQLiteDatabase = this.writableDatabase): Boolean {
+        val idMapping = mutableMapOf<Int, Int>() // Map : Ancien ID (fichier) -> Nouvel ID (local)
+
+        db.beginTransaction()
+        try {
+            // --- PASS 1 : Insertion de toutes les personnes (Parents et Enfants) ---
+            // On crée d'abord tous les enregistrements pour obtenir leurs NOUVEAUX IDs locaux.
+            for (i in 0 until dataArray.length()) {
+                val personJson = dataArray.getJSONObject(i)
+                val oldId = personJson.getInt("id")
+
+                val prenom = personJson.getString("prenom")
+                val nom = if (personJson.has("nom")) personJson.getString("nom") else ""
+                val groupe = if (personJson.has("groupe")) personJson.getString("groupe") else ""
+                val naissanceStr = if (personJson.has("naissance")) personJson.getString("naissance") else null
+
+                var newLocalId: Int
+
+                if (naissanceStr != null) {
+                    // --- C'est un ENFANT ---
+                    // Conversion date "dd.MM.yyyy" -> Timestamp
+                    val timestamp = try {
+                        val parts = naissanceStr.split(".")
+                        if (parts.size == 3) {
+                            val cal = Calendar.getInstance()
+                            cal.set(Calendar.YEAR, parts[2].toInt())
+                            cal.set(Calendar.MONTH, parts[1].toInt() - 1) // 0-based
+                            cal.set(Calendar.DAY_OF_MONTH, parts[0].toInt())
+                            cal.set(Calendar.HOUR_OF_DAY, 0)
+                            cal.set(Calendar.MINUTE, 0)
+                            cal.set(Calendar.SECOND, 0)
+                            cal.set(Calendar.MILLISECOND, 0)
+                            cal.timeInMillis
+                        } else {
+                            0L
+                        }
+                    } catch (e: Exception) {
+                        Log.w("Import", "Erreur date: $naissanceStr", e)
+                        0L
+                    }
+
+                    // Insertion avec idParent1 et idParent2 à 0/null pour l'instant
+                    // On les corrigera dans le PASS 2
+                    val stmt = db.compileStatement(
+                        "INSERT INTO enfants (prenom, dateNaissance, idParent1, idParent2) VALUES (?, ?, 0, NULL)"
+                    )
+                    stmt.bindString(1, prenom)
+                    stmt.bindLong(2, timestamp)
+                    stmt.executeInsert()
+                    newLocalId = db.lastInsertRowId().toInt()
+
+                } else {
+                    // --- C'est un PARENT ---
+                    val nomComplet = if (nom.isNotEmpty()) "$prenom $nom" else prenom
+
+                    val stmt = db.compileStatement(
+                        "INSERT INTO parents (nomComplet, groupe) VALUES (?, ?)"
+                    )
+                    stmt.bindString(1, nomComplet)
+                    stmt.bindString(2, groupe)
+                    stmt.executeInsert()
+                    newLocalId = db.lastInsertRowId().toInt()
+                }
+
+                // On stocke la correspondance Ancien ID -> Nouvel ID
+                idMapping[oldId] = newLocalId
+            }
+
+            // --- PASS 2 : Mise à jour des liens (Enfants -> Parents) ---
+            // On parcourt à nouveau le JSON pour relier les enfants à leurs parents
+            // en utilisant la map de correspondance.
+            for (i in 0 until dataArray.length()) {
+                val personJson = dataArray.getJSONObject(i)
+                val oldId = personJson.getInt("id")
+                val newLocalId = idMapping[oldId]!!
+
+                val naissanceStr = if (personJson.has("naissance")) personJson.getString("naissance") else null
+
+                if (naissanceStr == null) {
+                    // --- C'est un PARENT : on doit lier ses enfants à lui ---
+                    if (personJson.has("relations")) {
+                        val relations = personJson.getJSONObject("relations")
+                        if (relations.has("enfants")) {
+                            val enfantsArray = relations.getJSONArray("enfants")
+
+                            for (j in 0 until enfantsArray.length()) {
+                                val oldChildId = enfantsArray.getInt(j)
+
+                                // Si l'enfant a été importé (il est dans la map)
+                                if (idMapping.containsKey(oldChildId)) {
+                                    val newChildId = idMapping[oldChildId]!!
+
+                                    // On récupère les parents actuels de cet enfant dans la BDD locale
+                                    val cursor = db.rawQuery(
+                                        "SELECT idParent1, idParent2 FROM enfants WHERE id = ?",
+                                        arrayOf(newChildId.toString())
+                                    )
+
+                                    if (cursor.moveToFirst()) {
+                                        val currentP1 = cursor.getInt(0)
+                                        // val currentP2 = if (cursor.isNull(1)) null else cursor.getInt(1)
+                                        cursor.close()
+
+                                        // Règle : "Parent1 = première occurrence trouvée"
+                                        // Si idParent1 est vide (0) ou nul, on le remplit avec ce parent.
+                                        // Sinon, on ignore (ou on pourrait remplir Parent2, mais la consigne dit "Parent1 première occurence")
+                                        // Pour être plus robuste, on va remplir Parent1 si vide, sinon Parent2 si vide.
+
+                                        if (currentP1 == 0) {
+                                            db.execSQL(
+                                                "UPDATE enfants SET idParent1 = ? WHERE id = ?",
+                                                arrayOf(newLocalId, newChildId)
+                                            )
+                                        } else {
+                                            // Optionnel : remplir Parent2 si vide
+                                            // Pour l'instant, on suit strictement "Parent1 première occurence"
+                                            // donc si P1 est déjà pris par un autre import précédent, on ne fait rien.
+                                            // Si vous voulez absolument remplir P2, décommentez ci-dessous :
+                                            db.execSQL(
+                                                "UPDATE enfants SET idParent2 = ? WHERE id = ? AND idParent2 IS NULL",
+                                                arrayOf(newLocalId, newChildId)
+                                            )
+                                        }
+                                    } else {
+                                        cursor.close()
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            db.setTransactionSuccessful()
+            return true
+
+        } catch (e: Exception) {
+            Log.e("Import", "Erreur transaction merge", e)
+            return false
+        } finally {
+            db.endTransaction()
         }
     }
 

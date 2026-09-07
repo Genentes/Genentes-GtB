@@ -7,7 +7,43 @@
     android:layout_height="match_parent"
     tools:context=".MainActivity">
 
+    <!-- À placer en haut ou en bas de votre layout principal -->
+    <LinearLayout
+        android:id="@+id/importWarningBanner"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:background="#FFF3CD" <!-- Couleur jaune d'avertissement -->
+    android:padding="12dp"
+    android:visibility="gone" <!-- Caché par défaut -->
+    android:gravity="center_vertical">
 
+    <TextView
+        android:id="@+id/importWarningText"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:textColor="#856404"
+        android:textSize="14sp"
+        android:text="Import effectué. Voulez-vous confirmer l'importation ?" />
+
+    <Button
+        android:id="@+id/btnUndoImport"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Revenir en arrière"
+        android:layout_marginStart="12dp"
+        style="@style/Widget.MaterialComponents.Button.TextButton" />
+
+    <Button
+        android:id="@+id/btnConfirmImport"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Garder les nouveaux éléments"
+        android:layout_marginStart="4dp"
+        style="@style/Widget.MaterialComponents.Button.TextButton"
+        android:textColor="#155724" />
+</LinearLayout>
     <!-- 1. VOTRE NOUVELLE TOOLBAR -->
     <androidx.appcompat.widget.Toolbar
         android:id="@+id/maToolbar"

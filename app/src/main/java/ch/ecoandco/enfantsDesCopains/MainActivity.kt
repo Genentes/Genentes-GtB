@@ -54,6 +54,10 @@ class MainActivity : AppCompatActivity() {
     private lateinit var btnAnnuler: Button
     private lateinit var btnExporter: Button
     private lateinit var btnSupprimer: Button
+    private lateinit var importWarningBanner: LinearLayout
+    private lateinit var importWarningText: TextView
+    private lateinit var btnUndoImport: Button
+    private lateinit var btnConfirmImport: Button
 
     private var colonneTri: String = "date"
     private var estTriAscendant: Boolean = true     // true = Ascendant, false = Descendant
@@ -74,6 +78,9 @@ class MainActivity : AppCompatActivity() {
     // Variable temporaire pour stocker le contenu JSON avant l'écriture
     private var jsonContentToSave: String = ""
 
+    private var backupJsonBeforeImport: String? = null
+
+
     // UN SEUL launcher pour tous les exports
     private val fileSaverLauncher = registerForActivityResult(
         ActivityResultContracts.CreateDocument("application/json")
@@ -92,46 +99,131 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+
     // File picker launcher for import
     private val filePickerLauncher = registerForActivityResult(
         ActivityResultContracts.GetContent()
     ) { uri ->
         if (uri != null) {
-            AlertDialog.Builder(this)
-                .setTitle("Attention : Remplacement des données")
-                .setMessage("L'importation de ce fichier va effacer intégralement votre base de données actuelle. Cette action est irréversible. Voulez-vous vraiment continuer ?")
-                .setPositiveButton("Oui, importer (Effacer tout)") { _, _ ->
-                    effectuerImport(uri)
+            val fileSize = contentResolver.openInputStream(uri)?.available() ?: 0
+            if (fileSize > 5 * 1024 * 1024) { // Limite à 5 Mo
+                afficherToastPersonnalise("Fichier trop volumieux (Max 5 Mo)")
+                return
+            }
+            try {
+                // Lecture anticipée pour détecter le mode
+                val jsonString = contentResolver.openInputStream(uri)?.use { inputStream ->
+                    inputStream.bufferedReader().use { reader -> reader.readText() }
                 }
-                .setNegativeButton("Annuler", null)
-                .show()
+
+                if (jsonString.isNullOrEmpty()) {
+                    afficherToastPersonnalise("Fichier vide ou illisible")
+                    return@registerForActivityResult
+                }
+
+                val rootJson = JSONObject(jsonString)
+                // Détection du mode : si pas de champ "mode", c'est un ancien fichier -> replace
+                val mode = if (rootJson.has("mode")) {
+                    rootJson.getString("mode")
+                } else {
+                    "replace"
+                }
+
+                backupJsonBeforeImport = bdd.exportToJson() // Votre fonction existante
+
+                // Adaptation du message selon le mode
+                val title = if (mode == "merge") "Importer la sélection (Fusion)"
+                else "Attention : Remplacement des données"
+
+                val message = if (mode == "merge") {
+                    "Les données de ce fichier seront ajoutées à votre base actuelle. Les doublons potentiels seront gérés automatiquement."
+                } else {
+                    "L'importation de ce fichier va effacer intégralement votre base de données actuelle. Cette action est irréversible. Voulez-vous vraiment continuer ?"
+                }
+
+                // Affichage de l'alerte adaptée
+                AlertDialog.Builder(this)
+                    .setTitle(title)
+                    .setMessage(message)
+                    .setPositiveButton(if (mode == "merge") "Oui, ajouter à ma liste" else "Oui, effacer et importer") { _, _ ->
+                        // On passe le JSON et le mode à la fonction d'import
+                        effectuerImport(uri, jsonString, mode)
+                    }
+                    .setNegativeButton("Annuler", null)
+                    .show()
+
+            } catch (e: Exception) {
+                Log.e(TAG, "Erreur lecture préliminaire", e)
+                afficherToastPersonnalise("Fichier JSON invalide")
+            }
         }
     }
 
-    // Fonction helper pour isoler la logique d'import (plus propre)
-    private fun effectuerImport(uri: android.net.Uri) {
+    // MODIFICATION DANS effectuerImport (en cas de succès)
+    private fun effectuerImport(uri: android.net.Uri, jsonContent: String, mode: String) {
         try {
-            val inputStream = contentResolver.openInputStream(uri)
-            val jsonContent = inputStream?.bufferedReader().use { it?.readText() }
+            if (bdd.importFromJson(jsonContent, mode)) {
+                chargerDonneesDepuisBDD()
 
-            if (jsonContent != null) {
-                // Appel à votre fonction qui vide et remplit la BDD
-                if (bdd.importFromJson(jsonContent)) {
-                    chargerDonneesDepuisBDD()
-                    afficherToastPersonnalise("Données importées avec succès")
+                // Si on a une sauvegarde, on affiche le bandeau au lieu d'une popup
+                if (backupJsonBeforeImport != null) {
+                    afficherBandeauSauvegarde()
                 } else {
-                    afficherToastPersonnalise("Erreur lors de l'import")
+                    afficherToastPersonnalise("Import réussi")
                 }
             } else {
-                afficherToastPersonnalise("Impossible de lire le fichier")
+                afficherToastPersonnalise("Erreur lors de l'import")
+                chargerDonneesDepuisBDD()
             }
         } catch (e: Exception) {
-            Log.e(TAG, "Erreur lors de la lecture du fichier", e)
+            Log.e(TAG, "Erreur lors de l'import", e)
             afficherToastPersonnalise("Erreur: ${e.message}")
+            chargerDonneesDepuisBDD()
         }
     }
 
+    // Nouvelle fonction pour afficher le bandeau
+    private fun afficherBandeauSauvegarde() {
+        val dateFormat = android.text.format.DateFormat.getDateFormat(this)
+        val timeFormat = android.text.format.DateFormat.getTimeFormat(this)
+        val now = Calendar.getInstance().time
 
+        val dateStr = "${dateFormat.format(now)} à ${timeFormat.format(now)}"
+
+        importWarningText.text = "Import effectué le $dateStr. Vos données peuvent encore être restaurées."
+        importWarningBanner.visibility = View.VISIBLE
+    }
+
+    // Fonction appelée quand on clique sur "Garder"
+    private fun validerImportDefinitif() {
+        backupJsonBeforeImport = null // On vide la sauvegarde de la mémoire
+        importWarningBanner.visibility = View.GONE // On cache le bandeau
+        afficherToastPersonnalise("Modifications validées définitivement.")
+    }
+
+    // Fonction appelée quand on clique sur "Annuler"
+    private fun restaurerSauvegarde() {
+        val backup = backupJsonBeforeImport
+        if (backup != null) {
+            try {
+                // On réimporte la sauvegarde
+                if (bdd.importFromJson(backup, "replace")) {
+                    chargerDonneesDepuisBDD()
+                    afficherToastPersonnalise("Version précédente restaurée avec succès")
+
+                    // Nettoyage
+                    backupJsonBeforeImport = null
+                    importWarningBanner.visibility = View.GONE
+                } else {
+                    afficherToastPersonnalise("Échec de la restauration")
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "Erreur restauration", e)
+                afficherToastPersonnalise("Erreur lors de la restauration")
+            }
+        }
+    }
+}
 
     private fun afficherToastPersonnalise(message: String) {
         // Inflation de la vue sans l'attacher à un parent (null est correct ici)
@@ -186,6 +278,23 @@ class MainActivity : AppCompatActivity() {
             btnSupprimer = findViewById(R.id.btnSupprimerSelection)
 
             layoutSelection.visibility = View.GONE
+
+            // Initialisation des vues du bandeau
+            importWarningBanner = findViewById(R.id.importWarningBanner)
+            importWarningText = findViewById(R.id.importWarningText)
+            btnUndoImport = findViewById(R.id.btnUndoImport)
+            btnConfirmImport = findViewById(R.id.btnConfirmImport)
+
+            // Action du bouton Annuler
+            btnUndoImport.setOnClickListener {
+                restaurerSauvegarde()
+            }
+
+            // Action du bouton Valider (Garder)
+            btnConfirmImport.setOnClickListener {
+                validerImportDefinitif()
+            }
+
 
 // 2. Listener du bouton ANNULER
             btnAnnuler.setOnClickListener {
