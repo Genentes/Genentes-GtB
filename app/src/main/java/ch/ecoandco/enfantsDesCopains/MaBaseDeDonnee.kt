@@ -5,7 +5,10 @@ import android.content.Context
 import android.database.MatrixCursor
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
+import android.database.sqlite.SQLiteStatement
 import android.util.Log
+import org.json.JSONArray
+import org.json.JSONObject
 import java.util.Calendar
 import kotlin.compareTo
 
@@ -68,7 +71,7 @@ class MaBaseDeDonnees(private val context: Context) : SQLiteOpenHelper(context, 
             val inputStream = context.resources.openRawResource(R.raw.sample_data)
             val jsonString = inputStream.bufferedReader().use { it.readText() }
 
-            importFromJson(jsonString, db)
+            importFromJson(jsonString, "replace", db)
         } catch (e: Exception) {
             Log.e(TAG, "Erreur dans peuplerDonneesTest", e)
         }
@@ -282,7 +285,7 @@ class MaBaseDeDonnees(private val context: Context) : SQLiteOpenHelper(context, 
     fun executeReplaceImport(dataArray: JSONArray, db: SQLiteDatabase = this.writableDatabase): Boolean {
         return try {
             val parser = DataParser()
-            val person = parser.import(JSONArray)
+            val person = parser.import(dataArray)
             if (person != null) {
                 clearDatabase(db)
                 populateDatabaseFromPerson(db, person)
@@ -314,56 +317,40 @@ class MaBaseDeDonnees(private val context: Context) : SQLiteOpenHelper(context, 
                 val naissanceStr = if (personJson.has("naissance")) personJson.getString("naissance") else null
 
                 var newLocalId: Int
+                var stmt: SQLiteStatement? = null
+                try {
+                    if (naissanceStr != null) {
+                        val timestamp = parseDateToTimestamp(naissanceStr) // Votre fonction de parsing
+                        // --- C'est un ENFANT ---
+                        stmt = db.compileStatement(
+                            "INSERT INTO enfants (prenom, dateNaissance, idParent1, idParent2) VALUES (?, ?, 0, NULL)"
+                        )
+                        stmt.bindString(1, prenom)
+                        stmt.bindLong(2, timestamp)
 
-                if (naissanceStr != null) {
-                    // --- C'est un ENFANT ---
-                    // Conversion date "dd.MM.yyyy" -> Timestamp
-                    val timestamp = try {
-                        val parts = naissanceStr.split(".")
-                        if (parts.size == 3) {
-                            val cal = Calendar.getInstance()
-                            cal.set(Calendar.YEAR, parts[2].toInt())
-                            cal.set(Calendar.MONTH, parts[1].toInt() - 1) // 0-based
-                            cal.set(Calendar.DAY_OF_MONTH, parts[0].toInt())
-                            cal.set(Calendar.HOUR_OF_DAY, 0)
-                            cal.set(Calendar.MINUTE, 0)
-                            cal.set(Calendar.SECOND, 0)
-                            cal.set(Calendar.MILLISECOND, 0)
-                            cal.timeInMillis
-                        } else {
-                            0L
-                        }
-                    } catch (e: Exception) {
-                        Log.w("Import", "Erreur date: $naissanceStr", e)
-                        0L
-                    }
-
-                    // Insertion avec idParent1 et idParent2 à 0/null pour l'instant
-                    // On les corrigera dans le PASS 2
-                    val stmt = db.compileStatement(
-                        "INSERT INTO enfants (prenom, dateNaissance, idParent1, idParent2) VALUES (?, ?, 0, NULL)"
-                    )
-                    stmt.bindString(1, prenom)
-                    stmt.bindLong(2, timestamp)
-                    stmt.executeInsert()
-                    newLocalId = db.lastInsertRowId().toInt()
-
-                } else {
-                    // --- C'est un PARENT ---
+// CORRECTION : On récupère l'ID directement ici
+                        newLocalId = stmt.executeInsert().toInt()
+                        stmt.close()
+                    } else {
+                        // --- C'est un PARENT ---
                     val nomComplet = if (nom.isNotEmpty()) "$prenom $nom" else prenom
+                        stmt = db.compileStatement(
+                            "INSERT INTO parents (nomComplet, groupe) VALUES (?, ?)"
+                        )
+                        stmt.bindString(1, nomComplet)
+                        stmt.bindString(2, groupe)
 
-                    val stmt = db.compileStatement(
-                        "INSERT INTO parents (nomComplet, groupe) VALUES (?, ?)"
-                    )
-                    stmt.bindString(1, nomComplet)
-                    stmt.bindString(2, groupe)
-                    stmt.executeInsert()
-                    newLocalId = db.lastInsertRowId().toInt()
+// CORRECTION : On récupère l'ID directement ici
+                        newLocalId = stmt.executeInsert().toInt()
+                        stmt.close()
                 }
 
                 // On stocke la correspondance Ancien ID -> Nouvel ID
                 idMapping[oldId] = newLocalId
+            } finally {
+            stmt?.close()
             }
+        }
 
             // --- PASS 2 : Mise à jour des liens (Enfants -> Parents) ---
             // On parcourt à nouveau le JSON pour relier les enfants à leurs parents
@@ -808,6 +795,39 @@ class MaBaseDeDonnees(private val context: Context) : SQLiteOpenHelper(context, 
         } catch (e: Exception) {
             Log.e(TAG, "Erreur SQL native : ${e.message}", e)
             false
+        }
+    }
+
+    /**
+     * Convertit une date au format "dd.MM.yyyy" en timestamp (millisecondes).
+     * Retourne 0L si le format est invalide.
+     */
+    private fun parseDateToTimestamp(dateString: String): Long {
+        return try {
+            val parts = dateString.split(".")
+            if (parts.size == 3) {
+                val day = parts[0].toInt()
+                val month = parts[1].toInt() - 1 // Calendar.MONTH est 0-based (0 = Janvier)
+                val year = parts[2].toInt()
+
+                val calendar = Calendar.getInstance()
+                calendar.set(Calendar.YEAR, year)
+                calendar.set(Calendar.MONTH, month)
+                calendar.set(Calendar.DAY_OF_MONTH, day)
+                // On remet l'heure à zéro pour ne garder que la date
+                calendar.set(Calendar.HOUR_OF_DAY, 0)
+                calendar.set(Calendar.MINUTE, 0)
+                calendar.set(Calendar.SECOND, 0)
+                calendar.set(Calendar.MILLISECOND, 0)
+
+                calendar.timeInMillis
+            } else {
+                0L
+            }
+        } catch (e: Exception) {
+            // En cas d'erreur de format ou de nombre, on retourne 0
+            Log.w("Import", "Erreur de parsing date: $dateString", e)
+            0L
         }
     }
 }

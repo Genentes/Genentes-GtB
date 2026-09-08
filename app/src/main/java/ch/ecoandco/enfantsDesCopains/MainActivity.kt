@@ -25,6 +25,7 @@ import android.widget.Spinner
 import android.widget.TextView
 import androidx.appcompat.app.ActionBar
 import androidx.activity.result.contract.ActivityResultContracts
+import org.json.JSONObject
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
@@ -108,7 +109,7 @@ class MainActivity : AppCompatActivity() {
             val fileSize = contentResolver.openInputStream(uri)?.available() ?: 0
             if (fileSize > 5 * 1024 * 1024) { // Limite à 5 Mo
                 afficherToastPersonnalise("Fichier trop volumieux (Max 5 Mo)")
-                return
+                return@registerForActivityResult
             }
             try {
                 // Lecture anticipée pour détecter le mode
@@ -223,7 +224,6 @@ class MainActivity : AppCompatActivity() {
             }
         }
     }
-}
 
     private fun afficherToastPersonnalise(message: String) {
         // Inflation de la vue sans l'attacher à un parent (null est correct ici)
