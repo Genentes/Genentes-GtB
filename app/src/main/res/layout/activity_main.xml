@@ -64,7 +64,7 @@
                 android:layout_weight="1"
                 android:textColor="#856404"
                 android:textSize="14sp"
-                android:text="Import effectué. Voulez-vous confirmer l'importation ?" />
+                android:text="" />
 
             <Button
                 android:id="@+id/btnUndoImport"

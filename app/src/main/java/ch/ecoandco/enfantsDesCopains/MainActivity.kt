@@ -771,20 +771,41 @@ class MainActivity : AppCompatActivity() {
                         dialog.dismiss()
                         return@ajouterBoutonAction
                     }
+
                     val parser = DataParser()
                     val jsonContent = parser.exportSelection(selectedPersons)
 
-                    // 2. Préparez le nom de fichier spécifique
-                    val timeStamp = SimpleDateFormat(
-                        "yyyy_MM_dd_HHmmss",
-                        Locale.getDefault()
-                    ).format(Calendar.getInstance().time)
-                    val fileName = "anniversaires_selection_$timeStamp.json"
+                    // --- NOUVELLE LOGIQUE POUR LE NOM DE FICHIER ---
 
-                    // 3. Stockez le contenu dans la variable commune
+                    // 1. Extraire les prénoms.
+                    // On filtre pour ne prendre que les enfants (ceux qui ont une dateNaissance)
+                    // afin d'éviter d'avoir les prénoms des parents dans le nom du fichier.
+                    val childrenNames = selectedPersons
+                        .filter { it.dateNaissance != null }
+                        .map { it.prenom }
+                        .take(3) // On limite à 3 prénoms pour éviter les noms de fichiers trop longs
+
+                    // 2. Créer la chaîne de prénoms (ex: "Leo_Marie_Lucas")
+                    val namesPart = if (childrenNames.isNotEmpty()) {
+                        childrenNames.joinToString(separator = "_")
+                    } else {
+                        "Selection" // Fallback si aucun enfant trouvé (cas rare)
+                    }
+
+                    // 3. Formater la date
+                    val timeStamp = SimpleDateFormat("yyyy-MM-dd-HHmmss", Locale.getDefault())
+                        .format(Calendar.getInstance().time)
+
+                    // 4. Construire le nom final
+                    // Ex: Anniv_Leo_Marie_2026_09_08_143022.json
+                    val fileName = "Anniv_${namesPart}_$timeStamp.json"
+
+                    // -----------------------------------------------
+
+                    // 5. Stockez le contenu dans la variable commune
                     jsonContentToSave = jsonContent
 
-                    // 4. Lancez le MÊME launcher mais avec le nom de fichier différent
+                    // 6. Lancez le launcher
                     fileSaverLauncher.launch(fileName)
                     dialog.dismiss()
 

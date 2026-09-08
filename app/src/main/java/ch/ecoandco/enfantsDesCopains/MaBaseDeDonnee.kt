@@ -10,7 +10,6 @@ import android.util.Log
 import org.json.JSONArray
 import org.json.JSONObject
 import java.util.Calendar
-import kotlin.compareTo
 
 
 class MaBaseDeDonnees(private val context: Context) : SQLiteOpenHelper(context, "anniversaires.db", null, 2) {
