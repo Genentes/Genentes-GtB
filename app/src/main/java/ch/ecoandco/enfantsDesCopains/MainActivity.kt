@@ -191,7 +191,7 @@ class MainActivity : AppCompatActivity() {
 
         val dateStr = "${dateFormat.format(now)} à ${timeFormat.format(now)}"
 
-        importWarningText.text = "Import effectué le $dateStr. Vos données peuvent encore être restaurées."
+        importWarningText.text = "Import effectué le $dateStr."
         importWarningBanner.visibility = View.VISIBLE
     }
 

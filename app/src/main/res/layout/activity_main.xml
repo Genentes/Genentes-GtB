@@ -53,7 +53,7 @@
             android:layout_height="wrap_content"
             android:orientation="horizontal"
             android:background="#FFF3CD"
-            android:padding="12dp"
+            android:padding="6dp"
             android:visibility="gone"
             android:gravity="center_vertical">
 
@@ -70,7 +70,7 @@
                 android:id="@+id/btnUndoImport"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Revenir en arrière"
+                android:text="Annuler"
                 android:layout_marginStart="12dp"
                 style="@style/Widget.MaterialComponents.Button.TextButton" />
 
@@ -78,7 +78,7 @@
                 android:id="@+id/btnConfirmImport"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Garder les nouveaux éléments"
+                android:text="Valider"
                 android:layout_marginStart="4dp"
                 style="@style/Widget.MaterialComponents.Button.TextButton"
                 android:textColor="#155724" />
