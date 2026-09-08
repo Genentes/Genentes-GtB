@@ -55,9 +55,8 @@ class DataParser {
      * @param jsonString Contenu JSON à parser (format: tableau de personnes)
      * @return L'objet Person avec id=0 (représentant "Moi") avec toutes ses relations résolues
      */
-    fun import(jsonString: String): Person? {
+    fun import(jsonArray: JSONArray): Person? {
         return try {
-            val jsonArray = JSONArray(jsonString)
 
             // Première passe: Parse tous les objets Person sans résoudre les références
             // Chaque personne est stockée dans une map avec son ID comme clé

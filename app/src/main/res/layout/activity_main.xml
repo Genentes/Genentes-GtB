@@ -7,7 +7,6 @@
     android:layout_height="match_parent"
     tools:context=".MainActivity">
 
-
     <!-- 1. VOTRE NOUVELLE TOOLBAR -->
     <androidx.appcompat.widget.Toolbar
         android:id="@+id/maToolbar"
@@ -46,6 +45,44 @@
         app:layout_constraintTop_toBottomOf="@id/maToolbar"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent">
+
+        <!-- À placer en haut ou en bas de votre layout principal -->
+        <LinearLayout
+            android:id="@+id/importWarningBanner"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:background="#FFF3CD"
+            android:padding="6dp"
+            android:visibility="gone"
+            android:gravity="center_vertical">
+
+            <TextView
+                android:id="@+id/importWarningText"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:textColor="#856404"
+                android:textSize="14sp"
+                android:text="" />
+
+            <Button
+                android:id="@+id/btnUndoImport"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Annuler"
+                android:layout_marginStart="12dp"
+                style="@style/Widget.MaterialComponents.Button.TextButton" />
+
+            <Button
+                android:id="@+id/btnConfirmImport"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Valider"
+                android:layout_marginStart="4dp"
+                style="@style/Widget.MaterialComponents.Button.TextButton"
+                android:textColor="#155724" />
+        </LinearLayout>
 
         <!-- Colonne 1 : Parents (35% de la largeur) -->
         <TextView
