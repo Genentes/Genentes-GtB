@@ -199,7 +199,7 @@ class MainActivity : AppCompatActivity() {
     private fun validerImportDefinitif() {
         backupJsonBeforeImport = null // On vide la sauvegarde de la mémoire
         importWarningBanner.visibility = View.GONE // On cache le bandeau
-        afficherToastPersonnalise("Modifications validées définitivement.")
+        afficherToastPersonnalise("Modifications validées")
     }
 
     // Fonction appelée quand on clique sur "Annuler"
