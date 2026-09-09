@@ -108,9 +108,9 @@ class MaBaseDeDonnees(private val context: Context) : SQLiteOpenHelper(context, 
                 "enfants" -> "e.prenom COLLATE NOCASE ASC"
                 "date"    -> """
                 CASE 
-                    WHEN strftime('%m-%d', e.dateNaissance/1000, 'unixepoch') >= strftime('%m-%d', 'now') 
-                    THEN strftime('%Y', 'now') || '-' || strftime('%m-%d', e.dateNaissance/1000, 'unixepoch')
-                    ELSE (strftime('%Y', 'now') + 1) || '-' || strftime('%m-%d', e.dateNaissance/1000, 'unixepoch')
+                    WHEN strftime('%m-%d', e.dateNaissance/1000, 'unixepoch', 'localtime') >= strftime('%m-%d', 'now', 'localtime') 
+                    THEN strftime('%Y', 'now', 'localtime') || '-' || strftime('%m-%d', e.dateNaissance/1000, 'unixepoch', 'localtime')
+                    ELSE (strftime('%Y', 'now', 'localtime') + 1) || '-' || strftime('%m-%d', e.dateNaissance/1000, 'unixepoch', 'localtime')
                 END ASC
             """.trimIndent().replace("\n", " ")
                 else      -> "e.dateNaissance ASC"

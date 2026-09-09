@@ -249,6 +249,7 @@ class MainActivity : AppCompatActivity() {
             // 1. Charger le design XML
             setContentView(R.layout.activity_main)
 
+
             val toolbar = findViewById<androidx.appcompat.widget.Toolbar>(R.id.maToolbar)
 
             // 2. La définir comme barre d'action de l'activité
@@ -350,7 +351,6 @@ class MainActivity : AppCompatActivity() {
 // Lancement du premier chargement
             chargerDonneesDepuisBDD()
 
-
             adaptateur = AnniversaireAdapter(
                 getListeDonnees = { listeEnfants },
 
@@ -441,12 +441,16 @@ class MainActivity : AppCompatActivity() {
                             // 2. LE STOCKER dans la variable membre de la classe
                             selectedTimestamp = tempCalendar.timeInMillis
 
-                            // 3. Afficher la date lisible pour l'utilisateur (optionnel, mais recommandé)
+                            // 3. Afficher la date lisible pour l'utilisateur
                             val formattedDate = "$selectedDay/${selectedMonth + 1}/$selectedYear"
                             etDate.setText(formattedDate)
                         },
                         year, month, day
-                    ).show()
+                    ).apply {
+                        // --- AJOUTEZ CETTE LIGNE ---
+                        // Cela empêche de sélectionner toute date supérieure à "maintenant"
+                        datePicker.maxDate = System.currentTimeMillis()
+                    }.show()
                 }
 
                 // 5. Ajouter les champs au layout
@@ -462,6 +466,13 @@ class MainActivity : AppCompatActivity() {
                         val prenom = etPrenom.text.toString().trim()
 
                         if (prenom.isNotEmpty() && selectedTimestamp != 0L) {
+
+                            val maintenant = System.currentTimeMillis()
+
+                            if (selectedTimestamp > maintenant) {
+                                afficherToastPersonnalise("La date d'anniversaire ne peut pas être dans le futur.")
+                                return@setPositiveButton // On arrête tout ici, on n'exécute pas la suite
+                            }
                             // Appel de votre fonction d'ajout (à adapter pour inclure la date)
                             val rowId = bdd.ajouterEnfant(prenom, selectedTimestamp)
 
@@ -1118,23 +1129,38 @@ class MainActivity : AppCompatActivity() {
      * Si l'anniversaire est déjà passé cette année, retourne la date de l'année prochaine.
      */
     private fun calculerProchainAnniversaire(timestampNaissance: Long): Long {
-        val calendar = Calendar.getInstance()
         val now = Calendar.getInstance()
+        val anniversary = Calendar.getInstance()
 
-        // Charger la date de naissance dans le calendrier
-        calendar.time = Date(timestampNaissance)
+        // 1. Initialiser l'anniversaire avec la date de naissance (jour/mois)
+        anniversary.time = Date(timestampNaissance)
 
-        // Définir l'année de l'anniversaire sur l'année actuelle
-        calendar.set(Calendar.YEAR, now.get(Calendar.YEAR))
+        // 2. Mettre l'année de l'anniversaire à l'année actuelle
+        anniversary.set(Calendar.YEAR, now.get(Calendar.YEAR))
 
-        // Si l'anniversaire de cette année est déjà passé (ou s'il est aujourd'hui mais on veut les futurs d'abord ?)
-        // Comparaison : si calendar (anniv cette année) < now (aujourd'hui)
-        if (calendar.before(now)) {
-            // On passe à l'année prochaine
-            calendar.add(Calendar.YEAR, 1)
+        // IMPORTANT : On règle l'heure de l'anniversaire à 00h00 pour la comparaison
+        // Cela évite que l'heure actuelle (ex: 15h00) ne fasse croire que l'anniv est passé
+        anniversary.set(Calendar.HOUR_OF_DAY, 23)
+        anniversary.set(Calendar.MINUTE, 59)
+        anniversary.set(Calendar.SECOND, 59)
+        anniversary.set(Calendar.MILLISECOND, 0)
+
+        // 3. On fait pareil pour "maintenant" pour comparer uniquement les jours
+        val todayMidnight = Calendar.getInstance()
+        todayMidnight.time = now.time
+        todayMidnight.set(Calendar.HOUR_OF_DAY, 0)
+        todayMidnight.set(Calendar.MINUTE, 0)
+        todayMidnight.set(Calendar.SECOND, 0)
+        todayMidnight.set(Calendar.MILLISECOND, 0)
+
+        // 4. Logique : Si l'anniversaire (à minuit) est STRICTEMENT avant aujourd'hui (à minuit)
+        // Alors c'est qu'il est passé (hier ou avant). On passe à l'année prochaine.
+        // Si c'est égal (aujourd'hui), on ne fait rien, on garde cette année.
+        if (anniversary.before(todayMidnight)) {
+            anniversary.add(Calendar.YEAR, 1)
         }
 
-        return calendar.timeInMillis
+        return anniversary.timeInMillis
     }
 
 
