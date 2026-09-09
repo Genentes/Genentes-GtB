@@ -38,6 +38,7 @@
         android:layout_height="wrap_content"
         android:background="#FFF3CD"
         android:padding="8dp"
+        android:visibility="gone"
         app:layout_constraintTop_toBottomOf="@id/maToolbar"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent">
@@ -50,7 +51,7 @@
             android:textSize="13sp"
             android:maxLines="2"
             android:ellipsize="end"
-            android:text="Import effectué. Voulez-vous confirmer l'importation ?"
+            android:text="Import effectué."
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toStartOf="@id/btnUndoImport"
             app:layout_constraintTop_toTopOf="parent"
