@@ -249,6 +249,7 @@ class MainActivity : AppCompatActivity() {
             // 1. Charger le design XML
             setContentView(R.layout.activity_main)
 
+
             val toolbar = findViewById<androidx.appcompat.widget.Toolbar>(R.id.maToolbar)
 
             // 2. La définir comme barre d'action de l'activité
@@ -349,7 +350,6 @@ class MainActivity : AppCompatActivity() {
 
 // Lancement du premier chargement
             chargerDonneesDepuisBDD()
-
 
             adaptateur = AnniversaireAdapter(
                 getListeDonnees = { listeEnfants },
