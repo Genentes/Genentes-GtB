@@ -441,12 +441,16 @@ class MainActivity : AppCompatActivity() {
                             // 2. LE STOCKER dans la variable membre de la classe
                             selectedTimestamp = tempCalendar.timeInMillis
 
-                            // 3. Afficher la date lisible pour l'utilisateur (optionnel, mais recommandé)
+                            // 3. Afficher la date lisible pour l'utilisateur
                             val formattedDate = "$selectedDay/${selectedMonth + 1}/$selectedYear"
                             etDate.setText(formattedDate)
                         },
                         year, month, day
-                    ).show()
+                    ).apply {
+                        // --- AJOUTEZ CETTE LIGNE ---
+                        // Cela empêche de sélectionner toute date supérieure à "maintenant"
+                        datePicker.maxDate = System.currentTimeMillis()
+                    }.show()
                 }
 
                 // 5. Ajouter les champs au layout
