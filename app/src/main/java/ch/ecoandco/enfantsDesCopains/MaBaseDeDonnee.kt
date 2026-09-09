@@ -113,7 +113,13 @@ class MaBaseDeDonnees(private val context: Context) : SQLiteOpenHelper(context, 
                     ELSE (strftime('%Y', 'now') + 1) || '-' || strftime('%m-%d', e.dateNaissance/1000, 'unixepoch')
                 END ASC
             """.trimIndent().replace("\n", " ")
-                else      -> "e.dateNaissance ASC"
+                else      -> """
+                CASE 
+                    WHEN strftime('%m-%d', e.dateNaissance/1000, 'unixepoch') >= strftime('%m-%d', 'now') 
+                    THEN strftime('%Y', 'now') || '-' || strftime('%m-%d', e.dateNaissance/1000, 'unixepoch')
+                    ELSE (strftime('%Y', 'now') + 1) || '-' || strftime('%m-%d', e.dateNaissance/1000, 'unixepoch')
+                END ASC
+            """.trimIndent().replace("\n", " ")
             }
 
             val groupeTri = if (quelGroupe == null || quelGroupe == "null" || quelGroupe == "copains") {

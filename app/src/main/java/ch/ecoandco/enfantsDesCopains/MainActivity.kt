@@ -1129,23 +1129,38 @@ class MainActivity : AppCompatActivity() {
      * Si l'anniversaire est déjà passé cette année, retourne la date de l'année prochaine.
      */
     private fun calculerProchainAnniversaire(timestampNaissance: Long): Long {
-        val calendar = Calendar.getInstance()
         val now = Calendar.getInstance()
+        val anniversary = Calendar.getInstance()
 
-        // Charger la date de naissance dans le calendrier
-        calendar.time = Date(timestampNaissance)
+        // 1. Initialiser l'anniversaire avec la date de naissance (jour/mois)
+        anniversary.time = Date(timestampNaissance)
 
-        // Définir l'année de l'anniversaire sur l'année actuelle
-        calendar.set(Calendar.YEAR, now.get(Calendar.YEAR))
+        // 2. Mettre l'année de l'anniversaire à l'année actuelle
+        anniversary.set(Calendar.YEAR, now.get(Calendar.YEAR))
 
-        // Si l'anniversaire de cette année est déjà passé (ou s'il est aujourd'hui mais on veut les futurs d'abord ?)
-        // Comparaison : si calendar (anniv cette année) < now (aujourd'hui)
-        if (calendar.before(now)) {
-            // On passe à l'année prochaine
-            calendar.add(Calendar.YEAR, 1)
+        // IMPORTANT : On règle l'heure de l'anniversaire à 00h00 pour la comparaison
+        // Cela évite que l'heure actuelle (ex: 15h00) ne fasse croire que l'anniv est passé
+        anniversary.set(Calendar.HOUR_OF_DAY, 23)
+        anniversary.set(Calendar.MINUTE, 59)
+        anniversary.set(Calendar.SECOND, 59)
+        anniversary.set(Calendar.MILLISECOND, 0)
+
+        // 3. On fait pareil pour "maintenant" pour comparer uniquement les jours
+        val todayMidnight = Calendar.getInstance()
+        todayMidnight.time = now.time
+        todayMidnight.set(Calendar.HOUR_OF_DAY, 0)
+        todayMidnight.set(Calendar.MINUTE, 0)
+        todayMidnight.set(Calendar.SECOND, 0)
+        todayMidnight.set(Calendar.MILLISECOND, 0)
+
+        // 4. Logique : Si l'anniversaire (à minuit) est STRICTEMENT avant aujourd'hui (à minuit)
+        // Alors c'est qu'il est passé (hier ou avant). On passe à l'année prochaine.
+        // Si c'est égal (aujourd'hui), on ne fait rien, on garde cette année.
+        if (anniversary.before(todayMidnight)) {
+            anniversary.add(Calendar.YEAR, 1)
         }
 
-        return calendar.timeInMillis
+        return anniversary.timeInMillis
     }
 
 
