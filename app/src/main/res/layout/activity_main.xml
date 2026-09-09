@@ -7,6 +7,46 @@
     android:layout_height="match_parent"
     tools:context=".MainActivity">
 
+
+    <LinearLayout
+        android:id="@+id/importWarningBanner"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:background="#FFF3CD"
+        android:padding="6dp"
+        android:gravity="center_vertical"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
+
+    <TextView
+        android:id="@+id/importWarningText"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:textColor="#856404"
+        android:textSize="14sp"
+        android:text="" />
+
+    <Button
+        android:id="@+id/btnUndoImport"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Annuler"
+        android:layout_marginStart="12dp"
+        style="@style/Widget.MaterialComponents.Button.TextButton" />
+
+    <Button
+        android:id="@+id/btnConfirmImport"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Valider"
+        android:layout_marginStart="4dp"
+        style="@style/Widget.MaterialComponents.Button.TextButton"
+        android:textColor="#155724" />
+</LinearLayout>
+
     <!-- 1. VOTRE NOUVELLE TOOLBAR -->
     <androidx.appcompat.widget.Toolbar
         android:id="@+id/maToolbar"
@@ -15,7 +55,7 @@
         android:elevation="4dp"
         android:paddingBottom="0dp"
         android:layout_marginBottom="0dp"
-        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/importWarningBanner"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent">
 
@@ -32,58 +72,6 @@
                 android:layout_centerInParent="true" />
     </androidx.appcompat.widget.Toolbar>
 
-    <LinearLayout
-        android:id="@+id/importWarningBanner"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:background="#FFF3CD"
-        android:padding="6dp"
-        android:visibility="gone"
-        android:gravity="center_vertical"
-        app:layout_constraintTop_toBottomOf="@id/maToolbar"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent">
-
-        <TextView
-            android:id="@+id/importWarningText"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:textColor="#856404"
-            android:textSize="13sp"
-            android:maxLines="2"
-            android:ellipsize="end"
-            android:text="Import effectué."
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toStartOf="@id/btnUndoImport"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintBottom_toBottomOf="parent" />
-
-        <Button
-            android:id="@+id/btnUndoImport"
-            android:layout_width="wrap_content"
-            android:layout_height="0dp"
-        android:text="Annuler"
-        android:textSize="11sp"
-        android:layout_marginStart="8dp"
-        style="@style/Widget.MaterialComponents.Button.TextButton"
-        app:layout_constraintEnd_toStartOf="@id/btnConfirmImport"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintBottom_toBottomOf="parent" />
-
-        <Button
-            android:id="@+id/btnConfirmImport"
-            android:layout_width="wrap_content"
-            android:layout_height="0dp"
-            android:text="Valider"
-            android:textSize="11sp"
-            style="@style/Widget.MaterialComponents.Button.TextButton"
-            android:textColor="#155724"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintBottom_toBottomOf="parent" />
-
-    </LinearLayout>
 
     <!-- 2. Les En-têtes de colonnes (Pour simuler un tableau) -->
     <!-- On utilise un LinearLayout horizontal pour aligner les 3 titres -->
@@ -110,15 +98,6 @@
             style="?attr/textAppearanceLabelLarge" />
 
         <!-- Colonne 2 : Enfant (40% de la largeur) -->
-        <TextView
-            android:id="@+id/TriEnfant"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="0.37"
-            android:text="@string/label_enfant"
-            android:textSize="@dimen/text_size_normal"
-            android:fontFeatureSettings="smcp"
-            style="?attr/textAppearanceLabelLarge" />
 
         <!-- Colonne 3 : Date (25% de la largeur) -->
         <TextView
@@ -256,5 +235,17 @@
 
     </LinearLayout>
     </LinearLayout>
+
+    <TextView
+        android:id="@+id/TriEnfant"
+        style="?attr/textAppearanceLabelLarge"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="0.37"
+        android:fontFeatureSettings="smcp"
+        android:text="@string/label_enfant"
+        android:textSize="@dimen/text_size_normal"
+        tools:layout_editor_absoluteX="134dp"
+        tools:layout_editor_absoluteY="327dp" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
