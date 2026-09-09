@@ -462,6 +462,13 @@ class MainActivity : AppCompatActivity() {
                         val prenom = etPrenom.text.toString().trim()
 
                         if (prenom.isNotEmpty() && selectedTimestamp != 0L) {
+
+                            val maintenant = System.currentTimeMillis()
+
+                            if (selectedTimestamp > maintenant) {
+                                afficherToastPersonnalise("La date d'anniversaire ne peut pas être dans le futur.")
+                                return@setPositiveButton // On arrête tout ici, on n'exécute pas la suite
+                            }
                             // Appel de votre fonction d'ajout (à adapter pour inclure la date)
                             val rowId = bdd.ajouterEnfant(prenom, selectedTimestamp)
 
