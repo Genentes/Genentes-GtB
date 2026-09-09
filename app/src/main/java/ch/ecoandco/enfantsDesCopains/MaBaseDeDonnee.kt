@@ -70,7 +70,7 @@ class MaBaseDeDonnees(private val context: Context) : SQLiteOpenHelper(context, 
             val inputStream = context.resources.openRawResource(R.raw.sample_data)
             val jsonString = inputStream.bufferedReader().use { it.readText() }
 
-            importFromJson(jsonString, "replace", db)
+            importFromJson(jsonString, "replace")
         } catch (e: Exception) {
             Log.e(TAG, "Erreur dans peuplerDonneesTest", e)
         }
@@ -246,7 +246,7 @@ class MaBaseDeDonnees(private val context: Context) : SQLiteOpenHelper(context, 
     /**
      * Import from JSON file and populate database
      */
-    fun importFromJson(jsonString: String, mode: String, db: SQLiteDatabase = this.writableDatabase): Boolean {
+    fun importFromJson(jsonString: String, mode: String): Boolean {
         return try {
             val rootJson = JSONObject(jsonString)
             val dataArray: JSONArray
@@ -260,19 +260,23 @@ class MaBaseDeDonnees(private val context: Context) : SQLiteOpenHelper(context, 
                 dataArray = JSONArray(jsonString)
             }
 
-            if (mode == "replace") {
-                // --- LOGIQUE ACTUELLE (REPLACE) ---
-                // 1. Vider la base (DELETE FROM parents; DELETE FROM enfants;)
-                // 2. Parser le JSON et réinsérer tout avec les nouveaux IDs (ou ceux du fichier si vous gardez la logique nextId)
-                // C'est votre code actuel qui fonctionne déjà.
-                return executeReplaceImport(dataArray)
+            when (mode) {
+                "replace" -> {
+                    // --- LOGIQUE ACTUELLE (REPLACE) ---
+                    // 1. Vider la base (DELETE FROM parents; DELETE FROM enfants;)
+                    // 2. Parser le JSON et réinsérer tout avec les nouveaux IDs (ou ceux du fichier si vous gardez la logique nextId)
+                    // C'est votre code actuel qui fonctionne déjà.
+                    return executeReplaceImport(dataArray)
 
-            } else if (mode == "merge") {
-                // --- NOUVELLE LOGIQUE (MERGE) ---
-                return executeMergeImport(dataArray)
-            } else {
-                Log.e(TAG, "Mode inconnu: $mode")
-                false
+                }
+                "merge" -> {
+                    // --- NOUVELLE LOGIQUE (MERGE) ---
+                    return executeMergeImport(dataArray)
+                }
+                else -> {
+                    Log.e(TAG, "Mode inconnu: $mode")
+                    false
+                }
             }
 
         } catch (e: Exception) {
@@ -438,7 +442,7 @@ class MaBaseDeDonnees(private val context: Context) : SQLiteOpenHelper(context, 
             nom = ""
         )
 
-        var nextId = 1;
+        var nextId = 1
 
         try {
             // Query all parents from database
@@ -472,7 +476,6 @@ class MaBaseDeDonnees(private val context: Context) : SQLiteOpenHelper(context, 
 
             if (enfantCursor.moveToFirst()) {
                 do {
-                    val enfantId = enfantCursor.getInt(0)
                     val prenom = enfantCursor.getString(1)
                     val dateNaissance = enfantCursor.getLong(2)
                     val idParent1 = enfantCursor.getInt(3)
@@ -500,13 +503,13 @@ class MaBaseDeDonnees(private val context: Context) : SQLiteOpenHelper(context, 
                     // Add child to parent1
                     if (parentMap.containsKey(idParent1)) {
                         val parent1 = parentMap[idParent1]!!
-                        parent1.enfants = parent1.enfants + enfant
+                        parent1.enfants += enfant
                     }
 
                     // Add child to parent2 if exists
                     if (idParent2 != null && parentMap.containsKey(idParent2)) {
                         val parent2 = parentMap[idParent2]!!
-                        parent2.enfants = parent2.enfants + enfant
+                        parent2.enfants += enfant
                     }
                 } while (enfantCursor.moveToNext())
             }
@@ -570,9 +573,6 @@ class MaBaseDeDonnees(private val context: Context) : SQLiteOpenHelper(context, 
                 } while (parentQuery.moveToNext())
             }
             parentQuery.close()
-
-            // L'ensemble des IDs à charger = Enfants sélectionnés + Leurs Parents
-            val allIdsToLoad = selectedChildIds.toSet() + parentIdsSet
 
             // ÉTAPE 2 : Charger les Parents
             // On utilise une requête avec "IN" pour charger uniquement les parents nécessaires
@@ -641,11 +641,11 @@ class MaBaseDeDonnees(private val context: Context) : SQLiteOpenHelper(context, 
 
                     if (peopleMap.containsKey(idParent1)) {
                         val parent1 = peopleMap[idParent1]!!
-                        parent1.enfants = parent1.enfants + enfant
+                        parent1.enfants += enfant
                     }
                     if (idParent2 != null && peopleMap.containsKey(idParent2)) {
                         val parent2 = peopleMap[idParent2]!!
-                        parent2.enfants = parent2.enfants + enfant
+                        parent2.enfants += enfant
                     }
 
                 } while (enfantCursor.moveToNext())

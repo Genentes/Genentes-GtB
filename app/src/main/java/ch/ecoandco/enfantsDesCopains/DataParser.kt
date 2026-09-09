@@ -1,10 +1,9 @@
 package ch.ecoandco.enfantsDesCopains
 
-import android.content.Context
 import android.util.Log
 import org.json.JSONArray
 import org.json.JSONObject
-import java.io.File
+
 /**
 * Classe de données universelle représentant toute personne du système (parents, enfants, conjoint, amis)
 * Les propriétés sont optionnelles selon le rôle de la personne
@@ -52,7 +51,6 @@ class DataParser {
      *   1. Première passe: Parse tous les IDs de référence (conjointId, enfantIds, amisIds)
      *   2. Deuxième passe: Résout ces IDs en objets Person réels
      *
-     * @param jsonString Contenu JSON à parser (format: tableau de personnes)
      * @return L'objet Person avec id=0 (représentant "Moi") avec toutes ses relations résolues
      */
     fun import(jsonArray: JSONArray): Person? {
@@ -159,7 +157,6 @@ class DataParser {
      * Crée un tableau JSON avec toutes les personnes liées (amis, enfants, conjoint, etc.)
      * Les relations sont stockées comme des IDs, pas comme des objets imbriqués
      *
-     * @param person La personne à exporter (généralement id=0 "Moi")
      * @return String contenant le JSON formaté avec indentation (2 espaces)
      */
     // --- NOUVELLE SIGNATURE PRINCIPALE ---
