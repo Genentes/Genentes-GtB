@@ -249,46 +249,47 @@ class MaBaseDeDonnees(private val context: Context) : SQLiteOpenHelper(context, 
     fun importFromJson(jsonString: String, mode: String): Boolean {
         return try {
             val dataArray: JSONArray
-            // 1. Tenter de parser comme un OBJET (Nouveau format)
-            if (jsonString.trim().startsWith("{")) {
+            val trimmedJson = jsonString.trim()
+
+            // 1. Détection du format par le premier caractère (plus sûr que de tenter un parse qui plante)
+            if (trimmedJson.startsWith("{")) {
+                // --- NOUVEAU FORMAT (Objet) ---
                 val rootJson = JSONObject(jsonString)
 
-                // Vérifier où sont les données (clé "data" ou "enfants" selon votre standard)
+                // On cherche le tableau dans la clé "data"
                 if (rootJson.has("data")) {
                     dataArray = rootJson.getJSONArray("data")
-                } else if (rootJson.has("enfants")) {
-                    dataArray = rootJson.getJSONArray("enfants")
                 } else {
-                    // Si c'est un objet mais sans tableau connu
-                    Log.e(TAG, "Objet JSON valide mais aucune clé 'data' ou 'enfants' trouvée.")
+                    Log.e(TAG, "Format objet détecté, mais la clé 'data' est manquante.")
                     return false
                 }
-            }
-            // 2. Tenter de parser comme un TABLEAU (Vieux format)
-            else if (jsonString.trim().startsWith("[")) {
+            } else if (trimmedJson.startsWith("[")) {
+                // --- ANCIEN FORMAT (Tableau pur) ---
+                // C'est ici que vos vieux fichiers [{"id":0, "prenom":"Me"...}] sont gérés
                 dataArray = JSONArray(jsonString)
-            }
-            else {
-                Log.e(TAG, "Le fichier ne commence ni par { ni par [")
+
+                // Optionnel : Forcez le mode pour les vieux fichiers si nécessaire
+                // val effectiveMode = "replace"
+            } else {
+                Log.e(TAG, "Le fichier JSON semble corrompu (ne commence ni par { ni par [)")
                 return false
             }
 
-            // 3. Exécuter la logique selon le mode
+            // 2. Exécution de l'import avec le tableau extrait (peu importe sa provenance)
             return when (mode) {
                 "replace" -> executeReplaceImport(dataArray)
                 "merge" -> executeMergeImport(dataArray)
                 else -> {
-                    Log.e(TAG, "Mode inconnu: $mode, défaut sur 'merge'")
+                    Log.e(TAG, "Mode '$mode' inconnu, bascule sur 'merge' par sécurité.")
                     executeMergeImport(dataArray)
                 }
             }
 
         } catch (e: Exception) {
-            Log.e(TAG, "Erreur lors du parsing ou de l'import", e)
+            Log.e(TAG, "Erreur critique lors de l'import JSON", e)
             return false
         }
     }
-
     fun executeReplaceImport(dataArray: JSONArray, db: SQLiteDatabase = this.writableDatabase): Boolean {
         return try {
             val parser = DataParser()

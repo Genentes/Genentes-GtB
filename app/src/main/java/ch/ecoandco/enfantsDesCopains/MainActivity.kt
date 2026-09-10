@@ -178,7 +178,6 @@ class MainActivity : AppCompatActivity() {
     // MODIFICATION DANS effectuerImport (en cas de succès)
     private fun effectuerImport(uri: android.net.Uri, jsonContent: String, mode: String, estTableau: Boolean) {
 
-
         try {
             if (bdd.importFromJson(jsonContent, mode)) {
                 chargerDonneesDepuisBDD()
@@ -190,7 +189,7 @@ class MainActivity : AppCompatActivity() {
                     afficherToastPersonnalise("Import réussi")
                 }
             } else {
-                afficherToastPersonnalise("Erreur lors de l'import")
+                afficherToastPersonnalise("Erreur lors de l'import - 2")
                 chargerDonneesDepuisBDD()
             }
         } catch (e: Exception) {
