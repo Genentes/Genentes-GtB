@@ -11,8 +11,8 @@ android {
         applicationId = "ch.ecoandco.enfantsDesCopains" // <--- REMPLACEZ CECI aussi par votre vrai nom de package
         minSdk = 26 // Version minimum d'Android (26 = Android 8.0)
         targetSdk = 34
-        versionCode = 2
-        versionName = "1.2"
+        versionCode = 3
+        versionName = "1.3"
     }
 
     buildTypes {
