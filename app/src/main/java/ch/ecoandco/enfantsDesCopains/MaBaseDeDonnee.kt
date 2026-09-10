@@ -248,40 +248,44 @@ class MaBaseDeDonnees(private val context: Context) : SQLiteOpenHelper(context, 
      */
     fun importFromJson(jsonString: String, mode: String): Boolean {
         return try {
-            val rootJson = JSONObject(jsonString)
             val dataArray: JSONArray
+            // 1. Tenter de parser comme un OBJET (Nouveau format)
+            if (jsonString.trim().startsWith("{")) {
+                val rootJson = JSONObject(jsonString)
 
-            // 1. Extraire le tableau de données selon le format
-            if (rootJson.has("data")) {
-                // Nouveau format : {"mode": "...", "data": [...]}
-                dataArray = rootJson.getJSONArray("data")
-            } else {
-                // Ancien format : [...] directement à la racine
+                // Vérifier où sont les données (clé "data" ou "enfants" selon votre standard)
+                if (rootJson.has("data")) {
+                    dataArray = rootJson.getJSONArray("data")
+                } else if (rootJson.has("enfants")) {
+                    dataArray = rootJson.getJSONArray("enfants")
+                } else {
+                    // Si c'est un objet mais sans tableau connu
+                    Log.e(TAG, "Objet JSON valide mais aucune clé 'data' ou 'enfants' trouvée.")
+                    return false
+                }
+            }
+            // 2. Tenter de parser comme un TABLEAU (Vieux format)
+            else if (jsonString.trim().startsWith("[")) {
                 dataArray = JSONArray(jsonString)
             }
+            else {
+                Log.e(TAG, "Le fichier ne commence ni par { ni par [")
+                return false
+            }
 
-            when (mode) {
-                "replace" -> {
-                    // --- LOGIQUE ACTUELLE (REPLACE) ---
-                    // 1. Vider la base (DELETE FROM parents; DELETE FROM enfants;)
-                    // 2. Parser le JSON et réinsérer tout avec les nouveaux IDs (ou ceux du fichier si vous gardez la logique nextId)
-                    // C'est votre code actuel qui fonctionne déjà.
-                    return executeReplaceImport(dataArray)
-
-                }
-                "merge" -> {
-                    // --- NOUVELLE LOGIQUE (MERGE) ---
-                    return executeMergeImport(dataArray)
-                }
+            // 3. Exécuter la logique selon le mode
+            return when (mode) {
+                "replace" -> executeReplaceImport(dataArray)
+                "merge" -> executeMergeImport(dataArray)
                 else -> {
-                    Log.e(TAG, "Mode inconnu: $mode")
-                    false
+                    Log.e(TAG, "Mode inconnu: $mode, défaut sur 'merge'")
+                    executeMergeImport(dataArray)
                 }
             }
 
         } catch (e: Exception) {
-            Log.e(TAG, "Erreur globale d'import", e)
-            false
+            Log.e(TAG, "Erreur lors du parsing ou de l'import", e)
+            return false
         }
     }
 

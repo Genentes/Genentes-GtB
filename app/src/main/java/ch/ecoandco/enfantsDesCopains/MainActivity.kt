@@ -25,6 +25,7 @@ import android.widget.Spinner
 import android.widget.TextView
 import androidx.appcompat.app.ActionBar
 import androidx.activity.result.contract.ActivityResultContracts
+import org.json.JSONArray
 import org.json.JSONObject
 import java.text.SimpleDateFormat
 import java.util.Calendar
@@ -112,7 +113,7 @@ class MainActivity : AppCompatActivity() {
                 return@registerForActivityResult
             }
             try {
-                // Lecture anticipée pour détecter le mode
+                // Lecture du contenu brut
                 val jsonString = contentResolver.openInputStream(uri)?.use { inputStream ->
                     inputStream.bufferedReader().use { reader -> reader.readText() }
                 }
@@ -122,12 +123,26 @@ class MainActivity : AppCompatActivity() {
                     return@registerForActivityResult
                 }
 
-                val rootJson = JSONObject(jsonString)
-                // Détection du mode : si pas de champ "mode", c'est un ancien fichier -> replace
-                val mode = if (rootJson.has("mode")) {
-                    rootJson.getString("mode")
-                } else {
-                    "replace"
+                var mode = "replace"
+                var estTableau = false
+
+                try {
+                    // Essai 1 : Est-ce un tableau ? (Vieux format)
+                    JSONArray(jsonString)
+                    estTableau = true
+                    mode = "replace" // Ou "merge" selon votre préférence pour les vieux fichiers
+                } catch (e: Exception) {
+                    try {
+                        // Essai 2 : Est-ce un objet ? (Nouveau format)
+                        val rootObj = JSONObject(jsonString)
+                        if (rootObj.has("mode")) {
+                            mode = rootObj.getString("mode")
+                        }
+                        estTableau = false
+                    } catch (e2: Exception) {
+                        afficherToastPersonnalise("Format JSON invalide")
+                        return@registerForActivityResult
+                    }
                 }
 
                 backupJsonBeforeImport = bdd.exportToJson() // Votre fonction existante
@@ -148,7 +163,7 @@ class MainActivity : AppCompatActivity() {
                     .setMessage(message)
                     .setPositiveButton(if (mode == "merge") "Oui, ajouter à ma liste" else "Oui, effacer et importer") { _, _ ->
                         // On passe le JSON et le mode à la fonction d'import
-                        effectuerImport(uri, jsonString, mode)
+                        effectuerImport(uri, jsonString, mode, estTableau)
                     }
                     .setNegativeButton("Annuler", null)
                     .show()
@@ -161,7 +176,9 @@ class MainActivity : AppCompatActivity() {
     }
 
     // MODIFICATION DANS effectuerImport (en cas de succès)
-    private fun effectuerImport(uri: android.net.Uri, jsonContent: String, mode: String) {
+    private fun effectuerImport(uri: android.net.Uri, jsonContent: String, mode: String, estTableau: Boolean) {
+
+
         try {
             if (bdd.importFromJson(jsonContent, mode)) {
                 chargerDonneesDepuisBDD()
