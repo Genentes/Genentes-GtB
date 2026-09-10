@@ -82,6 +82,15 @@ class MainActivity : AppCompatActivity() {
 
     private var backupJsonBeforeImport: String? = null
 
+    // Vérifier si on revient d'une rotation
+    if (savedInstanceState != null) {
+        val isVisible = savedInstanceState.getBoolean("isWarningVisible", false)
+        if (isVisible) {
+            importWarningBanner.visibility = View.VISIBLE
+        } else {
+            importWarningBanner.visibility = View.GONE
+        }
+    }
 
     // UN SEUL launcher pour tous les exports
     private val fileSaverLauncher = registerForActivityResult(
@@ -130,7 +139,7 @@ class MainActivity : AppCompatActivity() {
                     // Essai 1 : Est-ce un tableau ? (Vieux format)
                     JSONArray(jsonString)
                     estTableau = true
-                    mode = "replace" // Ou "merge" selon votre préférence pour les vieux fichiers
+                    mode = "merge" // Ou "merge" selon votre préférence pour les vieux fichiers
                 } catch (e: Exception) {
                     try {
                         // Essai 2 : Est-ce un objet ? (Nouveau format)
@@ -163,7 +172,7 @@ class MainActivity : AppCompatActivity() {
                     .setMessage(message)
                     .setPositiveButton(if (mode == "merge") "Oui, ajouter à ma liste" else "Oui, effacer et importer") { _, _ ->
                         // On passe le JSON et le mode à la fonction d'import
-                        effectuerImport(uri, jsonString, mode, estTableau)
+                        effectuerImport(uri, jsonString, mode)
                     }
                     .setNegativeButton("Annuler", null)
                     .show()
@@ -176,7 +185,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     // MODIFICATION DANS effectuerImport (en cas de succès)
-    private fun effectuerImport(uri: android.net.Uri, jsonContent: String, mode: String, estTableau: Boolean) {
+    private fun effectuerImport(uri: android.net.Uri, jsonContent: String, mode: String) {
 
         try {
             if (bdd.importFromJson(jsonContent, mode)) {
@@ -560,6 +569,12 @@ class MainActivity : AppCompatActivity() {
             afficherToastPersonnalise("Erreur: ${e.message}")
         }
 
+    }
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+        // On sauvegarde true si le banner est visible, false sinon
+        outState.putBoolean("isWarningVisible", importWarningBanner.visibility == View.VISIBLE)
     }
 
     override fun onResume() {

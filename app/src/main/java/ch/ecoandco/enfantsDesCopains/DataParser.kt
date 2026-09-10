@@ -91,65 +91,103 @@ class DataParser {
      * @return Objet Person avec les IDs de référence (pas encore résolus)
      */
     private fun parsePerson(jsonObject: JSONObject): Person {
-        // Extraction des propriétés principales
-        val id = jsonObject.getInt("id")
-        val prenom = jsonObject.getString("prenom")
-        val nom = if (jsonObject.has("nom")) jsonObject.getString("nom") else ""
-        val groupe = if (jsonObject.has("groupe")) jsonObject.getString("groupe") else ""
+        // 1. ID : Utiliser optInt pour ne pas planter si manquant. Défaut à -1.
+        val id = jsonObject.optInt("id", -1)
 
-        // Initialisation des IDs de référence (à None/vide par défaut)
+        // 2. Noms : Utiliser optString avec une valeur par défaut
+        val prenom = jsonObject.optString("prenom", "Inconnu")
+        val nom = jsonObject.optString("nom", "")
+
+        // 3. Groupe : Clé optionnelle, vide si absente (compatible ancien fichier sans groupe)
+        val groupe = jsonObject.optString("groupe", "copains")
+
+        // Initialisation des IDs
         var conjointId: Int? = null
         var enfantIds = listOf<Int>()
         var amisIds = listOf<Int>()
 
-        // Parse le champ "relations" qui contient les références aux autres personnes
+        // 4. Relations : Vérifier l'existence avant de lire
         if (jsonObject.has("relations") && !jsonObject.isNull("relations")) {
-            val relationsJson = jsonObject.getJSONObject("relations")
+            try {
+                val relationsJson = jsonObject.getJSONObject("relations")
 
-            // Extraction de l'ID du conjoint (un seul ID, pas un tableau)
-            if (relationsJson.has("conjoint") && !relationsJson.isNull("conjoint")) {
-                conjointId = relationsJson.getInt("conjoint")
-            }
-
-            // Extraction des IDs des enfants (tableau d'IDs)
-            if (relationsJson.has("enfants") && !relationsJson.isNull("enfants")) {
-                val enfantsArray = relationsJson.getJSONArray("enfants")
-                val ids = mutableListOf<Int>()
-                for (i in 0 until enfantsArray.length()) {
-                    ids.add(enfantsArray.getInt(i))
+                // Conjoint
+                if (relationsJson.has("conjoint")) {
+                    conjointId = relationsJson.optInt("conjoint", -1).takeIf { it != -1 }
                 }
-                enfantIds = ids
-            }
 
-            // Extraction des IDs des amis (tableau d'IDs)
-            if (relationsJson.has("amis") && !relationsJson.isNull("amis")) {
-                val amisArray = relationsJson.getJSONArray("amis")
-                val ids = mutableListOf<Int>()
-                for (i in 0 until amisArray.length()) {
-                    ids.add(amisArray.getInt(i))
+                // Enfants (Gère à la fois JSONArray d'IDs ou autre format si besoin)
+                if (relationsJson.has("enfants") && !relationsJson.isNull("enfants")) {
+                    val enfantsArray = relationsJson.optJSONArray("enfants")
+                    if (enfantsArray != null) {
+                        val ids = mutableListOf<Int>()
+                        for (i in 0 until enfantsArray.length()) {
+                            // optInt évite le plantage si un élément n'est pas un int
+                            ids.add(enfantsArray.optInt(i, -1))
+                        }
+                        enfantIds = ids.filter { it != -1 }
+                    }
                 }
-                amisIds = ids
+
+                // Amis
+                if (relationsJson.has("amis") && !relationsJson.isNull("amis")) {
+                    val amisArray = relationsJson.optJSONArray("amis")
+                    if (amisArray != null) {
+                        val ids = mutableListOf<Int>()
+                        for (i in 0 until amisArray.length()) {
+                            ids.add(amisArray.optInt(i, -1))
+                        }
+                        amisIds = ids.filter { it != -1 }
+                    }
+                }
+            } catch (e: Exception) {
+                // Si le bloc relations est mal formé, on continue avec les valeurs par défaut (null/empty)
+                Log.w("DataParser", "Erreur lecture relations pour $prenom, ignoré.", e)
             }
         }
 
-        // Extraction de la date de naissance au format "dd.MM.yyyy"
-        val dateNaissance = if (jsonObject.has("naissance") && !jsonObject.isNull("naissance")) {
-            jsonObject.getString("naissance")
-        } else {
-            null
+        // 5. Date de naissance : Gérer les DEUX formats (String "dd.MM.yyyy" ET Timestamp Long)
+        val dateNaissance: String? = when {
+            // Cas 1: Clé "naissance" existe (Nouveau format String)
+            jsonObject.has("naissance") && !jsonObject.isNull("naissance") -> {
+                jsonObject.optString("naissance", null)
+            }
+            // Cas 2: Clé "dateNaissance" existe (Timestamp Long - comme vu dans vos logs)
+            jsonObject.has("dateNaissance") && !jsonObject.isNull("dateNaissance") -> {
+                val timestamp = jsonObject.optLong("dateNaissance", 0L)
+                if (timestamp > 0) {
+                    // Convertir le timestamp en String "dd.MM.yyyy" pour que votre classe Person soit contente
+                    convertirTimestampEnDateFr(timestamp)
+                } else {
+                    null
+                }
+            }
+            // Cas 3: Clé "date" existe (Autre variante possible)
+            jsonObject.has("date") && !jsonObject.isNull("date") -> {
+                val timestamp = jsonObject.optLong("date", 0L)
+                if (timestamp > 0) convertirTimestampEnDateFr(timestamp) else null
+            }
+            else -> null
         }
 
-        // Création et retour de l'objet Person avec les IDs de référence
         return Person(
             id = id,
             prenom = prenom,
             nom = nom,
-            groupe = groupe,
+            groupe = groupe, // Sera vide pour les anciens fichiers, ce qui est gérable
             conjointId = conjointId,
             enfantIds = enfantIds,
             amisIds = amisIds,
             dateNaissance = dateNaissance
         )
+    }
+
+    // Fonction utilitaire à ajouter pour la conversion
+    private fun convertirTimestampEnDateFr(timestamp: Long): String {
+        val sdf = java.text.SimpleDateFormat("dd.MM.yyyy", java.util.Locale.getDefault())
+        // Important : ajuster le fuseau horaire si nécessaire, ou utiliser 'localtime' comme vu avant
+        sdf.timeZone = java.util.TimeZone.getDefault()
+        return sdf.format(java.util.Date(timestamp))
     }
 
     /**
