@@ -210,13 +210,6 @@ class MainActivity : AppCompatActivity() {
         importWarningBanner.visibility = View.VISIBLE
     }
 
-    override fun onSaveInstanceState(outState: Bundle) {
-        super.onSaveInstanceState(outState)
-        // On sauvegarde true si le banner est visible, false sinon
-        outState.putBoolean("isWarningVisible", importWarningBanner.visibility == View.VISIBLE)
-    }
-
-
     // Fonction appelée quand on clique sur "Garder"
     private fun validerImportDefinitif() {
         backupJsonBeforeImport = null // On vide la sauvegarde de la mémoire
@@ -307,16 +300,6 @@ class MainActivity : AppCompatActivity() {
             importWarningText = findViewById(R.id.importWarningText)
             btnUndoImport = findViewById(R.id.btnUndoImport)
             btnConfirmImport = findViewById(R.id.btnConfirmImport)
-
-            // Vérifier si on revient d'une rotation
-            if (savedInstanceState != null) {
-                val isVisible = savedInstanceState.getBoolean("isWarningVisible", false)
-                if (isVisible) {
-                    importWarningBanner.visibility = View.VISIBLE
-                } else {
-                    importWarningBanner.visibility = View.GONE
-                }
-            }
 
 
             // Action du bouton Annuler
