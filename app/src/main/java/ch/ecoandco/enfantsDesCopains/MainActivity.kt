@@ -82,16 +82,6 @@ class MainActivity : AppCompatActivity() {
 
     private var backupJsonBeforeImport: String? = null
 
-    // Vérifier si on revient d'une rotation
-    if (savedInstanceState != null) {
-        val isVisible = savedInstanceState.getBoolean("isWarningVisible", false)
-        if (isVisible) {
-            importWarningBanner.visibility = View.VISIBLE
-        } else {
-            importWarningBanner.visibility = View.GONE
-        }
-    }
-
     // UN SEUL launcher pour tous les exports
     private val fileSaverLauncher = registerForActivityResult(
         ActivityResultContracts.CreateDocument("application/json")
@@ -161,7 +151,7 @@ class MainActivity : AppCompatActivity() {
                 else "Attention : Remplacement des données"
 
                 val message = if (mode == "merge") {
-                    "Les données de ce fichier seront ajoutées à votre base actuelle. Les doublons potentiels seront gérés automatiquement."
+                    "Les données de ce fichier seront ajoutées à votre base actuelle."
                 } else {
                     "L'importation de ce fichier va effacer intégralement votre base de données actuelle. Cette action est irréversible. Voulez-vous vraiment continuer ?"
                 }
@@ -219,6 +209,13 @@ class MainActivity : AppCompatActivity() {
         importWarningText.text = "Import effectué le $dateStr."
         importWarningBanner.visibility = View.VISIBLE
     }
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+        // On sauvegarde true si le banner est visible, false sinon
+        outState.putBoolean("isWarningVisible", importWarningBanner.visibility == View.VISIBLE)
+    }
+
 
     // Fonction appelée quand on clique sur "Garder"
     private fun validerImportDefinitif() {
@@ -310,6 +307,17 @@ class MainActivity : AppCompatActivity() {
             importWarningText = findViewById(R.id.importWarningText)
             btnUndoImport = findViewById(R.id.btnUndoImport)
             btnConfirmImport = findViewById(R.id.btnConfirmImport)
+
+            // Vérifier si on revient d'une rotation
+            if (savedInstanceState != null) {
+                val isVisible = savedInstanceState.getBoolean("isWarningVisible", false)
+                if (isVisible) {
+                    importWarningBanner.visibility = View.VISIBLE
+                } else {
+                    importWarningBanner.visibility = View.GONE
+                }
+            }
+
 
             // Action du bouton Annuler
             btnUndoImport.setOnClickListener {
@@ -569,12 +577,6 @@ class MainActivity : AppCompatActivity() {
             afficherToastPersonnalise("Erreur: ${e.message}")
         }
 
-    }
-
-    override fun onSaveInstanceState(outState: Bundle) {
-        super.onSaveInstanceState(outState)
-        // On sauvegarde true si le banner est visible, false sinon
-        outState.putBoolean("isWarningVisible", importWarningBanner.visibility == View.VISIBLE)
     }
 
     override fun onResume() {

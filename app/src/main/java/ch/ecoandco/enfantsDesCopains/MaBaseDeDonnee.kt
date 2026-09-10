@@ -321,7 +321,7 @@ class MaBaseDeDonnees(private val context: Context) : SQLiteOpenHelper(context, 
 
                 val prenom = personJson.getString("prenom")
                 val nom = if (personJson.has("nom")) personJson.getString("nom") else ""
-                val groupe = if (personJson.has("groupe")) personJson.getString("groupe") else ""
+                val groupe = personJson.optString("groupe", "copains")
                 val naissanceStr = if (personJson.has("naissance")) personJson.getString("naissance") else null
 
                 var newLocalId: Int
