@@ -248,43 +248,48 @@ class MaBaseDeDonnees(private val context: Context) : SQLiteOpenHelper(context, 
      */
     fun importFromJson(jsonString: String, mode: String): Boolean {
         return try {
-            val rootJson = JSONObject(jsonString)
             val dataArray: JSONArray
+            val trimmedJson = jsonString.trim()
 
-            // 1. Extraire le tableau de données selon le format
-            if (rootJson.has("data")) {
-                // Nouveau format : {"mode": "...", "data": [...]}
-                dataArray = rootJson.getJSONArray("data")
-            } else {
-                // Ancien format : [...] directement à la racine
+            // 1. Détection du format par le premier caractère (plus sûr que de tenter un parse qui plante)
+            if (trimmedJson.startsWith("{")) {
+                // --- NOUVEAU FORMAT (Objet) ---
+                val rootJson = JSONObject(jsonString)
+
+                // On cherche le tableau dans la clé "data"
+                if (rootJson.has("data")) {
+                    dataArray = rootJson.getJSONArray("data")
+                } else {
+                    Log.e(TAG, "Format objet détecté, mais la clé 'data' est manquante.")
+                    return false
+                }
+            } else if (trimmedJson.startsWith("[")) {
+                // --- ANCIEN FORMAT (Tableau pur) ---
+                // C'est ici que vos vieux fichiers [{"id":0, "prenom":"Me"...}] sont gérés
                 dataArray = JSONArray(jsonString)
+
+                // Optionnel : Forcez le mode pour les vieux fichiers si nécessaire
+                // val effectiveMode = "replace"
+            } else {
+                Log.e(TAG, "Le fichier JSON semble corrompu (ne commence ni par { ni par [)")
+                return false
             }
 
-            when (mode) {
-                "replace" -> {
-                    // --- LOGIQUE ACTUELLE (REPLACE) ---
-                    // 1. Vider la base (DELETE FROM parents; DELETE FROM enfants;)
-                    // 2. Parser le JSON et réinsérer tout avec les nouveaux IDs (ou ceux du fichier si vous gardez la logique nextId)
-                    // C'est votre code actuel qui fonctionne déjà.
-                    return executeReplaceImport(dataArray)
-
-                }
-                "merge" -> {
-                    // --- NOUVELLE LOGIQUE (MERGE) ---
-                    return executeMergeImport(dataArray)
-                }
+            // 2. Exécution de l'import avec le tableau extrait (peu importe sa provenance)
+            return when (mode) {
+                "replace" -> executeReplaceImport(dataArray)
+                "merge" -> executeMergeImport(dataArray)
                 else -> {
-                    Log.e(TAG, "Mode inconnu: $mode")
-                    false
+                    Log.e(TAG, "Mode '$mode' inconnu, bascule sur 'merge' par sécurité.")
+                    executeMergeImport(dataArray)
                 }
             }
 
         } catch (e: Exception) {
-            Log.e(TAG, "Erreur globale d'import", e)
-            false
+            Log.e(TAG, "Erreur critique lors de l'import JSON", e)
+            return false
         }
     }
-
     fun executeReplaceImport(dataArray: JSONArray, db: SQLiteDatabase = this.writableDatabase): Boolean {
         return try {
             val parser = DataParser()
@@ -316,7 +321,7 @@ class MaBaseDeDonnees(private val context: Context) : SQLiteOpenHelper(context, 
 
                 val prenom = personJson.getString("prenom")
                 val nom = if (personJson.has("nom")) personJson.getString("nom") else ""
-                val groupe = if (personJson.has("groupe")) personJson.getString("groupe") else ""
+                val groupe = personJson.optString("groupe", "copains")
                 val naissanceStr = if (personJson.has("naissance")) personJson.getString("naissance") else null
 
                 var newLocalId: Int

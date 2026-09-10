@@ -25,6 +25,7 @@ import android.widget.Spinner
 import android.widget.TextView
 import androidx.appcompat.app.ActionBar
 import androidx.activity.result.contract.ActivityResultContracts
+import org.json.JSONArray
 import org.json.JSONObject
 import java.text.SimpleDateFormat
 import java.util.Calendar
@@ -81,7 +82,6 @@ class MainActivity : AppCompatActivity() {
 
     private var backupJsonBeforeImport: String? = null
 
-
     // UN SEUL launcher pour tous les exports
     private val fileSaverLauncher = registerForActivityResult(
         ActivityResultContracts.CreateDocument("application/json")
@@ -112,7 +112,7 @@ class MainActivity : AppCompatActivity() {
                 return@registerForActivityResult
             }
             try {
-                // Lecture anticipée pour détecter le mode
+                // Lecture du contenu brut
                 val jsonString = contentResolver.openInputStream(uri)?.use { inputStream ->
                     inputStream.bufferedReader().use { reader -> reader.readText() }
                 }
@@ -122,12 +122,26 @@ class MainActivity : AppCompatActivity() {
                     return@registerForActivityResult
                 }
 
-                val rootJson = JSONObject(jsonString)
-                // Détection du mode : si pas de champ "mode", c'est un ancien fichier -> replace
-                val mode = if (rootJson.has("mode")) {
-                    rootJson.getString("mode")
-                } else {
-                    "replace"
+                var mode = "replace"
+                var estTableau = false
+
+                try {
+                    // Essai 1 : Est-ce un tableau ? (Vieux format)
+                    JSONArray(jsonString)
+                    estTableau = true
+                    mode = "merge" // Ou "merge" selon votre préférence pour les vieux fichiers
+                } catch (e: Exception) {
+                    try {
+                        // Essai 2 : Est-ce un objet ? (Nouveau format)
+                        val rootObj = JSONObject(jsonString)
+                        if (rootObj.has("mode")) {
+                            mode = rootObj.getString("mode")
+                        }
+                        estTableau = false
+                    } catch (e2: Exception) {
+                        afficherToastPersonnalise("Format JSON invalide")
+                        return@registerForActivityResult
+                    }
                 }
 
                 backupJsonBeforeImport = bdd.exportToJson() // Votre fonction existante
@@ -137,7 +151,7 @@ class MainActivity : AppCompatActivity() {
                 else "Attention : Remplacement des données"
 
                 val message = if (mode == "merge") {
-                    "Les données de ce fichier seront ajoutées à votre base actuelle. Les doublons potentiels seront gérés automatiquement."
+                    "Les données de ce fichier seront ajoutées à votre base actuelle."
                 } else {
                     "L'importation de ce fichier va effacer intégralement votre base de données actuelle. Cette action est irréversible. Voulez-vous vraiment continuer ?"
                 }
@@ -162,6 +176,7 @@ class MainActivity : AppCompatActivity() {
 
     // MODIFICATION DANS effectuerImport (en cas de succès)
     private fun effectuerImport(uri: android.net.Uri, jsonContent: String, mode: String) {
+
         try {
             if (bdd.importFromJson(jsonContent, mode)) {
                 chargerDonneesDepuisBDD()
@@ -173,7 +188,7 @@ class MainActivity : AppCompatActivity() {
                     afficherToastPersonnalise("Import réussi")
                 }
             } else {
-                afficherToastPersonnalise("Erreur lors de l'import")
+                afficherToastPersonnalise("Erreur lors de l'import - 2")
                 chargerDonneesDepuisBDD()
             }
         } catch (e: Exception) {
@@ -285,6 +300,7 @@ class MainActivity : AppCompatActivity() {
             importWarningText = findViewById(R.id.importWarningText)
             btnUndoImport = findViewById(R.id.btnUndoImport)
             btnConfirmImport = findViewById(R.id.btnConfirmImport)
+
 
             // Action du bouton Annuler
             btnUndoImport.setOnClickListener {

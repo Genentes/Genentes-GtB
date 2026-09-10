@@ -16,11 +16,5 @@
         android:title="@string/exportData"
         app:showAsAction="never" />
 
-    <!-- Option ChangeCatégorie -->
-    <item
-        android:id="@+id/action_change_category"
-        android:title="@string/changeCategory"
-        app:showAsAction="never" />
-
 
 </menu>
