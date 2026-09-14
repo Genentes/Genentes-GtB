@@ -69,7 +69,3 @@ Ce projet est distribué sous la licence GNU General Public License v3 (GPL-3.0)
 📞 Contact
 Dépôt GitHub : https://github.com/Genentes/Genentes-GtB
 Issues : https://github.com/Genentes/Genentes-GtB/issues
-*[9] Pour le fun*
-
-
---version 0.02 [SC]
