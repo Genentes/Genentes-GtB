@@ -68,5 +68,7 @@ Soumettez une Pull Request pour proposer des modifications de code.
 Ce projet est distribué sous la licence GNU General Public License v3 (GPL-3.0). Vous êtes libre d'utiliser, modifier et distribuer ce logiciel, à condition que toute œuvre dérivée soit également publiée sous cette même licence et que le code source reste accessible. Voir le fichier LICENSE pour le texte complet de la licence.
 
 📞 Contact
+
 Dépôt GitHub : https://github.com/Genentes/Genentes-GtB
+
 Issues : https://github.com/Genentes/Genentes-GtB/issues
