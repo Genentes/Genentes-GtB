@@ -58,12 +58,13 @@ bash
 ./gradlew assembleDebug
 
 🤝 Contribuer
-Les contributions sont les bienvenues ! Que ce soit pour corriger des bugs, améliorer l'interface ou traduire l'application.
 
+Les contributions sont les bienvenues ! Que ce soit pour corriger des bugs, améliorer l'interface ou traduire l'application.
 Ouvrez une Issue pour signaler un bug ou proposer une idée.
 Soumettez une Pull Request pour proposer des modifications de code.
 
 📄 Licence
+
 Ce projet est distribué sous la licence GNU General Public License v3 (GPL-3.0). Vous êtes libre d'utiliser, modifier et distribuer ce logiciel, à condition que toute œuvre dérivée soit également publiée sous cette même licence et que le code source reste accessible. Voir le fichier LICENSE pour le texte complet de la licence.
 
 📞 Contact
